@@ -30,7 +30,7 @@ import {
   ENGAGEMENTS,
   ENGAGEMENT_DRIVERS,
   ENGAGEMENT_QUESTIONS,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { WriterMemory } from '../../core/memory'
 import { requireEnv } from '../../lib/env'
 import {
@@ -299,7 +299,7 @@ export const anthropicLlm: LlmProvider = {
         {
           type: 'text',
           text: [
-            'You help the operator of Influstep set up one of their own accounts. Influstep drafts posts and replies for it, which the operator posts by hand, so the people there discover the sponsor.',
+            'You help the operator of Stepradar set up one of their own accounts. Stepradar drafts posts and replies for it, which the operator posts by hand, so the people there discover the sponsor.',
             `The sponsor is ${brief.sponsorName}: ${brief.sponsorPitch} The account helps people first: the sponsor comes up only sometimes, in its own words.`,
           ].join('\n'),
         },
@@ -344,7 +344,7 @@ export const anthropicLlm: LlmProvider = {
         { type: 'text', text: accountSystem(args.account), cache_control: { type: 'ephemeral' } },
         {
           type: 'text',
-          text: `You are chatting with your operator inside Influstep. Answer in two or three sentences. ${args.directive ? `The operator's last message was stored as a standing directive: "${args.directive}". Confirm it and say how the next posts and replies change.` : ''}`,
+          text: `You are chatting with your operator inside Stepradar. Answer in two or three sentences. ${args.directive ? `The operator's last message was stored as a standing directive: "${args.directive}". Confirm it and say how the next posts and replies change.` : ''}`,
         },
       ],
       messages: args.history.map((turn) => ({ role: turn.author === 'operator' ? 'user' : 'assistant', content: turn.text })),
@@ -397,7 +397,7 @@ const CONVERSATION: ChatIntent = { kind: 'conversation' }
 
 /** What the interpreter does, for every message alike, so it caches; the account, the plan and the message follow. */
 const INTERPRET_SYSTEM = [
-  "You read a message the operator sends to one of their X accounts in Influstep, which drafts that account's posts and replies, and say what the message asks for. You never answer the message.",
+  "You read a message the operator sends to one of their X accounts in Stepradar, which drafts that account's posts and replies, and say what the message asks for. You never answer the message.",
   'Kinds:',
   '- conversation: a question, a remark, thanks, or anything you are unsure about. When in doubt, it is conversation.',
   '- directive: a standing rule for the next posts and replies ("focus on beginners", "stop saying guys"). text is the rule in the operator\'s words.',
@@ -433,7 +433,7 @@ function turnLine(accountName: string, turn: ChatTurn): string {
 }
 
 const TASK_REPORT_INSTRUCTION = [
-  'You are answering your operator in the Influstep chat with a report one of your agents put together.',
+  'You are answering your operator in the Stepradar chat with a report one of your agents put together.',
   'Write plain text in your own voice, under 120 words, with no headings.',
   'Use only numbers that appear in the data; never estimate, total or invent one. When the data is empty, say so plainly.',
 ].join(' ')

@@ -1,4 +1,4 @@
-import { parsePostedLink, type PlatformPlace } from '@influstep/shared'
+import { parsePostedLink, type PlatformPlace } from '@stepradar/shared'
 import React from 'react'
 import { cn } from '@/lib/cn'
 import { Input } from './ui'

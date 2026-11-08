@@ -1,5 +1,5 @@
-import type { api } from '@influstep/convex/_generated/api'
-import { EXPERIMENT_CATALOG, effectiveVariant, type ExperimentKind, type StrategyDefault } from '@influstep/shared'
+import type { api } from '@stepradar/convex/_generated/api'
+import { EXPERIMENT_CATALOG, effectiveVariant, type ExperimentKind, type StrategyDefault } from '@stepradar/shared'
 import type { FunctionArgs } from 'convex/server'
 
 /** A variant as the new experiment form sends it: the backend's own validator, read from the mutation. */

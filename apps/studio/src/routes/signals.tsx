@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
   FRESHNESS_HALF_LIFE_DAYS,
   SIGNAL_SOURCES,
@@ -8,7 +8,7 @@ import {
   signalFreshness,
   type SignalSource,
   handleOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'

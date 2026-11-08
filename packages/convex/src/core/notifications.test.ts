@@ -1,4 +1,4 @@
-import { postedAnchor } from '@influstep/shared'
+import { postedAnchor } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
 import { commentPayloadOf } from './notifications'

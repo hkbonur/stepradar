@@ -1,4 +1,4 @@
-import { STRATEGY_REVIEW_SLOT, WEEKDAYS, type JournalActor } from '@influstep/shared'
+import { STRATEGY_REVIEW_SLOT, WEEKDAYS, type JournalActor } from '@stepradar/shared'
 
 /** Who made a journal entry or wrote a memory entry, as its meta line says it. */
 export const ACTOR_WORDS: Record<JournalActor, string> = {

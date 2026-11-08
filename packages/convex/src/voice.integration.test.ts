@@ -10,7 +10,7 @@ import {
   type PlatformFormat,
   type PostKind,
   type Voice,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'

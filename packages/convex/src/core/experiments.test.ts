@@ -1,4 +1,4 @@
-import { EXPERIMENT_CATALOG } from '@influstep/shared'
+import { EXPERIMENT_CATALOG } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
@@ -141,12 +141,12 @@ describe('startExperiment', () => {
       await expect(
         startExperiment(ctx, reddit, catalogExperiment('hook', ['statement', 'question'], { metric: 'clicks' }))
       ).rejects.toThrow(
-        "A post on Reddit links to the sponsor directly, so no click is counted. Influstep cannot read a posted item's numbers on Reddit yet. A hook test on reach would never be decided. Test the hook on paid or signups."
+        "A post on Reddit links to the sponsor directly, so no click is counted. Stepradar cannot read a posted item's numbers on Reddit yet. A hook test on reach would never be decided. Test the hook on paid or signups."
       )
       // LinkedIn's numbers are not read, so a test on reach would never end.
       const linkedIn = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
       await expect(startExperiment(ctx, linkedIn, catalogExperiment('hook', ['statement', 'question']))).rejects.toThrow(
-        "Influstep cannot read a posted item's numbers on LinkedIn yet. A hook test on reach would never be decided."
+        "Stepradar cannot read a posted item's numbers on LinkedIn yet. A hook test on reach would never be decided."
       )
       // A Hacker News comment shows no points to anyone but its author, so a reply test there would never end.
       const hackerNews = await insertAccount(ctx, { platform: 'hackernews', handle: 'ada' })
@@ -178,7 +178,7 @@ describe('measurableMetrics', () => {
       const linkedIn = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
       expect(await measurableMetrics(ctx, linkedIn, 'hook')).toEqual({
         metrics: ['paid', 'signups', 'clicks'],
-        why: "Influstep cannot read a posted item's numbers on LinkedIn yet. A hook test on reach would never be decided.",
+        why: "Stepradar cannot read a posted item's numbers on LinkedIn yet. A hook test on reach would never be decided.",
       })
       const x = await insertAccount(ctx, { platform: 'x', handle: 'ada_x' })
       expect(await measurableMetrics(ctx, x, 'hook')).toEqual({ metrics: ['paid', 'signups', 'clicks', 'reach'], why: null })
@@ -605,7 +605,7 @@ describe('a post experiment', () => {
       const linkedIn = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
       expect(await measurableMetrics(ctx, linkedIn, 'posting_time')).toEqual({
         metrics: [],
-        why: "Influstep cannot read the account's own posts on LinkedIn yet. A posting time test could not tell when a post went out.",
+        why: "Stepradar cannot read the account's own posts on LinkedIn yet. A posting time test could not tell when a post went out.",
       })
       const late = await insertAccount(ctx, { handle: 'ada_late' })
       await ctx.db.patch(late._id, { publishHour: 19, cadence: { ...late.cadence, postsPerDay: 2 } })

@@ -1,4 +1,4 @@
-import { handleOf, needsConnection, placeOf, placeLabel } from '@influstep/shared'
+import { handleOf, needsConnection, placeOf, placeLabel } from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
@@ -123,7 +123,7 @@ export async function openConnectItem(ctx: MutationCtx, account: Doc<'accounts'>
   await ctx.db.insert('checklistItems', {
     accountId: account._id,
     title: `Connect your ${label} account`,
-    why: `Influstep reads ${handleOf(account)}'s posts and the comments under them through ${label}'s API only once you let it. Until then they are steps you take by hand.`,
+    why: `Stepradar reads ${handleOf(account)}'s posts and the comments under them through ${label}'s API only once you let it. Until then they are steps you take by hand.`,
     status: 'open',
     action: { kind: 'connect_account' },
     createdAt: now,

@@ -1,4 +1,4 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

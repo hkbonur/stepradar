@@ -7,7 +7,7 @@ import {
   type Leak,
   type StepFlows,
   type WeekPosting,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { addDays, dayKey, instantAt, weekStart } from './dates'

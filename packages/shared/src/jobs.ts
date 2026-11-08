@@ -11,7 +11,7 @@ export const AGENT_ROLE_LABELS: Record<AgentRole, string> = {
 export const JOB_STATUSES = ['queued', 'running', 'done', 'failed'] as const
 export type JobStatus = (typeof JOB_STATUSES)[number]
 
-/** Every unit of agent work. Every job runs on the backend (ADR 0004): Influstep never posts, so nothing needs the operator's machine. */
+/** Every unit of agent work. Every job runs on the backend (ADR 0004): Stepradar never posts, so nothing needs the operator's machine. */
 export const JOB_KINDS = {
   poll_signals: { role: 'researcher' },
   // Every morning: poll the sources, log repeated questions as problems, write the daily brief.

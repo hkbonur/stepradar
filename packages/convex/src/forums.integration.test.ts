@@ -19,7 +19,7 @@ afterEach(() => {
 
 const HOUR = 3_600_000
 
-/** A forum on software Influstep cannot read: its steps are the operator's, like LinkedIn's. */
+/** A forum on software Stepradar cannot read: its steps are the operator's, like LinkedIn's. */
 const ZAPIER_FORUM = { origin: 'https://community.zapier.com', name: 'Zapier Community', software: 'other' as const }
 
 describe('a forum account', () => {
@@ -43,7 +43,7 @@ describe('a forum account', () => {
     )
   })
 
-  it('leaves every step on a forum Influstep cannot read to the operator, and answers a thread pasted from that forum only', async () => {
+  it('leaves every step on a forum Stepradar cannot read to the operator, and answers a thread pasted from that forum only', async () => {
     const t = setup()
     const account = await t.run((ctx) => insertAccount(ctx, { platform: 'forum', forum: ZAPIER_FORUM, handle: 'ada' }))
     await expect(t.mutation(api.private.replies.listenNow, { accountId: account._id })).rejects.toThrow(

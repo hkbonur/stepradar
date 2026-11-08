@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import { handleOf } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import { handleOf } from '@stepradar/shared'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'

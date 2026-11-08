@@ -1,4 +1,4 @@
-import { STRATEGY_REVIEW_SLOT } from '@influstep/shared'
+import { STRATEGY_REVIEW_SLOT } from '@stepradar/shared'
 import { cronJobs } from 'convex/server'
 import { internal } from './_generated/api'
 

@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
   EXPERIMENT_KINDS,
   EXPERIMENT_KIND_LABELS,
@@ -8,7 +8,7 @@ import {
   itemsNoun,
   effectiveVariant,
   pillarWeights,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

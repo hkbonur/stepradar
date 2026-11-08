@@ -1,5 +1,5 @@
-import type { api } from '@influstep/convex/_generated/api'
-import { PLATFORM_LABELS, probableBasisText } from '@influstep/shared'
+import type { api } from '@stepradar/convex/_generated/api'
+import { PLATFORM_LABELS, probableBasisText } from '@stepradar/shared'
 import type { FunctionReturnType } from 'convex/server'
 import { formatCount, formatMoney, plural } from '@/lib/format'
 

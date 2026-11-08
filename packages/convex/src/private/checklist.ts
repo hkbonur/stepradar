@@ -1,7 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from '../_generated/server'
 import { accountRefOf, endsWait, planTwoWeeks } from '../core/accounts'
-import { ticksOffByHand } from '@influstep/shared'
+import { ticksOffByHand } from '@stepradar/shared'
 import { lookedAt } from '../core/communities'
 import { refusal } from '../lib/errors'
 

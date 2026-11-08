@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import { useAction } from 'convex/react'
 import React from 'react'
 import { errorMessage } from '@/lib/errors'

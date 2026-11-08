@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { placeOf, type Forum } from '@influstep/shared'
+import { placeOf, type Forum } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { internalMutation, internalQuery } from '../_generated/server'
 import { internal } from '../_generated/api'

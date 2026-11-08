@@ -1,4 +1,4 @@
-import { COMMUNITY_RULES_TTL_MS, communityLabel, handleOf, postedItemOf, postsToMetCommunity, type SelfPromotion } from '@influstep/shared'
+import { COMMUNITY_RULES_TTL_MS, communityLabel, handleOf, postedItemOf, postsToMetCommunity, type SelfPromotion } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 

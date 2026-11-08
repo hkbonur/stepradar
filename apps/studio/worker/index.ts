@@ -5,7 +5,7 @@
  * function over HTTP.
  */
 import { ConvexHttpClient } from 'convex/browser'
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 
 interface Env {
   ASSETS: Fetcher

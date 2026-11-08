@@ -6,7 +6,7 @@ import {
   namesSponsor,
   type Platform,
   type SelfPromotion,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 
 /**
  * The ground rules (docs/plan.md) a reply draft is checked against before it

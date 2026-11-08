@@ -1,4 +1,4 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import {
   REPLY_ORIGIN_LABELS,
   parsePostedLink,
@@ -13,7 +13,7 @@ import {
   platformLength,
   type DraftShape,
   communityLabel,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { ArrowSquareOutIcon } from '@phosphor-icons/react'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

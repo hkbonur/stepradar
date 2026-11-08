@@ -1,4 +1,4 @@
-import { engages, missingReasons, type Engagement } from '@influstep/shared'
+import { engages, missingReasons, type Engagement } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { accountRefOf, type AccountRef } from './accounts'

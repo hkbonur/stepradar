@@ -1,6 +1,6 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
   DEFAULT_FORMATS,
   ONBOARDING_ACCOUNTS_MAX,
@@ -25,7 +25,7 @@ import {
   MET_COMMUNITY_NOUNS,
   PLATFORM_IN_WORDS,
   PLATFORM_KIND_LABELS,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { Navigate, createFileRoute } from '@tanstack/react-router'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import React from 'react'
@@ -338,7 +338,7 @@ function AccountStep(props: {
             >
               <Input value={draft.handle} onChange={(event) => patch({ handle: event.target.value })} required />
             </Field>
-            <Field label="Name" hint="How the account is named in Influstep.">
+            <Field label="Name" hint="How the account is named in Stepradar.">
               <Input value={draft.name} onChange={(event) => patch({ name: event.target.value })} required />
             </Field>
           </div>
@@ -471,14 +471,14 @@ function Problems(props: { problems: string[] }) {
   )
 }
 
-/** What Influstep reads of the forum the setup found: a Discourse forum is read, any other forum software is run by hand. */
+/** What Stepradar reads of the forum the setup found: a Discourse forum is read, any other forum software is run by hand. */
 function ForumRead(props: { forum: Forum }) {
   if (props.forum.software === 'discourse') {
-    return <p className="text-sm">{props.forum.name} runs on Discourse, so Influstep finds its threads and reads what you post there.</p>
+    return <p className="text-sm">{props.forum.name} runs on Discourse, so Stepradar finds its threads and reads what you post there.</p>
   }
   return (
     <p className="text-sm">
-      Influstep cannot read {props.forum.name}: paste a thread’s link to have it answered, and the link to what you posted.
+      Stepradar cannot read {props.forum.name}: paste a thread’s link to have it answered, and the link to what you posted.
     </p>
   )
 }
@@ -500,7 +500,7 @@ function planWaitLine(placing: PostPlacing): string | null {
     case 'met':
       return `On ${PLATFORM_IN_WORDS[placing.platform]}, the first two weeks are planned once the listener meets a ${MET_COMMUNITY_NOUNS[placing.platform].one}.`
     case 'nowhere':
-      return `On ${placing.forumName}, Influstep plans no post: it cannot read the forum's categories or their rules.`
+      return `On ${placing.forumName}, Stepradar plans no post: it cannot read the forum's categories or their rules.`
   }
 }
 

@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import { quietHoursProblems, type QuietHours } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import { quietHoursProblems, type QuietHours } from '@stepradar/shared'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'
 import { NotificationsButton } from './notifications-button'

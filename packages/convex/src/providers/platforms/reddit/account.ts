@@ -1,4 +1,4 @@
-import type { AccountReach, ImportedPost } from '@influstep/shared'
+import type { AccountReach, ImportedPost } from '@stepradar/shared'
 import { z } from 'zod'
 import type { ActivityQuery, CommentsQuery, CountedItem, CountsQuery, HeardMention, MentionsQuery, PlatformComment } from '../types'
 import type { RedditSession } from './oauth'

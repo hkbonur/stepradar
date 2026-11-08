@@ -6,7 +6,7 @@ import {
   type Forum,
   type ImportedPost,
   type ItemCounts,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { z } from 'zod'
 import { refusal } from '../../lib/errors'
 import { rankFound } from './found'
@@ -37,12 +37,12 @@ export async function discourseForumAt(origin: string): Promise<Forum> {
   try {
     response = await fetch(`${origin}/site/basic-info.json`, { headers: { Accept: 'application/json' } })
   } catch (error) {
-    throw refusal(`Influstep could not reach ${host}: ${error instanceof Error ? error.message : String(error)}`)
+    throw refusal(`Stepradar could not reach ${host}: ${error instanceof Error ? error.message : String(error)}`)
   }
   const info = response.ok ? basicInfoSchema.safeParse(await response.json().catch(() => null)) : null
   if (!info?.success) return { origin, name: host, software: 'other' }
   if (info.data.login_required)
-    throw refusal(`${info.data.title} asks visitors to sign in, and Influstep reads only forums anyone can read.`)
+    throw refusal(`${info.data.title} asks visitors to sign in, and Stepradar reads only forums anyone can read.`)
   return { origin, name: info.data.title, software: 'discourse' }
 }
 

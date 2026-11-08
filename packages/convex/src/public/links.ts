@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { BIO_CAMPAIGN, buildAttributedUrl, placeOf, utmMediumOf } from '@influstep/shared'
+import { BIO_CAMPAIGN, buildAttributedUrl, placeOf, utmMediumOf } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { mutation, type MutationCtx } from '../_generated/server'
 import { workspaceOf } from '../core/workspace'

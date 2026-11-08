@@ -1,4 +1,4 @@
-import { VOICE_SAMPLE_MIN, handleOf, historyCanComeIn, placeOf, profileEditLink } from '@influstep/shared'
+import { VOICE_SAMPLE_MIN, handleOf, historyCanComeIn, placeOf, profileEditLink } from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'

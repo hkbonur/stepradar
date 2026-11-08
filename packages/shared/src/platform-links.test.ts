@@ -99,7 +99,7 @@ describe('parsePostedLink', () => {
 })
 
 describe('profileEditLink', () => {
-  it("opens where the operator edits the account's profile, and knows none on a forum Influstep cannot read", () => {
+  it("opens where the operator edits the account's profile, and knows none on a forum Stepradar cannot read", () => {
     expect(profileEditLink({ platform: 'x' }, 'ada')).toBe('https://x.com/settings/profile')
     expect(profileEditLink({ platform: 'hackernews' }, 'ada')).toBe('https://news.ycombinator.com/user?id=ada')
     expect(profileEditLink({ platform: 'forum', forum: N8N }, 'Ada Lovelace')).toBe(

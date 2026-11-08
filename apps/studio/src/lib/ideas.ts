@@ -1,4 +1,4 @@
-import { writeDayOf } from '@influstep/shared'
+import { writeDayOf } from '@stepradar/shared'
 import { formatDay } from './format'
 
 /**

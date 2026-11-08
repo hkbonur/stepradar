@@ -1,4 +1,4 @@
-import { AGENT_ROLES, AGENT_ROLE_LABELS } from '@influstep/shared'
+import { AGENT_ROLES, AGENT_ROLE_LABELS } from '@stepradar/shared'
 
 /** The agents by name, in the order work flows, for a sentence: "The researcher, the writer and the analyst". */
 export const AGENTS_IN_WORDS = (() => {

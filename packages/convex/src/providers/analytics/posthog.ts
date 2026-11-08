@@ -1,4 +1,4 @@
-import { platformOfHeardAbout, platformOfReferrer, type Platform, type ProbableBasis } from '@influstep/shared'
+import { platformOfHeardAbout, platformOfReferrer, type Platform, type ProbableBasis } from '@stepradar/shared'
 import { z } from 'zod'
 import { requireEnv } from '../../lib/env'
 import type { AnalyticsProvider, FoundConversion, FoundProbable } from './types'

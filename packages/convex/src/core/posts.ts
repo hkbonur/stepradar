@@ -20,7 +20,7 @@ import {
   canApply,
   type ImportedPost,
   itemTextOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { enqueueJob, markFailed } from '../jobs/queue'
@@ -36,7 +36,7 @@ import { postingTimeOf, slotHourOf } from './variants'
  * through `savePost`, so the hook is computed one way and no post is stored
  * that X would refuse), what the operator's "I posted it" records, and what
  * skipping, killing and moving a post do. Operator mutations and agent
- * actions both call these. Influstep never posts (ADR 0004): a written post
+ * actions both call these. Stepradar never posts (ADR 0004): a written post
  * waits as a draft until the operator posts it by hand.
  */
 

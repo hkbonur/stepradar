@@ -20,7 +20,7 @@ http.route({
     const state = params.get('state')
     const pending = state === null ? null : await ctx.runQuery(internal.internal.connections.pendingByState, { state })
     if (pending === null) {
-      return new Response('This Reddit connection is unknown or has expired. Start it again from the account in Influstep.', {
+      return new Response('This Reddit connection is unknown or has expired. Start it again from the account in Stepradar.', {
         status: 400,
       })
     }

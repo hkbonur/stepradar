@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BRIEF_TTL_MS, PROBLEM_SCORE } from '@influstep/shared'
+import { BRIEF_TTL_MS, PROBLEM_SCORE } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
 import { insertPost, insertAccount, insertSignal } from '../../test/fixtures'

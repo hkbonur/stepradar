@@ -10,7 +10,7 @@ import {
   postsToMetCommunity,
   placeOf,
   type HeardThread,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalAction, internalMutation, internalQuery, type ActionCtx } from '../_generated/server'

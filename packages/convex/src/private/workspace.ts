@@ -1,4 +1,4 @@
-import { isWebUrl, sponsorProblems } from '@influstep/shared'
+import { isWebUrl, sponsorProblems } from '@stepradar/shared'
 import { v } from 'convex/values'
 import { mutation, query } from '../_generated/server'
 import { requireWorkspace } from '../core/workspace'

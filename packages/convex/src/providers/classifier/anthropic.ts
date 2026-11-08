@@ -1,5 +1,5 @@
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
-import { HEARD_INTENTS, SELF_PROMOTION, communityLabel, type HeardFit } from '@influstep/shared'
+import { HEARD_INTENTS, SELF_PROMOTION, communityLabel, type HeardFit } from '@stepradar/shared'
 import { z } from 'zod'
 import { anthropicClient } from '../llm/anthropic'
 import type { ClassifierProvider, ClassifyBrief } from './types'

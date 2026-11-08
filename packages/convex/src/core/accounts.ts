@@ -1,4 +1,4 @@
-import { affiliationProblems, needsConnection, placeLabel, placeOf, takenHandleProblem } from '@influstep/shared'
+import { affiliationProblems, needsConnection, placeLabel, placeOf, takenHandleProblem } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { enqueueJob } from '../jobs/queue'

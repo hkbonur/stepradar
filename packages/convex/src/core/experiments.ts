@@ -36,7 +36,7 @@ import {
   catalogControl,
   isPostModelKey,
   placeOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'

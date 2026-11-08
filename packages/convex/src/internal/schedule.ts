@@ -1,4 +1,4 @@
-import { SIGNAL_TTL_MS, signalAgesOut } from '@influstep/shared'
+import { SIGNAL_TTL_MS, signalAgesOut } from '@stepradar/shared'
 import { internalMutation } from '../_generated/server'
 import { addDays, dayKey, weekStart } from '../core/dates'
 import { queueDuePosts } from '../core/posts'

@@ -6,7 +6,7 @@ import {
   type PlatformFormat,
   type PostKind,
   type SelfPromotion,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'

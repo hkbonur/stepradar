@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { ITEM_REACH_LABELS, placeOf, wentOut } from '@influstep/shared'
+import { ITEM_REACH_LABELS, placeOf, wentOut } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'

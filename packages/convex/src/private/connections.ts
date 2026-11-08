@@ -1,4 +1,4 @@
-import { needsConnection, type ConnectedPlatform, placeLabel, placeOf } from '@influstep/shared'
+import { needsConnection, type ConnectedPlatform, placeLabel, placeOf } from '@stepradar/shared'
 import { v } from 'convex/values'
 import { internal } from '../_generated/api'
 import { action } from '../_generated/server'
@@ -20,7 +20,7 @@ export const connect = action({
   handler: async (ctx, args): Promise<{ kind: 'connected' } | { kind: 'authorize'; url: string }> => {
     const { account } = await ctx.runQuery(internal.internal.data.getAccount, { accountId: args.accountId })
     if (!needsConnection(account.platform)) {
-      throw refusal(`${placeLabel(placeOf(account))} needs no connection: Influstep reads it by the handle.`)
+      throw refusal(`${placeLabel(placeOf(account))} needs no connection: Stepradar reads it by the handle.`)
     }
     if (providersMode() === 'mock') {
       await ctx.runMutation(internal.internal.connections.connectMock, { accountId: account._id })

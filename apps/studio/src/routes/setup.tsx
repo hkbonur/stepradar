@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { SponsorProblem } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import type { SponsorProblem } from '@stepradar/shared'
 import { Navigate, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/setup')({ component: SetupPage })
 /**
  * The first run (DESIGN.md, Setup): before any workspace exists the studio
  * opens here, without the sidebar, since every other page needs the product.
- * A welcome that says what Influstep does, then the product the accounts
+ * A welcome that says what Stepradar does, then the product the accounts
  * promote, then what one paying customer is worth; saving it makes the
  * workspace and hands over to the account onboarding, the setup's last step.
  */
@@ -112,10 +112,10 @@ function Welcome(props: { onStart: () => void }) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-metric">Welcome to Influstep</h1>
+        <h1 className="text-metric">Welcome to Stepradar</h1>
         <p className="mt-2 max-w-[60ch] text-base text-graphite">
-          Influstep is your engagement desk on {platformsInWords('conjunction')}. For each of your accounts it finds what people ask in its
-          niche, drafts posts and replies, and reads what they bring your product. You post by hand; Influstep never posts.
+          Stepradar is your engagement desk on {platformsInWords('conjunction')}. For each of your accounts it finds what people ask in its
+          niche, drafts posts and replies, and reads what they bring your product. You post by hand; Stepradar never posts.
         </p>
       </div>
       <div>

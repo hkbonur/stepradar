@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { MATCH_WINDOW_MS, placeOf } from '@influstep/shared'
+import { MATCH_WINDOW_MS, placeOf } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import { internalAction, internalMutation } from '../_generated/server'
 import { storeMatches, type MatchResult } from '../core/match'

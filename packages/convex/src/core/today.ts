@@ -1,4 +1,4 @@
-import { POST_PHASES, draftRank } from '@influstep/shared'
+import { POST_PHASES, draftRank } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { accountRefOf, type AccountRef } from './accounts'

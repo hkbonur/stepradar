@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
   EXPERIMENT_KINDS,
   EXPERIMENT_KIND_LABELS,
@@ -15,7 +15,7 @@ import {
   type ExperimentKind,
   type StrategyDefault,
   handleOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'

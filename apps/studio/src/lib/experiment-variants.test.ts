@@ -1,4 +1,4 @@
-import { EXPERIMENT_CATALOG, type StrategyDefault } from '@influstep/shared'
+import { EXPERIMENT_CATALOG, type StrategyDefault } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import { knownVariants, parseVariants, variantsText } from './experiment-variants'
 

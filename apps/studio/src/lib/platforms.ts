@@ -1,8 +1,8 @@
-import { PLATFORMS, PLATFORM_LABELS } from '@influstep/shared'
+import { PLATFORMS, PLATFORM_LABELS } from '@stepradar/shared'
 
 /**
  * The platforms by name for a sentence: "Reddit, Hacker News, X, LinkedIn
- * and product forums" where Influstep works on all of them, "… LinkedIn or a
+ * and product forums" where Stepradar works on all of them, "… LinkedIn or a
  * product forum" where an account is on one. Every forum is its own site, so
  * forums are named as a kind.
  */

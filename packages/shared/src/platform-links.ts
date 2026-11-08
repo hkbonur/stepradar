@@ -106,7 +106,7 @@ function forumProfileEditLink(forum: Forum, handle: string): string | null {
   return forum.software === 'discourse' ? `${forum.origin}/u/${encodeURIComponent(handle)}/preferences/profile` : null
 }
 
-/** Where the operator edits the account's profile, where its bio goes; null where Influstep does not know the page. */
+/** Where the operator edits the account's profile, where its bio goes; null where Stepradar does not know the page. */
 export function profileEditLink(place: PlatformPlace, handle: string): string | null {
   return place.platform === 'forum' ? forumProfileEditLink(place.forum, handle) : PROFILE_EDIT_LINKS[place.platform](handle)
 }

@@ -1,4 +1,4 @@
-import { type ItemCounts, type ItemRead, placeLabel, type PlatformPlace } from '@influstep/shared'
+import { type ItemCounts, type ItemRead, placeLabel, type PlatformPlace } from '@stepradar/shared'
 import { formatCount, plural } from '@/lib/format'
 
 /**

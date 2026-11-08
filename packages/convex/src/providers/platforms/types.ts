@@ -8,7 +8,7 @@ import {
   type SignalSource,
   placeLabel,
   type PlatformPlace,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 
 /** One item a search found, as the researcher stores it: a signal. */
 export interface FoundSignal {
@@ -180,7 +180,7 @@ const CAPABILITY_WORDS: Record<ReaderCapability, string> = {
   community: 'where a thread was said',
 }
 
-/** The refusal for a step the account's platform reader cannot do: "Influstep cannot read the account's own posts on X yet." */
+/** The refusal for a step the account's platform reader cannot do: "Stepradar cannot read the account's own posts on X yet." */
 export function cannotRead(place: PlatformPlace, capability: ReaderCapability): string {
-  return `Influstep cannot read ${CAPABILITY_WORDS[capability]} on ${placeLabel(place)} yet.`
+  return `Stepradar cannot read ${CAPABILITY_WORDS[capability]} on ${placeLabel(place)} yet.`
 }

@@ -11,7 +11,7 @@ import {
   placeOf,
   utmMediumOf,
   type ItemCounts,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc } from '../_generated/dataModel'
 import { internalAction, internalMutation, internalQuery, type ActionCtx } from '../_generated/server'

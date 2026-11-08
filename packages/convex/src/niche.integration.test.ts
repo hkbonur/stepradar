@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { EXPERIMENT_CATALOG } from '@influstep/shared'
+import { EXPERIMENT_CATALOG } from '@stepradar/shared'
 import { api, internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'
 import type { MutationCtx } from './_generated/server'

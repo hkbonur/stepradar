@@ -1,5 +1,5 @@
 import { ChatsCircleIcon, LinkedinLogoIcon, RedditLogoIcon, XLogoIcon } from '@phosphor-icons/react'
-import type { Platform } from '@influstep/shared'
+import type { Platform } from '@stepradar/shared'
 import { cn } from '@/lib/cn'
 
 /** What an account's agents are doing, as its mark shows it. */

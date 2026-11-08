@@ -9,7 +9,7 @@ describe('forumAddress', () => {
   })
 
   it('refuses an address that is not read over https by its name', () => {
-    expect(forumAddress('http://community.n8n.io')).toEqual({ kind: 'invalid', problem: 'Influstep reads a forum over https only.' })
+    expect(forumAddress('http://community.n8n.io')).toEqual({ kind: 'invalid', problem: 'Stepradar reads a forum over https only.' })
     for (const typed of [
       '',
       'localhost',

@@ -1,4 +1,4 @@
-import { POST_STATUS_LABELS, POST_EVENTS, canApply, foundPosted, type ImportedPost, type PostStatus, type Posted } from '@influstep/shared'
+import { POST_STATUS_LABELS, POST_EVENTS, canApply, foundPosted, type ImportedPost, type PostStatus, type Posted } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
 import { refusal } from '../lib/errors'

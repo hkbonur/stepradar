@@ -1,4 +1,4 @@
-import { PLATFORMS, needsConnection, type Platform, type PlatformPlace } from '@influstep/shared'
+import { PLATFORMS, needsConnection, type Platform, type PlatformPlace } from '@stepradar/shared'
 import { query } from '../_generated/server'
 import { hasEnv, providersMode } from '../lib/env'
 import { capabilitiesOf, readerKeys, realReader } from '../providers/platforms'

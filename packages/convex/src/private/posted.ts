@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { COMMENT_WINDOW_MS } from '@influstep/shared'
+import { COMMENT_WINDOW_MS } from '@stepradar/shared'
 import { query } from '../_generated/server'
 import { accountRefOf } from '../core/accounts'
 import { accountReader } from '../core/connections'

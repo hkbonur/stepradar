@@ -1,7 +1,7 @@
 import { CaretRightIcon, CheckCircleIcon, InfoIcon, WarningCircleIcon, WarningIcon, type Icon } from '@phosphor-icons/react'
 import { Link, type LinkProps } from '@tanstack/react-router'
 import React from 'react'
-import type { StatusTint } from '@influstep/shared'
+import type { StatusTint } from '@stepradar/shared'
 import { cn } from '@/lib/cn'
 import { TINT_CLASS } from './status'
 

@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
   AGENT_ROLE_LABELS,
   JOB_KIND_LABELS,
@@ -11,7 +11,7 @@ import {
   SELF_PROMOTION_LABELS,
   communityLabel,
   fellBehind,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { CaretRightIcon } from '@phosphor-icons/react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'

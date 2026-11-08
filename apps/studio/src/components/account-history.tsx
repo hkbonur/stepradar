@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
   ACCOUNT_POST_SOURCES,
   ACCOUNT_POST_SOURCE_LABELS,
@@ -11,7 +11,7 @@ import {
   needsConnection,
   placeLabel,
   type PlatformPlace,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
@@ -33,7 +33,7 @@ type ImportProgress =
 
 /**
  * The account's history on the voice page (DESIGN.md, Voice page): how many
- * posts Influstep holds and from where, and the three ways to bring more. An
+ * posts Stepradar holds and from where, and the three ways to bring more. An
  * import only reads; nothing is posted, liked or followed.
  *
  * Delete history removes the very line its button sits in, so focus moves to
@@ -69,7 +69,7 @@ export function HistorySection(props: {
       </p>
       {/* Open while there is nothing to learn from; once there is a history, adding to it is the rare step. */}
       <Collapsible summary="Import more posts" defaultOpen={props.totals.count === 0} className="mt-3 border-t border-mist pt-2">
-        <p className="max-w-[65ch] text-xs text-ash">Importing only reads: Influstep never posts, likes or follows while it imports.</p>
+        <p className="max-w-[65ch] text-xs text-ash">Importing only reads: Stepradar never posts, likes or follows while it imports.</p>
         <div className="mt-3 grid gap-3">
           {props.place.platform === ARCHIVE_PLATFORM && (
             <>
@@ -82,7 +82,7 @@ export function HistorySection(props: {
           )}
           {!props.readsActivity && props.place.platform !== ARCHIVE_PLATFORM && (
             <p className="text-xs text-ash">
-              Influstep cannot read this account's posts on {placeLabel(props.place)} yet.
+              Stepradar cannot read this account's posts on {placeLabel(props.place)} yet.
               {needsConnection(props.place.platform) && ' Connect the account above to import them.'}
             </p>
           )}
@@ -178,7 +178,7 @@ function ClearHistory(props: { accountId: Id<'accounts'>; count: number; onClear
         <div id={confirmId} className="flex max-w-[22rem] flex-col items-end gap-2 text-right">
           <p className="text-xs">
             Delete the <span className="tabular">{props.count.toLocaleString()}</span> imported {plural(props.count, 'post', 'posts')} and
-            the learned voice? The posts stay on X; only Influstep forgets them.
+            the learned voice? The posts stay on X; only Stepradar forgets them.
           </p>
           <div className="flex gap-2">
             {/* Focus lands on the safe answer, so an Enter pressed out of habit deletes nothing. */}

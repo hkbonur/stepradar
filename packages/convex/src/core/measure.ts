@@ -1,4 +1,4 @@
-import { MEASUREMENT_WINDOW_MS, postedItemOf, type AccountReach, type ItemCounts } from '@influstep/shared'
+import { MEASUREMENT_WINDOW_MS, postedItemOf, type AccountReach, type ItemCounts } from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'

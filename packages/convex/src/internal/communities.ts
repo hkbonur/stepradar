@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { placeLabel, placeOf } from '@influstep/shared'
+import { placeLabel, placeOf } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { internal } from '../_generated/api'
 import { internalMutation, internalQuery, type ActionCtx } from '../_generated/server'

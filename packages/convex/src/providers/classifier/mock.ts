@@ -1,4 +1,4 @@
-import { namesSponsor, type HeardFit, type HeardIntent } from '@influstep/shared'
+import { namesSponsor, type HeardFit, type HeardIntent } from '@stepradar/shared'
 import type { ClassifierProvider, ClassifyBrief } from './types'
 
 /** Words too common to say what a post is about. */

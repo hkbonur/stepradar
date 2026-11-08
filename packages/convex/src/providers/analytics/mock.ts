@@ -1,4 +1,4 @@
-import { PLATFORMS } from '@influstep/shared'
+import { PLATFORMS } from '@stepradar/shared'
 import type { AnalyticsProvider, FoundConversion, FoundProbable } from './types'
 
 const DAY_MS = 86_400_000

@@ -1,4 +1,4 @@
-import { hackerNewsCommunityOfTitle, type AccountReach, type ImportedPost, type ItemCounts } from '@influstep/shared'
+import { hackerNewsCommunityOfTitle, type AccountReach, type ImportedPost, type ItemCounts } from '@stepradar/shared'
 import { z } from 'zod'
 import { refusal } from '../../lib/errors'
 import type {

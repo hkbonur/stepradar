@@ -1,4 +1,4 @@
-import { JOB_KINDS, type JobKind } from '@influstep/shared'
+import { JOB_KINDS, type JobKind } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'

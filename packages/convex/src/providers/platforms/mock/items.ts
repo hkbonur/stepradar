@@ -1,4 +1,4 @@
-import type { AccountReach, CountedPlatform, ItemCounts, Platform, PlatformPlace } from '@influstep/shared'
+import type { AccountReach, CountedPlatform, ItemCounts, Platform, PlatformPlace } from '@stepradar/shared'
 import type { CommentsQuery, CountedItem, CountsQuery, PlatformComment } from '../types'
 
 const COMMENTS = [

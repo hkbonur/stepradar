@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { PLATFORMS, REACH_LABELS, communityLabel, placeOf, type PlatformPlace } from '@influstep/shared'
+import { PLATFORMS, REACH_LABELS, communityLabel, placeOf, type PlatformPlace } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalAction, internalMutation, type ActionCtx } from '../_generated/server'

@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { placeOf, postsToMetCommunity, signalFreshness, type SignalStatus } from '@influstep/shared'
+import { placeOf, postsToMetCommunity, signalFreshness, type SignalStatus } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { mutation, query, type QueryCtx } from '../_generated/server'
 import { createIdea } from '../core/posts'

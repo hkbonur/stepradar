@@ -38,7 +38,7 @@ describe('the connected Reddit reader', () => {
   beforeEach(() => {
     vi.stubEnv('REDDIT_CLIENT_ID', 'client-id')
     vi.stubEnv('REDDIT_CLIENT_SECRET', 'client-secret')
-    vi.stubEnv('REDDIT_USER_AGENT', 'web:influstep:test (by /u/nora_builds)')
+    vi.stubEnv('REDDIT_USER_AGENT', 'web:stepradar:test (by /u/nora_builds)')
   })
   afterEach(() => {
     vi.unstubAllEnvs()

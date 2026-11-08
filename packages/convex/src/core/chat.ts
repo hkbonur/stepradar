@@ -15,7 +15,7 @@ import {
   type ChatIntent,
   type PostTarget,
   type Weekday,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { enqueueJob } from '../jobs/queue'

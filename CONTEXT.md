@@ -1,13 +1,13 @@
-# Influstep
+# Stepradar
 
-The ubiquitous language of Influstep. Influstep is the operator's engagement desk: it listens on Reddit, Hacker News, X, LinkedIn and product forums for the conversations where the operator's future customers talk, drafts replies and posts in the operator's voice, and the operator posts them by hand from their own accounts. Influstep then matches what went out, measures it, notifies the operator about comments, runs experiments and recommends what to do next, so the operator's product, the sponsor, gets attention and customers.
+The ubiquitous language of Stepradar. Stepradar is the operator's engagement desk: it listens on Reddit, Hacker News, X, LinkedIn and product forums for the conversations where the operator's future customers talk, drafts replies and posts in the operator's voice, and the operator posts them by hand from their own accounts. Stepradar then matches what went out, measures it, notifies the operator about comments, runs experiments and recommends what to do next, so the operator's product, the sponsor, gets attention and customers.
 
 This file is a glossary only: it defines what each term _is_, not how it is implemented. When several words exist for one concept, the canonical word is the heading and the rejected ones are listed under _Avoid_.
 
 ## People
 
 **Operator**:
-The person who owns an Influstep workspace, connects their own accounts, posts the drafts they like by hand, and does the few things only a human can (connect an account, set a key, paste a link where a platform has no API). Anyone who runs Influstep for their own product; no login yet, one workspace per backend.
+The person who owns an Stepradar workspace, connects their own accounts, posts the drafts they like by hand, and does the few things only a human can (connect an account, set a key, paste a link where a platform has no API). Anyone who runs Stepradar for their own product; no login yet, one workspace per backend.
 _Avoid_: user (ambiguous with the readers), admin, owner.
 
 **Reader**:
@@ -33,11 +33,11 @@ A product's community forum, such as the n8n Community, where an account is the 
 _Avoid_: board, community (that is one of its categories), Discourse (that is the software).
 
 **Connection**:
-What lets Influstep read an account on a platform that needs the operator's permission: on Reddit, the operator's consent through Reddit's own page. A connection can expire or be revoked; then a checklist item asks to connect again. Hacker News, X and LinkedIn accounts need only their handle in v1.
+What lets Stepradar read an account on a platform that needs the operator's permission: on Reddit, the operator's consent through Reddit's own page. A connection can expire or be revoked; then a checklist item asks to connect again. Hacker News, X and LinkedIn accounts need only their handle in v1.
 _Avoid_: integration, login, OAuth (fine as the mechanism).
 
 **Setup**:
-The first run (`/setup`): what Influstep does, the product, what one paying customer is worth, then the operator's accounts. "Add account" in the sidebar runs the account step again.
+The first run (`/setup`): what Stepradar does, the product, what one paying customer is worth, then the operator's accounts. "Add account" in the sidebar runs the account step again.
 _Avoid_: wizard, onboarding (that was the persona roster), signup.
 
 **Agent**:
@@ -79,7 +79,7 @@ _Avoid_: schedule (that is a post's day), frequency.
 ## Drafts
 
 **Draft**:
-Text the writer wrote for the operator to post: a post's or a reply's, in the account's voice and the platform's draft shape. A draft waits for the operator, who opens the thread, copies it or rewrites it, and posts it by hand, or skips it. Influstep never posts a draft.
+Text the writer wrote for the operator to post: a post's or a reply's, in the account's voice and the platform's draft shape. A draft waits for the operator, who opens the thread, copies it or rewrites it, and posts it by hand, or skips it. Stepradar never posts a draft.
 _Avoid_: suggestion, template, script (that was the video's spoken text).
 
 **Judgment**:
@@ -279,7 +279,7 @@ How a post opens: a plain statement of what it gives (the control), a question t
 _Avoid_: opener, headline.
 
 **Posting time** (dimension):
-When a post is due against the account's usual hour: at it, two hours earlier or two hours later. A test moves a whole day's posts by one variant, so they stay three hours apart, and starts only where every variant keeps them within the day; while it runs the account's hours stay as they are. The operator posts by hand, so a post counts for its variant only if the match found it within 45 minutes of the hour it was planned for; a platform whose own posts Influstep cannot read cannot run the test. A decided test moves the account's posting hour and keeps no default, and the strategy review does not test the posting time again within 180 days.
+When a post is due against the account's usual hour: at it, two hours earlier or two hours later. A test moves a whole day's posts by one variant, so they stay three hours apart, and starts only where every variant keeps them within the day; while it runs the account's hours stay as they are. The operator posts by hand, so a post counts for its variant only if the match found it within 45 minutes of the hour it was planned for; a platform whose own posts Stepradar cannot read cannot run the test. A decided test moves the account's posting hour and keeps no default, and the strategy review does not test the posting time again within 180 days.
 _Avoid_: schedule, slot.
 
 **Post model** (dimension):
@@ -355,7 +355,7 @@ _Avoid_: insights, best practices, leaderboard.
 ## Operations
 
 **Checklist item**:
-Something only the operator can do, created by an agent when it is blocked: connect an account again, set a key, paste the link of a draft on a platform without an API, or look at a community that removed a comment. A new account opens its first ones: put its bio and its bio link on its profile, and where its own posts can come in, have its voice learned. An item that asks for a step Influstep sees (connecting, learning the voice) closes once the step is taken. Done items unblock what they name.
+Something only the operator can do, created by an agent when it is blocked: connect an account again, set a key, paste the link of a draft on a platform without an API, or look at a community that removed a comment. A new account opens its first ones: put its bio and its bio link on its profile, and where its own posts can come in, have its voice learned. An item that asks for a step Stepradar sees (connecting, learning the voice) closes once the step is taken. Done items unblock what they name.
 _Avoid_: todo, task (that is a chat request), ticket.
 
 **Job**:

@@ -1,4 +1,4 @@
-import type { PlatformPlace } from '@influstep/shared'
+import type { PlatformPlace } from '@stepradar/shared'
 import { mockXHistory } from './history'
 import { mockAccount, mockComments, mockCounts } from './items'
 import { mockMentions, mockXSearch } from './listen'

@@ -1,4 +1,4 @@
-import { writeDayOf } from '@influstep/shared'
+import { writeDayOf } from '@stepradar/shared'
 import type { Id } from '../src/_generated/dataModel'
 import { instantAt } from '../src/core/dates'
 import { queueDuePosts } from '../src/core/posts'

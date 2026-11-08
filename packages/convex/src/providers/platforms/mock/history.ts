@@ -1,4 +1,4 @@
-import type { ImportedPost } from '@influstep/shared'
+import type { ImportedPost } from '@stepradar/shared'
 import type { ActivityQuery } from '../types'
 
 /**

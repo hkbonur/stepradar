@@ -1,4 +1,4 @@
-import { MATCH_WINDOW_MS, type ImportedPost, type Platform } from '@influstep/shared'
+import { MATCH_WINDOW_MS, type ImportedPost, type Platform } from '@stepradar/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'

@@ -21,7 +21,7 @@ import {
   hackerNewsTitlePrefix,
   missingReasons,
   type EngagementReasons,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import {
   type AccountPostSample,
   type LlmProvider,

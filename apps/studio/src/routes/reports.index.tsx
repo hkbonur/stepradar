@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import { CONVERSION_KIND_LABELS, ITEM_REACH_LABELS, METRIC_LABELS, ACCOUNT_REACH_LABELS, VALUE_LABEL } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import { CONVERSION_KIND_LABELS, ITEM_REACH_LABELS, METRIC_LABELS, ACCOUNT_REACH_LABELS, VALUE_LABEL } from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

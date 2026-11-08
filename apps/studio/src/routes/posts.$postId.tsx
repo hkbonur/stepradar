@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
   CONVERSION_KIND_LABELS,
   JOB_KIND_LABELS,
@@ -20,7 +20,7 @@ import {
   ENGAGEMENT_QUESTIONS,
   engages,
   missingReasons,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'

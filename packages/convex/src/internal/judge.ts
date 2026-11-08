@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { engages } from '@influstep/shared'
+import { engages } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import { internalAction, internalMutation, internalQuery } from '../_generated/server'
 import { accountBriefOf } from '../core/accounts'

@@ -1,4 +1,4 @@
-import { AGENT_ROLES, isChatTask, type AgentRole, type JobKind, type JobStatus } from '@influstep/shared'
+import { AGENT_ROLES, isChatTask, type AgentRole, type JobKind, type JobStatus } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import { query, type QueryCtx } from '../_generated/server'
 import { accountRefOf, type AccountRef } from '../core/accounts'

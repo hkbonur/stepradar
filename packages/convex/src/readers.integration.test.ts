@@ -169,6 +169,6 @@ describe('platform readers', () => {
         url: 'https://news.ycombinator.com/item?id=41000000',
         text: 'Retries?',
       })
-    ).rejects.toThrow('Influstep could not read the rules of Hacker News: the model is down')
+    ).rejects.toThrow('Stepradar could not read the rules of Hacker News: the model is down')
   })
 })

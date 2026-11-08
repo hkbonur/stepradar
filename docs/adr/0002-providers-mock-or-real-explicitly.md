@@ -4,7 +4,7 @@
 
 ## Context
 
-Influstep depends on ElevenLabs, an avatar generator, YouTube, TikTok, Instagram, Hacker News, Reddit, Google Trends, PostHog, and an LLM. Most need keys, app reviews, or paid plans. The pipeline must still be walkable end to end on a laptop with none of them.
+Stepradar depends on ElevenLabs, an avatar generator, YouTube, TikTok, Instagram, Hacker News, Reddit, Google Trends, PostHog, and an LLM. Most need keys, app reviews, or paid plans. The pipeline must still be walkable end to end on a laptop with none of them.
 
 ## Decision
 

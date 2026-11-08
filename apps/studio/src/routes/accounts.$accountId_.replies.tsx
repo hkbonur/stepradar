@@ -1,6 +1,6 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
-import { REPLY_STATUS_LABELS, postedItemOf, repliesLeft, wentOutAt, type Platform, placeLabel, type PlatformPlace } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
+import { REPLY_STATUS_LABELS, postedItemOf, repliesLeft, wentOutAt, type Platform, placeLabel, type PlatformPlace } from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
@@ -167,7 +167,7 @@ function Replies(props: { data: RepliesData; view: RepliesView }) {
           <BudgetCard data={data} />
           <PasteThread accountId={data.account._id} placeName={placeLabel(data.account)} open={!data.searches} onDone={onDone} />
           <p className="text-xs text-ash">
-            Every reply waits for you: post it on {placeLabel(data.account)} yourself, then say so here. Influstep never posts.
+            Every reply waits for you: post it on {placeLabel(data.account)} yourself, then say so here. Stepradar never posts.
           </p>
         </aside>
       </div>

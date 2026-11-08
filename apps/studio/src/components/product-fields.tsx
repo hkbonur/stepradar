@@ -1,4 +1,4 @@
-import { SPONSOR_PITCH_MAX, sponsorProblems, withScheme, type SponsorProblem } from '@influstep/shared'
+import { SPONSOR_PITCH_MAX, sponsorProblems, withScheme, type SponsorProblem } from '@stepradar/shared'
 import React from 'react'
 import { CharacterCounter } from './character-counter'
 import { Field, Input, Textarea } from './ui'

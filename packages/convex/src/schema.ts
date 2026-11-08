@@ -56,7 +56,7 @@ import {
 
 export default defineSchema({
   // One workspace today (the operator's). Accounts belong to it so a later
-  // multi-tenant Influstep needs no migration.
+  // multi-tenant Stepradar needs no migration.
   workspaces: defineTable({
     name: v.string(),
     sponsorName: v.string(),

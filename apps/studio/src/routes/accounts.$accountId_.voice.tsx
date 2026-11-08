@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
   DEFAULT_LENGTH_MIX,
   VOICE_EXAMPLES_MAX,
@@ -13,7 +13,7 @@ import {
   handleOf,
   placeLabel,
   placeOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
@@ -133,7 +133,7 @@ function ConnectionLine(props: { account: Doc<'accounts'>; connection: AccountDa
   const connection = props.connection
   switch (connection.kind) {
     case 'needless':
-      return <span>None needed: Influstep reads it by the handle.</span>
+      return <span>None needed: Stepradar reads it by the handle.</span>
     case 'connected':
       return (
         <span>

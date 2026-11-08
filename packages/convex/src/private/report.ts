@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { variantRate } from '@influstep/shared'
+import { variantRate } from '@stepradar/shared'
 import { query } from '../_generated/server'
 import {
   REPORT_DAYS,

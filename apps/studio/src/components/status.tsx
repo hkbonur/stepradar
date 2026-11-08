@@ -1,4 +1,4 @@
-import type { Doc } from '@influstep/convex/_generated/dataModel'
+import type { Doc } from '@stepradar/convex/_generated/dataModel'
 import {
   POST_STATUS_LABELS,
   POST_STATUS_TINTS,
@@ -14,7 +14,7 @@ import {
   type PostLength,
   type SponsorSegment,
   type StatusTint,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { ListNumbersIcon, TextTIcon, type Icon } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
 import { relativeTime } from '@/lib/format'

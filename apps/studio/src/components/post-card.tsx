@@ -1,6 +1,6 @@
-import { POST_STATUS_TINTS, SPONSOR_SEGMENT_LABELS, communityLabel, handleOf, letGo, needsOperator, type PostKind } from '@influstep/shared'
+import { POST_STATUS_TINTS, SPONSOR_SEGMENT_LABELS, communityLabel, handleOf, letGo, needsOperator, type PostKind } from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
 import { cn } from '@/lib/cn'
 import { formatTime } from '@/lib/format'

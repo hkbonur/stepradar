@@ -1,4 +1,4 @@
-import { DRAFT_STALE_MS, EXPERIMENT_CATALOG, REPLY_PEER_MAX, REPLY_REACH_MIN } from '@influstep/shared'
+import { DRAFT_STALE_MS, EXPERIMENT_CATALOG, REPLY_PEER_MAX, REPLY_REACH_MIN } from '@stepradar/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Doc } from './_generated/dataModel'
@@ -109,7 +109,7 @@ describe('engagement on X', () => {
       'It names Formstep; the account answers about its sponsor only when you ask.',
       'My rule "Never reply to politics." covers this post.',
     ])
-    // Influstep never posts, so every draft waits for the operator; every draft is a reply that fits X.
+    // Stepradar never posts, so every draft waits for the operator; every draft is a reply that fits X.
     expect(page.waiting.length).toBe(all.length - 2)
     for (const reply of page.waiting) {
       expect(reply.text.length).toBeGreaterThan(0)

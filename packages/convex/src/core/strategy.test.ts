@@ -1,4 +1,4 @@
-import { EXPERIMENT_CATALOG, type ExperimentKind } from '@influstep/shared'
+import { EXPERIMENT_CATALOG, type ExperimentKind } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'

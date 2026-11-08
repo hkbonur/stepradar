@@ -75,7 +75,7 @@ export function postsToMetCommunity(platform: Platform): platform is MetCommunit
  * Where an account's posts can go (docs/plan.md, ground rule 3): on X,
  * LinkedIn and Hacker News, anywhere from the start; on Reddit and a
  * Discourse forum, only in a community the listener has met; on a forum on
- * other software, nowhere, since Influstep cannot read its categories or
+ * other software, nowhere, since Stepradar cannot read its categories or
  * their rules.
  */
 export type PostPlacing = { kind: 'anywhere' } | { kind: 'met'; platform: MetCommunityPlatform } | { kind: 'nowhere'; forumName: string }

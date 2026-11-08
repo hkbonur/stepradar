@@ -10,7 +10,7 @@ import {
   type AccountIdentity,
   type AccountProposal,
   type Forum,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -80,7 +80,7 @@ const identityValidator = v.object(identityFields)
 
 /** The identity the args name, its place read as a row's (shared `placeOf`); a forum's origin is its address as the operator gave it. */
 function identityOf(args: Infer<typeof identityValidator>): AccountIdentity {
-  if (args.platform === 'forum' && args.forum === undefined) throw refusal('Give the forum’s address, and Influstep finds the forum there.')
+  if (args.platform === 'forum' && args.forum === undefined) throw refusal('Give the forum’s address, and Stepradar finds the forum there.')
   if (args.forum !== undefined) {
     const address = forumAddress(args.forum.origin)
     if (address.kind === 'invalid' || address.origin !== args.forum.origin) throw refusal(`${args.forum.origin} is no forum's address.`)
@@ -90,7 +90,7 @@ function identityOf(args: Infer<typeof identityValidator>): AccountIdentity {
 
 /**
  * The forum at the address the operator gives (any of its pages will do):
- * its origin, its name, and whether Influstep reads it or the operator
+ * its origin, its name, and whether Stepradar reads it or the operator
  * pastes its links by hand (providers/platforms `forumAt`).
  */
 export const checkForum = action({

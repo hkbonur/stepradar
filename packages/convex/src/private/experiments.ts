@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { variantRate } from '@influstep/shared'
+import { variantRate } from '@stepradar/shared'
 import { mutation, query } from '../_generated/server'
 import { applyExperimentDecision, measurableMetrics, experimentStats, startExperiment, stopExperiment } from '../core/experiments'
 import { experimentKindValidator, experimentMetricValidator, variantValidator } from '../lib/validators'

@@ -1,4 +1,4 @@
-import { handleOf, placeOf, placeLabel } from '@influstep/shared'
+import { handleOf, placeOf, placeLabel } from '@stepradar/shared'
 import { v } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalMutation, internalQuery, type ActionCtx, type MutationCtx } from '../_generated/server'
@@ -82,7 +82,7 @@ async function readingAs<T>(ctx: ActionCtx, account: Doc<'accounts'>, read: () =
     return await read()
   } catch (caught) {
     if (!(caught instanceof ConnectionRevoked)) throw caught
-    const error = `${placeLabel(placeOf(account))} no longer lets Influstep read ${handleOf(account)}: connect it again.`
+    const error = `${placeLabel(placeOf(account))} no longer lets Stepradar read ${handleOf(account)}: connect it again.`
     await ctx.runMutation(internal.internal.connections.fail, { accountId: account._id, error })
     throw refusal(error)
   }

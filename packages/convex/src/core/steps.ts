@@ -11,7 +11,7 @@ import {
   staleAt,
   type FunnelStep,
   type WeekPosting,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { readableMetrics, variantStatsFor } from './experiments'

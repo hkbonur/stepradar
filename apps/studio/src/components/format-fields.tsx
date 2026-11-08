@@ -11,7 +11,7 @@ import {
   type PlatformFormat,
   type XCadence,
   PLATFORM_KIND_LABELS,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { cn } from '@/lib/cn'
 import { formatHour } from '@/lib/format'
 import { Field, Input } from './ui'

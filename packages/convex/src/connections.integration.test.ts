@@ -33,7 +33,7 @@ function realReddit(username: string) {
   vi.stubEnv('PROVIDERS_MODE', 'real')
   vi.stubEnv('REDDIT_CLIENT_ID', 'client-id')
   vi.stubEnv('REDDIT_CLIENT_SECRET', 'client-secret')
-  vi.stubEnv('REDDIT_USER_AGENT', 'web:influstep:test (by /u/nora_builds)')
+  vi.stubEnv('REDDIT_USER_AGENT', 'web:stepradar:test (by /u/nora_builds)')
   vi.stubEnv('CONVEX_SITE_URL', SITE)
   const fetch = vi.fn(async (input: string | URL, _init?: RequestInit) => {
     const url = String(input)
@@ -115,7 +115,7 @@ describe('connecting a Reddit account', () => {
     const account = await t.run((ctx) => insertAccount(ctx, { platform: 'hackernews', handle: 'nora' }))
     expect(await connectionOf(t, account._id)).toEqual({ kind: 'needless' })
     await expect(t.action(api.private.connections.connect, { accountId: account._id })).rejects.toThrow(
-      'Hacker News needs no connection: Influstep reads it by the handle.'
+      'Hacker News needs no connection: Stepradar reads it by the handle.'
     )
   })
 
@@ -225,7 +225,7 @@ describe('connecting a Reddit account', () => {
     )
     const failed = await t.mutation(api.private.history.importHistory, { accountId })
     await t.finishAllScheduledFunctions(() => {})
-    const said = 'Reddit no longer lets Influstep read u/Nora_Builds: connect it again.'
+    const said = 'Reddit no longer lets Stepradar read u/Nora_Builds: connect it again.'
     expect(await t.run((ctx) => ctx.db.get(failed))).toMatchObject({ status: 'failed', error: said })
     expect(await connectionOf(t, accountId)).toMatchObject({ kind: 'revoked', error: said })
     expect(await openConnectItems(t, accountId)).toHaveLength(1)

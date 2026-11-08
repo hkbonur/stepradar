@@ -8,7 +8,7 @@ The goal is Formstep users, not views. Platforms report views and follows but no
 
 ## Decision
 
-Every publication carries one tracked link, `/go/<slug>`, served by the Worker. A click is counted in Influstep and redirected to formstep.io with `utm_source=<persona handle>`, `utm_medium=<platform>`, `utm_campaign=<episode slug>`, and `utm_content=<variant key>`. PostHog's first-touch UTM properties then tie Formstep's `signed_up`, `form_published`, and `subscription_started` events to the persona, episode, and variant. The analyst pulls those counts from PostHog's query API (HogQL) per persona and stores them as metric snapshots, so the report's funnel is view → click → signup → paid with one source per step.
+Every publication carries one tracked link, `/go/<slug>`, served by the Worker. A click is counted in Stepradar and redirected to formstep.io with `utm_source=<persona handle>`, `utm_medium=<platform>`, `utm_campaign=<episode slug>`, and `utm_content=<variant key>`. PostHog's first-touch UTM properties then tie Formstep's `signed_up`, `form_published`, and `subscription_started` events to the persona, episode, and variant. The analyst pulls those counts from PostHog's query API (HogQL) per persona and stores them as metric snapshots, so the report's funnel is view → click → signup → paid with one source per step.
 
 ## Consequences
 

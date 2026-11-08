@@ -18,7 +18,7 @@ import {
   type ReplyThread,
   type Engagement,
   type EngagementReasons,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { WriterMemory } from '../../core/memory'
 import type { Funnel } from '../../core/report'
 import type { PostBasis } from '../../lib/validators'

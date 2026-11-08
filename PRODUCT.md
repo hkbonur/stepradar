@@ -1,10 +1,10 @@
-# Influstep
+# Stepradar
 
 **Register**: product
 
 ## What it is
 
-Influstep is the operator's engagement desk on Reddit, Hacker News, X, LinkedIn and product forums such as the n8n Community. It finds the conversations where the operator's future customers talk about the problem the operator's product solves, drafts replies and posts in the operator's own voice, and waits. The operator posts by hand from their own accounts. Influstep then finds what went out, measures it, tells the operator the moment someone answers, runs experiments on how the operator takes part, and says what to do next.
+Stepradar is the operator's engagement desk on Reddit, Hacker News, X, LinkedIn and product forums such as the n8n Community. It finds the conversations where the operator's future customers talk about the problem the operator's product solves, drafts replies and posts in the operator's own voice, and waits. The operator posts by hand from their own accounts. Stepradar then finds what went out, measures it, tells the operator the moment someone answers, runs experiments on how the operator takes part, and says what to do next.
 
 The business goal: attention, followers and users for the operator's product by being genuinely useful where its customers already talk, without ads and without fake accounts. Anyone can run it for their own product today; accounts, billing and several workspaces come later.
 
@@ -20,7 +20,7 @@ Copy uses the glossary in CONTEXT.md: account, draft, post, reply, match, commen
 
 ## Strategic principles
 
-1. **The operator posts, Influstep never does.** Every word that reaches a platform goes out by the operator's hand from their own account. Influstep listens, drafts, matches, measures and notifies.
+1. **The operator posts, Stepradar never does.** Every word that reaches a platform goes out by the operator's hand from their own account. Stepradar listens, drafts, matches, measures and notifies.
 2. **Today is the home.** One page answers what needs the operator now: comments waiting, drafts ready, posts due, next steps.
 3. **Affiliation is said out loud.** A draft that names the product says the operator builds it. A draft never speaks as a customer, and a community whose rules forbid self-promotion never hears the product's name.
 4. **Useful first, product second.** The sponsor dial keeps most drafts free of the product, so an account earns its karma and followers by helping.
@@ -30,12 +30,12 @@ Copy uses the glossary in CONTEXT.md: account, draft, post, reply, match, commen
 ## Anti-references
 
 - Social media management dashboards with twelve widgets and a funnel chart in every color: the report is one funnel and one line chart.
-- Growth hacks that hide who is speaking: sock puppets, fake reviews, karma farms, planted questions. Influstep drafts for one real person who says who they are.
+- Growth hacks that hide who is speaking: sock puppets, fake reviews, karma farms, planted questions. Stepradar drafts for one real person who says who they are.
 - Reply bots that spray the same pitch into every thread: the listener keeps a few threads a day per account, and the writer reads the thread, the community's rules and the operator's directives.
 
 ## Surfaces
 
-- **Setup** (first run): what Influstep does, the product (name, website, one-sentence pitch), what one paying customer is worth, then the operator's accounts.
+- **Setup** (first run): what Stepradar does, the product (name, website, one-sentence pitch), what one paying customer is worth, then the operator's accounts.
 - **Today** (home): comments waiting with their drafted answers, reply drafts, posts due, next steps, and the week ahead.
 - **Account**: chat with directives, communities with their rules, voice, strategy, memory, report.
 - **Drafts and posted items**: open the thread, copy, mark as posted, skip; what went out with its numbers and comments.

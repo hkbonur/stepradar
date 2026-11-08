@@ -1,4 +1,4 @@
-import { IMPORT_BATCH_MAX } from '@influstep/shared'
+import { IMPORT_BATCH_MAX } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import { chunk } from './imports'
 

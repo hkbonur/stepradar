@@ -1,4 +1,4 @@
-import { communityLabel, parseThreadLink, placeOf } from '@influstep/shared'
+import { communityLabel, parseThreadLink, placeOf } from '@stepradar/shared'
 import { v } from 'convex/values'
 import type { Id } from '../_generated/dataModel'
 import { mutation, query, action } from '../_generated/server'
@@ -89,7 +89,7 @@ export const pasteThread = action({
     if (link.community !== null) {
       const { unread } = await readCommunityRules(ctx, account, reader, [link.community])
       const [failed] = unread
-      if (failed) throw refusal(`Influstep could not read the rules of ${communityLabel(account.platform, failed.name)}: ${failed.error}`)
+      if (failed) throw refusal(`Stepradar could not read the rules of ${communityLabel(account.platform, failed.name)}: ${failed.error}`)
     }
     const text = args.text.trim()
     if (text === '') throw refusal('Paste the text you want to answer.')

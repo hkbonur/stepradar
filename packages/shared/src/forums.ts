@@ -38,7 +38,7 @@ export function forumAddress(typed: string): ForumAddress {
   } catch {
     return { kind: 'invalid', problem: NO_FORUM }
   }
-  if (url.protocol !== 'https:') return { kind: 'invalid', problem: 'Influstep reads a forum over https only.' }
+  if (url.protocol !== 'https:') return { kind: 'invalid', problem: 'Stepradar reads a forum over https only.' }
   if (url.port !== '' || url.username !== '' || !/\.[a-z]{2,}$/i.test(url.hostname)) return { kind: 'invalid', problem: NO_FORUM }
   return { kind: 'origin', origin: url.origin }
 }
@@ -49,7 +49,7 @@ export function forumHost(forum: Pick<Forum, 'origin'>): string {
 }
 
 /**
- * A Discourse item as Influstep names it, from what its links say: a topic
+ * A Discourse item as Stepradar names it, from what its links say: a topic
  * by its id, which is its first post, and a reply by the topic's id and the
  * reply's number in it ("296315/4"). A reply answers the item its number
  * points at, or the topic.

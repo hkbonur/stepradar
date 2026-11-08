@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc } from '@stepradar/convex/_generated/dataModel'
 import {
   PLATFORM_DRAFT_SHAPES,
   placeLabel,
@@ -19,7 +19,7 @@ import {
   type PlatformPlace,
   type PostKind,
   type PostStatus,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { useMutation } from 'convex/react'
 import React from 'react'
 import { errorMessage } from '@/lib/errors'
@@ -218,7 +218,7 @@ function MarkPosted(props: { postId: Doc<'posts'>['_id']; place: PlatformPlace; 
   return (
     <section className="tint-alert-amber rounded-xl border border-[color-mix(in_oklch,var(--tint)_35%,transparent)] bg-[color-mix(in_srgb,var(--tint)_7%,var(--color-paper))] px-4 py-3">
       <h3 className="mb-1 text-sm font-medium text-alert-amber-deep">Waiting on you</h3>
-      <p className="mb-3 text-sm">{POST_IT[PLATFORM_DRAFT_SHAPES[props.place.platform]](placeLabel(props.place))} Influstep never posts.</p>
+      <p className="mb-3 text-sm">{POST_IT[PLATFORM_DRAFT_SHAPES[props.place.platform]](placeLabel(props.place))} Stepradar never posts.</p>
       <PostedLinkField
         place={props.place}
         label="Link to the post"

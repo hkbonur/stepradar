@@ -1,4 +1,4 @@
-import { PROBLEM_SCORE } from '@influstep/shared'
+import { PROBLEM_SCORE } from '@stepradar/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Doc, Id } from './_generated/dataModel'

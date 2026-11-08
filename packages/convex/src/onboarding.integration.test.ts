@@ -1,4 +1,4 @@
-import { DEFAULT_FORMATS, type AccountIdentity, type AccountProposal } from '@influstep/shared'
+import { DEFAULT_FORMATS, type AccountIdentity, type AccountProposal } from '@stepradar/shared'
 import type { FunctionArgs } from 'convex/server'
 import { ConvexError } from 'convex/values'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -156,7 +156,7 @@ describe('onboarding', () => {
     const forum = await t.action(api.private.onboarding.checkForum, { address: 'https://community.n8n.io/t/webhook-retries/296315' })
     expect(forum).toEqual({ origin: 'https://community.n8n.io', name: 'community.n8n.io', software: 'discourse' })
     await expect(t.action(api.private.onboarding.checkForum, { address: 'http://community.n8n.io' })).rejects.toThrow(
-      'Influstep reads a forum over https only.'
+      'Stepradar reads a forum over https only.'
     )
     const onN8n: AccountIdentity = { ...NORA, platform: 'forum', forum, handle: 'Nora Notes' }
     await proposeAndCreate(t, onN8n)
@@ -174,7 +174,7 @@ describe('onboarding', () => {
     ])
     // A forum account names its forum, and no other account has one.
     await expect(t.action(api.private.onboarding.propose, { ...NORA, platform: 'forum' })).rejects.toThrow(
-      'Give the forum’s address, and Influstep finds the forum there.'
+      'Give the forum’s address, and Stepradar finds the forum there.'
     )
     await expect(t.action(api.private.onboarding.propose, { ...NORA, forum })).rejects.toThrow('a x account has a forum')
   })
@@ -216,7 +216,7 @@ describe('onboarding', () => {
       "Put the bio and its link on @nora_notion's profile",
     ])
 
-    // A forum Influstep cannot read: its posts never come in, and its profile page is not known.
+    // A forum Stepradar cannot read: its posts never come in, and its profile page is not known.
     const zapier = { origin: 'https://community.zapier.com', name: 'Zapier Community', software: 'other' as const }
     const onZapier = await proposeAndCreate(t, { ...NORA, platform: 'forum', forum: zapier, handle: 'Nora Notes' })
     const zapierItems = (await t.query(api.private.checklist.list, {})).filter((item) => item.accountId === onZapier.accountId)

@@ -7,7 +7,7 @@ import {
   signalFreshness,
   weekdayOf,
   type ChatIntent,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalAction, internalMutation, internalQuery, type MutationCtx, type QueryCtx } from '../_generated/server'

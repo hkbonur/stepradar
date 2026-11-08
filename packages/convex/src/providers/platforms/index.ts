@@ -1,4 +1,4 @@
-import { forumHost, needsConnection, type ConnectedPlatform, type Forum, type Platform, type PlatformPlace } from '@influstep/shared'
+import { forumHost, needsConnection, type ConnectedPlatform, type Forum, type Platform, type PlatformPlace } from '@stepradar/shared'
 import { providersMode } from '../../lib/env'
 import { discourseForumAt, discourseReader } from './discourse'
 import { hackerNewsReader } from './hackernews'

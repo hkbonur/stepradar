@@ -1,4 +1,4 @@
-import { countsClicks, itemTextOf, postedItemOf, type ConversionKind, type ItemRead, type Platform, type Posted } from '@influstep/shared'
+import { countsClicks, itemTextOf, postedItemOf, type ConversionKind, type ItemRead, type Platform, type Posted } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 

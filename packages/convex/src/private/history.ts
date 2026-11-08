@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { IMPORT_BATCH_MAX, placeOf } from '@influstep/shared'
+import { IMPORT_BATCH_MAX, placeOf } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'

@@ -9,7 +9,7 @@ import {
   type XCadence,
   PLATFORM_POST_KINDS,
   PLATFORM_KIND_LABELS,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { refusal } from '../lib/errors'
 

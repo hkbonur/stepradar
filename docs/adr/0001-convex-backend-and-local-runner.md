@@ -1,10 +1,10 @@
 # ADR 0001: Convex backend, Cloudflare app, local runner
 
-**Status**: accepted, 2026-10-09. The runner half is superseded by ADR 0004 (2026-10-22): Influstep no longer records or publishes, so it has no runner.
+**Status**: accepted, 2026-10-09. The runner half is superseded by ADR 0004 (2026-10-22): Stepradar no longer records or publishes, so it has no runner.
 
 ## Context
 
-Influstep must schedule work (plan weeks, poll sources, publish at a time), react in real time (the calendar updates as agents work), call external APIs, and record the screen of the operator's own computer. Cloudflare Workers cannot record a screen, and a cloud backend cannot sign in to the operator's n8n.
+Stepradar must schedule work (plan weeks, poll sources, publish at a time), react in real time (the calendar updates as agents work), call external APIs, and record the screen of the operator's own computer. Cloudflare Workers cannot record a screen, and a cloud backend cannot sign in to the operator's n8n.
 
 ## Decision
 

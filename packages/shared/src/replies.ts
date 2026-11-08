@@ -6,7 +6,7 @@ import { X_POST_LIMIT, platformLength } from './posts'
  * finds threads worth answering on the account's platform, the writer drafts
  * a reply in the platform's shape or passes on the thread within the
  * account's daily reply budget, and the operator posts the reply by hand and
- * says so. Influstep never posts, likes, votes or follows (ADR 0004).
+ * says so. Stepradar never posts, likes, votes or follows (ADR 0004).
  */
 
 /**

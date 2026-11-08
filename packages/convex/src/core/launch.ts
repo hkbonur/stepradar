@@ -1,4 +1,4 @@
-import { LAUNCH_WHAT_MAX, MET_COMMUNITY_NOUNS, handleOf, placeOf, postsToMetCommunity, shortDayLabel } from '@influstep/shared'
+import { LAUNCH_WHAT_MAX, MET_COMMUNITY_NOUNS, handleOf, placeOf, postsToMetCommunity, shortDayLabel } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
 import { refusal } from '../lib/errors'

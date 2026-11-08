@@ -7,7 +7,7 @@ import {
   type ItemRead,
   type Platform,
   type ProbableBasis,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import { capabilitiesOf } from '../providers/platforms'

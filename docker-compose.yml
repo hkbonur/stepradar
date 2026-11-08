@@ -4,7 +4,7 @@
 services:
   convex-backend:
     image: ghcr.io/get-convex/convex-backend:latest
-    container_name: influstep-convex
+    container_name: stepradar-convex
     ports:
       - "3220:3210"
       - "3221:3211"
@@ -17,6 +17,6 @@ services:
       CONVEX_SITE_ORIGIN: http://127.0.0.1:3221
       DISABLE_METRICS_ENDPOINT: "true"
     volumes:
-      - influstep-convex-data:/convex/data
+      - stepradar-convex-data:/convex/data
 volumes:
-  influstep-convex-data:
+  stepradar-convex-data:

@@ -1,4 +1,4 @@
-import type { NotificationPayload } from '@influstep/shared'
+import type { NotificationPayload } from '@stepradar/shared'
 
 /** A device the operator turned notifications on in: the push service's endpoint and the keys the payload is encrypted to. */
 export interface PushDevice {

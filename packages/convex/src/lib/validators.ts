@@ -32,7 +32,7 @@ import {
   COMMENT_STATUSES,
   NOTIFICATION_KINDS,
   NOTIFICATION_STATUSES,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 
 /** One validator per shared enum, so the schema and the app read the same list. */
 function literals<const T extends readonly string[]>(values: T): Validator<T[number]> {

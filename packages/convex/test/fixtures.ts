@@ -13,7 +13,7 @@ import {
   type HeardFit,
   type ItemCounts,
   type Forum,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../src/_generated/dataModel'
 import type { MutationCtx } from '../src/_generated/server'
 import { instantAt } from '../src/core/dates'

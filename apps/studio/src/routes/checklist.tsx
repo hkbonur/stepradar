@@ -1,10 +1,10 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { AccountLabel } from '@/components/account-mark'
 import { Card, CardList, Collapsible, Empty, Mono, PageHeader, Skeleton } from '@/components/ui'
 import { formatDateTime } from '@/lib/format'
-import { handleOf } from '@influstep/shared'
+import { handleOf } from '@stepradar/shared'
 import { ChecklistAction, ChecklistCheckbox } from '@/components/checklist-item'
 
 export const Route = createFileRoute('/checklist')({ component: ChecklistPage })

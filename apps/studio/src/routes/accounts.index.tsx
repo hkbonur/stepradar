@@ -1,11 +1,11 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { AccountMark, accountState } from '@/components/account-mark'
 import { Card, Empty, LinkButton, Mono, PageHeader, Pill, Skeleton } from '@/components/ui'
 import { AGENTS_IN_WORDS } from '@/lib/agents'
 import { cn } from '@/lib/cn'
-import { handleOf } from '@influstep/shared'
+import { handleOf } from '@stepradar/shared'
 import { platformsInWords } from '@/lib/platforms'
 
 export const Route = createFileRoute('/accounts/')({ component: AccountsPage })

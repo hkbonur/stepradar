@@ -11,7 +11,7 @@ import {
   type PostKind,
   type PostLength,
   type SponsorSegment,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id, TableNames } from '../_generated/dataModel'
 import { internalMutation, type MutationCtx } from '../_generated/server'
 import { insertAccountPosts, topOriginalsOf } from '../core/history'
@@ -62,7 +62,7 @@ const MAX_FORMAT: PlatformFormat = {
 export const run = internalMutation({
   args: { appUrl: v.optional(v.string()) },
   handler: async (ctx, args): Promise<{ workspaceId: Id<'workspaces'> }> => {
-    // The demo is a fictional run for Formstep, the product Influstep was first built for. A workspace set up for another
+    // The demo is a fictional run for Formstep, the product Stepradar was first built for. A workspace set up for another
     // product is the operator's own: the demo's accounts would land in it, so the seed leaves it alone.
     const workspaces = await ctx.db.query('workspaces').collect()
     const existing = workspaces.find((workspace) => workspace.name === 'Formstep')

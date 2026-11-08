@@ -1,4 +1,4 @@
-import { api } from '@influstep/convex/_generated/api'
+import { api } from '@stepradar/convex/_generated/api'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'
 import { deviceLabel, deviceSubscribed, pushSupport, subscribeDevice } from '@/lib/push'

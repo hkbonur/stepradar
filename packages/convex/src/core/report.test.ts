@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
-import type { ItemCounts } from '@influstep/shared'
+import type { ItemCounts } from '@stepradar/shared'
 import { countConversions } from './posted'
 import { buildFunnel, buildReachLine, buildTrend, rankGroups, sumFunnels, type PostOutcome } from './report'
 

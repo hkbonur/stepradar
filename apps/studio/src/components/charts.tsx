@@ -1,4 +1,4 @@
-import { CONVERSION_KIND_LABELS, METRIC_LABELS, VALUE_LABEL } from '@influstep/shared'
+import { CONVERSION_KIND_LABELS, METRIC_LABELS, VALUE_LABEL } from '@stepradar/shared'
 import { cn } from '@/lib/cn'
 import { formatCount, formatDay, formatKnown, formatMoney, formatPercent } from '@/lib/format'
 

@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
   CONVERSION_KIND_LABELS,
   EXPERIMENT_KIND_LABELS,
@@ -13,7 +13,7 @@ import {
   VALUE_LABEL,
   countsSource,
   placeOf,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

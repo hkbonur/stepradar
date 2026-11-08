@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pillarWeights, type Platform, type PlatformFormat, type PostIntent, type PostLength, type XCadence } from '@influstep/shared'
+import { pillarWeights, type Platform, type PlatformFormat, type PostIntent, type PostLength, type XCadence } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import {
   placePost,

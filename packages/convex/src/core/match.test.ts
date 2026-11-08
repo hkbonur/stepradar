@@ -1,4 +1,4 @@
-import { editShareOf, textSimilarity, type ImportedPost } from '@influstep/shared'
+import { editShareOf, textSimilarity, type ImportedPost } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import type { Id } from '../_generated/dataModel'
 import { matchItems, type PostCandidate, type ReplyCandidate } from './match'

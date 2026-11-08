@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { COMMENT_WINDOW_MS, REPLY_FRESH_MS, placeLabel, placeOf, sameHandle } from '@influstep/shared'
+import { COMMENT_WINDOW_MS, REPLY_FRESH_MS, placeLabel, placeOf, sameHandle } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import { internalAction, internalMutation, internalQuery } from '../_generated/server'
 import {

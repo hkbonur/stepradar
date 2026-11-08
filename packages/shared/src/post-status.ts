@@ -1,6 +1,6 @@
 /**
  * A post's way from its idea to its numbers (CONTEXT.md, "Post"), in the
- * order a post goes through them. Influstep never posts: a written post waits for the
+ * order a post goes through them. Stepradar never posts: a written post waits for the
  * operator as a draft until they post it by hand and say so.
  */
 export const POST_STATUSES = ['idea', 'draft', 'posted', 'measured', 'skipped', 'failed', 'killed'] as const

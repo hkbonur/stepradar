@@ -72,7 +72,7 @@ describe('finding a forum', () => {
   it('refuses a forum that asks visitors to sign in, and one it cannot reach', async () => {
     stubForum({ '/site/basic-info.json': { title: 'Acme Insiders', login_required: true } })
     await expect(discourseForumAt('https://insiders.acme.example')).rejects.toThrow(
-      'Acme Insiders asks visitors to sign in, and Influstep reads only forums anyone can read.'
+      'Acme Insiders asks visitors to sign in, and Stepradar reads only forums anyone can read.'
     )
     vi.stubGlobal(
       'fetch',
@@ -80,7 +80,7 @@ describe('finding a forum', () => {
         throw new TypeError('fetch failed')
       })
     )
-    await expect(discourseForumAt('https://gone.example.com')).rejects.toThrow('Influstep could not reach gone.example.com: fetch failed')
+    await expect(discourseForumAt('https://gone.example.com')).rejects.toThrow('Stepradar could not reach gone.example.com: fetch failed')
   })
 })
 

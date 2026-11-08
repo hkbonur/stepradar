@@ -1,4 +1,4 @@
-import { POST_LENGTHS, POST_LENGTH_LABELS, type LengthMix, type PostLength } from '@influstep/shared'
+import { POST_LENGTHS, POST_LENGTH_LABELS, type LengthMix, type PostLength } from '@stepradar/shared'
 import { cn } from '@/lib/cn'
 import { formatPercent } from '@/lib/format'
 

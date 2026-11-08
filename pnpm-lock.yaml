@@ -45,15 +45,15 @@ importers:
       '@fontsource-variable/jetbrains-mono':
         specifier: 5.3.0
         version: 5.3.0
-      '@influstep/convex':
-        specifier: workspace:*
-        version: link:../../packages/convex
-      '@influstep/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@phosphor-icons/react':
         specifier: 2.1.10
         version: 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@stepradar/convex':
+        specifier: workspace:*
+        version: link:../../packages/convex
+      '@stepradar/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@tanstack/react-router':
         specifier: ^1.170.38
         version: 1.170.41(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -124,7 +124,7 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.80.0
         version: 0.80.0(zod@4.6.5)
-      '@influstep/shared':
+      '@stepradar/shared':
         specifier: workspace:*
         version: link:../shared
       convex:

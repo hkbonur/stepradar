@@ -8,7 +8,7 @@ import {
   postProblems,
   replyProblems,
   type PostLength,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import { mockLlm } from './mock'
 import type { PostBrief, ReplyBrief } from './types'

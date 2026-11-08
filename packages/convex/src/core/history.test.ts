@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { countVoice } from '@influstep/shared'
+import { countVoice } from '@stepradar/shared'
 import { HISTORY_BEING_DELETED, accountTotals, assertVoiceEdit, engagementOf, voiceSampleOf } from './history'
 
 const bySource = { archive: 2, paste: 1, api: 0, mock: 0 }

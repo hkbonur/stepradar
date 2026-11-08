@@ -1,4 +1,4 @@
-import { placeLabel, placeOf } from '@influstep/shared'
+import { placeLabel, placeOf } from '@stepradar/shared'
 import { providersMode } from '../../lib/env'
 import { anthropicClassifier } from './anthropic'
 import { mockClassifier } from './mock'

@@ -1,5 +1,5 @@
 /**
- * Hacker News's guidelines, in short and in Influstep's words (the site's
+ * Hacker News's guidelines, in short and in Stepradar's words (the site's
  * own page is news.ycombinator.com/newsguidelines.html): what the
  * classifier reads as the rules of every Hacker News community.
  */

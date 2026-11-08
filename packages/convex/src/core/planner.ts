@@ -26,7 +26,7 @@ import {
   type PostLength,
   type SponsorSegment,
   type XCadence,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import { activeCommunities } from './communities'
 import type { BasisThread, PostBasis } from '../lib/validators'
@@ -469,12 +469,12 @@ export function postIntentOf(key: string): PostIntent {
 /** Why a Reddit or forum account plans no post: it posts only where the listener has met a community. */
 export function noMetCommunity(platform: MetCommunityPlatform): string {
   const nouns = MET_COMMUNITY_NOUNS[platform]
-  return `Influstep posts to ${PLATFORM_IN_WORDS[platform]} only in the ${nouns.many} the listener has met that removed none of your posts or replies, and there is none now. The writer plans two weeks once there is one.`
+  return `Stepradar posts to ${PLATFORM_IN_WORDS[platform]} only in the ${nouns.many} the listener has met that removed none of your posts or replies, and there is none now. The writer plans two weeks once there is one.`
 }
 
-/** Why an account on a forum Influstep cannot read plans no post, ever (shared `postPlacingOf`). */
+/** Why an account on a forum Stepradar cannot read plans no post, ever (shared `postPlacingOf`). */
 export function noReadableCommunity(forumName: string): string {
-  return `Influstep cannot read the categories of ${forumName} or their rules, so it plans no post there. Post there yourself, and paste a thread to have a reply drafted.`
+  return `Stepradar cannot read the categories of ${forumName} or their rules, so it plans no post there. Post there yourself, and paste a thread to have a reply drafted.`
 }
 
 /**

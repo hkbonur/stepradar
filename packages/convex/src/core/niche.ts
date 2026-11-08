@@ -1,4 +1,4 @@
-import { asksSomething, isThreadSource, namesSponsor, placeLabel, placeOf, postedItemOf, roundupOf, standouts } from '@influstep/shared'
+import { asksSomething, isThreadSource, namesSponsor, placeLabel, placeOf, postedItemOf, roundupOf, standouts } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import type { BasisThread } from '../lib/validators'

@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import { LAUNCH_WHAT_MAX } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import { LAUNCH_WHAT_MAX } from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'

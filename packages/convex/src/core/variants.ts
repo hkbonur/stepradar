@@ -1,4 +1,4 @@
-import { effectiveVariant, postingTimeOffset, type ExperimentKind } from '@influstep/shared'
+import { effectiveVariant, postingTimeOffset, type ExperimentKind } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import type { BriefVariant } from '../providers/llm/types'

@@ -1,4 +1,4 @@
-import type { JobStatus } from '@influstep/shared'
+import type { JobStatus } from '@stepradar/shared'
 import type { Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 

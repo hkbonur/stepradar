@@ -1,4 +1,4 @@
-import type { HeardFit, Platform, ReplyOrigin, SelfPromotion } from '@influstep/shared'
+import type { HeardFit, Platform, ReplyOrigin, SelfPromotion } from '@stepradar/shared'
 
 /** One account's heard posts, with what the classifier reads them against: the niche, the pillars and the sponsor. */
 export interface ClassifyBrief {

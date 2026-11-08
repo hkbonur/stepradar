@@ -1,4 +1,4 @@
-import { BIO_CAMPAIGN, SPONSOR_LINKS, buildAttributedUrl, makeSlug, placeOf, trackedLinkUrl, utmMediumOf } from '@influstep/shared'
+import { BIO_CAMPAIGN, SPONSOR_LINKS, buildAttributedUrl, makeSlug, placeOf, trackedLinkUrl, utmMediumOf } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 

@@ -1,6 +1,6 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Doc, Id } from '@influstep/convex/_generated/dataModel'
-import { PLATFORM_POST_KINDS, POST_KIND_LABELS, parsePillars, placeLabel, placeOf, type PlatformFormat } from '@influstep/shared'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
+import { PLATFORM_POST_KINDS, POST_KIND_LABELS, parsePillars, placeLabel, placeOf, type PlatformFormat } from '@stepradar/shared'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
@@ -75,7 +75,7 @@ function MakeBioLink(props: { accountId: Id<'accounts'> }) {
   )
 }
 
-/** The link the operator puts on the account's profile, with Copy and, where Influstep counts them, its clicks. */
+/** The link the operator puts on the account's profile, with Copy and, where Stepradar counts them, its clicks. */
 function BioLink(props: { link: BioLinkData }) {
   const [copy, setCopy] = React.useState<{ status: 'idle' | 'copied' } | { status: 'error'; message: string }>({ status: 'idle' })
   const copyLink = async () => {

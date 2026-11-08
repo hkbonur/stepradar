@@ -1,5 +1,5 @@
-import { api } from '@influstep/convex/_generated/api'
-import type { Id } from '@influstep/convex/_generated/dataModel'
+import { api } from '@stepradar/convex/_generated/api'
+import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
   BroadcastIcon,
   ChartLineIcon,
@@ -12,7 +12,7 @@ import {
   UsersThreeIcon,
 } from '@phosphor-icons/react'
 import { Link, Navigate, Outlet, createRootRoute, useLocation, useMatchRoute } from '@tanstack/react-router'
-import { handleOf, placeLabel, placeOf } from '@influstep/shared'
+import { handleOf, placeLabel, placeOf } from '@stepradar/shared'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
@@ -94,7 +94,7 @@ function Sidebar(props: {
             <span className="size-1.5 rounded-full bg-field-green" />
           </span>
         </button>
-        {!props.collapsed && <span className="font-semibold tracking-tight">Influstep</span>}
+        {!props.collapsed && <span className="font-semibold tracking-tight">Stepradar</span>}
       </div>
       <nav className="flex shrink-0 flex-col gap-0.5 px-2">
         {NAV.map((item) => (
@@ -402,7 +402,7 @@ function SetupLayout() {
           <span aria-hidden className="flex size-5 items-center justify-center rounded-[6px] bg-ink">
             <span className="size-2 rounded-full bg-field-green" />
           </span>
-          <span className="font-semibold tracking-tight">Influstep</span>
+          <span className="font-semibold tracking-tight">Stepradar</span>
         </div>
         <main>
           <Outlet />

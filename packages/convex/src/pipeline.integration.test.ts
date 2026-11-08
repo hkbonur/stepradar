@@ -7,7 +7,7 @@ import {
   type ImportedPost,
   type PostIntent,
   type PostLength,
-} from '@influstep/shared'
+} from '@stepradar/shared'
 import type { FunctionReturnType } from 'convex/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
@@ -24,7 +24,7 @@ const DAY_MS = 86_400_000
 /**
  * One post through the whole pipeline with mock providers: the writer drafts
  * it the day before it is due, the operator posts it by hand and says so with
- * its link, and the analyst measures it until its window closes. Influstep
+ * its link, and the analyst measures it until its window closes. Stepradar
  * never posts (ADR 0004).
  */
 
