@@ -1,0 +1,7 @@
+interface:
+  display_name: "Thermo-Nuclear Review"
+  short_description: "Run an uncompromising maintainability review"
+  default_prompt: "Use $thermo-nuclear-code-quality-review to audit this diff for structural maintainability."
+
+policy:
+  allow_implicit_invocation: false

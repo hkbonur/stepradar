@@ -1,0 +1,22 @@
+# Local Convex backend. `pnpm backend:up` starts it, generates an admin key and
+# pushes packages/convex. Ports 3220/3221 stay clear of the Formstep repo's
+# Playwright backend on 3210/3211.
+services:
+  convex-backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    container_name: influstep-convex
+    ports:
+      - "3220:3210"
+      - "3221:3211"
+    # A Node action calls the backend back at CONVEX_CLOUD_ORIGIN from inside the container, where the backend listens
+    # on 3210, not 3220: the host's port, reached through host.docker.internal, serves both sides.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      CONVEX_CLOUD_ORIGIN: http://host.docker.internal:3220
+      CONVEX_SITE_ORIGIN: http://127.0.0.1:3221
+      DISABLE_METRICS_ENDPOINT: "true"
+    volumes:
+      - influstep-convex-data:/convex/data
+volumes:
+  influstep-convex-data:

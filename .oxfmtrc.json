@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "useTabs": false,
+  "tabWidth": 2,
+  "printWidth": 140,
+  "trailingComma": "es5",
+  "semi": false,
+  "singleQuote": true,
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "insertFinalNewline": true,
+  "ignorePatterns": ["apps/form-builder/src/routeTree.gen.ts", "packages/convex/src/_generated"]
+}

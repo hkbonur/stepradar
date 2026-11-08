@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+<rect width="1920" height="1080" fill="oklch(24% 0.008 90)"/>
+<rect x="96" y="96" width="1728" height="888" rx="48" fill="none" stroke="#fafafa" stroke-opacity="0.35" stroke-width="4"/>
+<text font-family="Inter, system-ui, sans-serif" font-size="84" font-weight="600" fill="#fafafa"><tspan x="160" y="468">Curly red hair, round glasses,</tspan><tspan x="160" y="572">a mustard sweater.</tspan></text>
+<text x="160" y="900" font-family="ui-monospace, monospace" font-size="36" fill="#fafafa" fill-opacity="0.8">Image for Wren Webflow · mock, generated</text>
+</svg>

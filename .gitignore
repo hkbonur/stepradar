@@ -1,0 +1,33 @@
+# Dependencies & build output
+node_modules
+dist
+*.local
+*.tsbuildinfo
+.turbo
+*.log
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Environment
+.env
+.env.production
+.env.local
+.env.self-hosted.local
+
+# Tooling
+.claude/*
+!.claude/skills/
+!.claude/settings.json
+
+# Generated
+routeTree.gen.ts
+.tanstack
+packages/convex/src/_generated
+
+# Wrangler
+.wrangler
+

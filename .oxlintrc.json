@@ -1,0 +1,139 @@
+// Lint config for every package. A package's own .oxlintrc.json extends this
+// one; its overrides resolve against that package's folder, not the repo root.
+// Conventions enforced here are listed in .claude/skills/coding-rules/SKILL.md.
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "**/*.mjs", "**/*.cjs", "packages/convex/src/_generated/**", "**/routeTree.gen.ts"],
+  "plugins": ["typescript", "react", "unicorn", "oxc"],
+  // studio/* rules: scripts/oxlint-plugin-studio.mjs
+  "jsPlugins": ["./scripts/oxlint-plugin-studio.mjs"],
+  "rules": {
+    // Likely bugs: errors instead of warnings.
+    "no-constant-binary-expression": "error",
+    "no-constant-condition": "error",
+    "no-debugger": "error",
+    "no-duplicate-case": "error",
+    "no-empty": "error",
+    "no-empty-pattern": "error",
+    "no-extra-boolean-cast": "error",
+    "no-inner-declarations": "error",
+    "no-irregular-whitespace": "error",
+    "no-prototype-builtins": "error",
+    "no-self-compare": "error",
+    "no-sparse-arrays": "error",
+    "no-template-curly-in-string": "error",
+    "no-unreachable": "error",
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+
+    // Declarations.
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": [
+      "warn",
+      { "varsIgnorePattern": "^(jsx|_)", "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ],
+    "typescript/no-this-alias": "off",
+
+    // Early returns (general-early-returns).
+    "no-else-return": "error",
+    "no-lonely-if": "error",
+
+    // Kebab-case filenames. Exceptions: overrides below and packages/convex/.oxlintrc.json.
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+
+    // React Compiler memoizes (ADR 0028), so manual memo is an error. A kept one
+    // needs `// oxlint-disable-next-line <rule> -- <reason>` on the line above.
+    "no-restricted-properties": [
+      "error",
+      { "object": "React", "property": "useMemo", "message": "React Compiler memoizes this. Remove it, or keep it with a disable comment that says why." },
+      { "object": "React", "property": "useCallback", "message": "React Compiler memoizes this. Remove it, or keep it with a disable comment that says why." },
+      { "object": "React", "property": "memo", "message": "React Compiler memoizes this. Remove it, or keep it with a disable comment that says why." }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react",
+            "importNames": ["useMemo", "useCallback", "memo"],
+            "message": "React Compiler memoizes this. Remove it, or keep it with a disable comment that says why."
+          },
+          // Hooks are called through the namespace: React.useState, not useState.
+          {
+            "name": "react",
+            "importNames": [
+              "use",
+              "useActionState",
+              "useContext",
+              "useDebugValue",
+              "useDeferredValue",
+              "useEffect",
+              "useEffectEvent",
+              "useId",
+              "useImperativeHandle",
+              "useInsertionEffect",
+              "useLayoutEffect",
+              "useOptimistic",
+              "useReducer",
+              "useRef",
+              "useState",
+              "useSyncExternalStore",
+              "useTransition"
+            ],
+            "message": "Import React and call hooks through the namespace: React.useState."
+          }
+        ]
+      }
+    ],
+
+    // React Compiler's own checks. A hit usually means the compiler skips the
+    // function. Warnings only because of the existing backlog; don't add to it.
+    "react/refs": "warn",
+    "react/immutability": "warn",
+    "react/purity": "warn",
+    "react/preserve-manual-memoization": "warn",
+    "react/incompatible-library": "warn",
+    "react/globals": "off",
+    "react/static-components": "off",
+    "react/use-memo": "off",
+    "react/set-state-in-effect": "off",
+
+    // React conventions.
+    "react/rules-of-hooks": "error",
+    "react/no-deriving-state-in-effects": "error",
+    "studio/no-destructure-props": "error",
+    "studio/cn-object-syntax": "error",
+    "studio/no-jsx-ternary-null": "error"
+  },
+  "overrides": [
+    {
+      // Tests are not compiled by React Compiler, so manual memo is harmless there.
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "rules": {
+        "react/jsx-key": "off",
+        "no-restricted-properties": "off",
+        "no-restricted-imports": "off",
+        "studio/no-destructure-props": "off"
+      }
+    },
+    {
+      // The runner is a Node daemon without React Compiler, and its Playwright recipes are not hooks.
+      "files": ["apps/runner/**"],
+      "rules": {
+        "no-restricted-properties": "off",
+        "no-restricted-imports": "off",
+        "react/rules-of-hooks": "off"
+      }
+    },
+    {
+      // Route files are named by TanStack Router; catalogs and locales by language code.
+      "files": ["**/src/routes/**", "**/i18n/catalog/**", "**/i18n/**/locales/**"],
+      "rules": {
+        "unicorn/filename-case": "off"
+      }
+    }
+  ]
+}

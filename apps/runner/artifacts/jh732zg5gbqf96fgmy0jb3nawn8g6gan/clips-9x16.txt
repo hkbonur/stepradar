@@ -1,0 +1,2 @@
+file '/Users/onurhakbilen/git/influstep/apps/runner/artifacts/jh732zg5gbqf96fgmy0jb3nawn8g6gan/shot-1-9x16.mp4'
+file '/Users/onurhakbilen/git/influstep/apps/runner/artifacts/jh732zg5gbqf96fgmy0jb3nawn8g6gan/shot-2-9x16.mp4'

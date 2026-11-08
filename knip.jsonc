@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "apps/studio": { "entry": ["src/routes/**/*.tsx"], "project": ["src/**", "worker/**"] },
+    "packages/convex": { "entry": ["src/**/*.ts!"], "project": ["src/**", "test/**"] },
+    "packages/shared": { "project": ["src/**"] },
+    ".": { "ignore": [".claude/**"] }
+  }
+}

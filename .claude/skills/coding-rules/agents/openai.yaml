@@ -1,0 +1,7 @@
+interface:
+  display_name: "Coding Rules"
+  short_description: "Apply repository general, TypeScript, and React rules"
+  default_prompt: "Use $coding-rules to look up relevant general, TypeScript, or React conventions."
+
+policy:
+  allow_implicit_invocation: true

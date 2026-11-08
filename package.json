@@ -1,0 +1,35 @@
+{
+  "name": "influstep",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.0.9",
+  "scripts": {
+    "dev": "turbo run dev --filter=@influstep/app --filter=@influstep/convex",
+    "backend:up": "node --experimental-strip-types scripts/local-convex.ts up",
+    "backend:push": "node --experimental-strip-types scripts/local-convex.ts push",
+    "backend:down": "node --experimental-strip-types scripts/local-convex.ts down",
+    "seed": "pnpm --filter @influstep/convex seed",
+    "seed:fresh": "pnpm --filter @influstep/convex seed:fresh",
+    "build": "turbo run build",
+    "test": "turbo run test --concurrency=2",
+    "lint:check": "turbo run lint:check",
+    "lint:fix": "turbo run lint:fix",
+    "format:check": "turbo run format:check",
+    "format:fix": "turbo run format:fix",
+    "tsc:check": "turbo run tsc:check",
+    "quality:check": "turbo run quality:check",
+    "quality:fix": "turbo run quality:fix",
+    "knip": "knip"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.5",
+    "@vitejs/plugin-react": "^6.1.1",
+    "knip": "^6.37.0",
+    "oxc-transform-react": "0.150.0",
+    "oxfmt": "0.68.0",
+    "oxlint": "^1.83.0",
+    "turbo": "2.10.13",
+    "typescript": "^6.0.3"
+  }
+}

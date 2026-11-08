@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* DESIGN.md tokens. Light-first; the operator reads this on a laptop in daylight. */
+@theme {
+  --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-paper: oklch(99.4% 0.002 90);
+  --color-paper-tint: oklch(98.2% 0.002 90);
+  --color-paper-warm: oklch(96.8% 0.003 90);
+  /* The page behind the cards: one step under paper, so a card reads as one group. */
+  --color-canvas: oklch(97.4% 0.003 90);
+  --color-mist: oklch(92% 0.003 90);
+  --color-fog: oklch(86% 0.004 90);
+  --color-smoke: oklch(70% 0.006 90);
+  --color-ash: oklch(53% 0.008 90);
+  --color-graphite: oklch(34% 0.008 90);
+  --color-ink: oklch(24% 0.008 90);
+  --color-ink-deep: oklch(14% 0.008 90);
+  --color-hairline: oklch(0% 0 0 / 4%);
+  --color-hairline-strong: oklch(0% 0 0 / 8%);
+
+  --color-field-green: oklch(69.6% 0.17 162);
+  --color-field-green-deep: oklch(50.8% 0.118 165);
+  --color-field-green-soft: oklch(97.9% 0.021 166);
+  --color-signal-red: oklch(63.7% 0.237 25);
+  --color-signal-red-deep: oklch(50.5% 0.213 27);
+  --color-alert-amber: oklch(76.9% 0.188 70);
+  --color-alert-amber-deep: oklch(55.5% 0.163 48);
+  --color-note-blue: oklch(62.3% 0.214 259);
+  --color-note-blue-deep: oklch(48.8% 0.243 264);
+
+  --color-chart-1: oklch(68.5% 0.169 237);
+  --color-chart-2: oklch(62.7% 0.265 304);
+  --color-chart-3: oklch(76.9% 0.188 70);
+  --color-chart-4: oklch(69.6% 0.17 162);
+  --color-chart-5: oklch(63.7% 0.237 25);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.45;
+  --text-label--letter-spacing: 0.18em;
+  --text-label--font-weight: 600;
+  --text-title: 0.9375rem;
+  --text-title--line-height: 1.4;
+  --text-title--letter-spacing: -0.005em;
+  --text-title--font-weight: 600;
+  --text-metric: 1.5rem;
+  --text-metric--line-height: 1.15;
+  --text-metric--letter-spacing: -0.02em;
+  --text-metric--font-weight: 600;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-paper text-ink font-sans text-sm antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+  ::selection {
+    @apply bg-field-green-soft;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility eyebrow {
+  @apply text-label uppercase text-ash;
+}
+
+/* A card's paper over the canvas; `card` pads it for content that is not a Card component. */
+@utility surface {
+  @apply bg-paper border border-mist rounded-xl shadow-[0_1px_2px_0_oklch(0%_0_0/0.04)];
+}
+@utility card {
+  @apply surface card-pad;
+}
+/* A card's inner padding: 16px on a phone, 20px from 640px. `card-x` is the sideways part, for rows that pad themselves. */
+@utility card-pad {
+  @apply p-4 sm:p-5;
+}
+@utility card-x {
+  @apply px-4 sm:px-5;
+}
+/* A card's action band: the last part of a card that holds a draft or a form, paper-tint under a mist rule. */
+@utility card-band {
+  @apply rounded-b-xl border-t border-mist bg-paper-tint card-x py-3;
+}
+/* A table that runs the full width of a flush card: its first and last cells take the card's own side padding. */
+@utility card-table {
+  & :where(td, th):first-child {
+    @apply pl-4 sm:pl-5;
+  }
+  & :where(td, th):last-child {
+    @apply pr-4 sm:pr-5;
+  }
+}
+
+@utility field {
+  @apply w-full rounded-lg bg-hairline px-3 h-8 text-sm text-ink placeholder:text-smoke outline-none border border-transparent;
+  &:focus {
+    @apply border-fog bg-paper;
+  }
+  &:disabled {
+    @apply opacity-50;
+  }
+  /* A field a shown problem is about: the problem line under the form says why in words. */
+  &[aria-invalid='true'] {
+    @apply border-signal-red/50;
+  }
+}
+
+/* Status tints (DESIGN.md): the status is a dot and a wash, never a side stripe. */
+@utility tint-fog {
+  --tint: var(--color-fog);
+  --tint-deep: var(--color-ash);
+}
+@utility tint-alert-amber {
+  --tint: var(--color-alert-amber);
+  --tint-deep: var(--color-alert-amber-deep);
+}
+@utility tint-field-green {
+  --tint: var(--color-field-green);
+  --tint-deep: var(--color-field-green-deep);
+}
+@utility tint-ink {
+  --tint: var(--color-ink);
+  --tint-deep: var(--color-ink-deep);
+}
+@utility tint-signal-red {
+  --tint: var(--color-signal-red);
+  --tint-deep: var(--color-signal-red-deep);
+}
+@utility tint-note-blue {
+  --tint: var(--color-note-blue);
+  --tint-deep: var(--color-note-blue-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

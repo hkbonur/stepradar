@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cleanup"
+  short_description: "Simplify changed TypeScript and React code"
+  default_prompt: "Use $cleanup to simplify changed TypeScript and React files."
+
+policy:
+  allow_implicit_invocation: false

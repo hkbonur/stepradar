@@ -1,0 +1,19 @@
+{
+  "$schema": "https://v2-9-6.turborepo.dev/schema.json",
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "dev": { "dependsOn": ["^build"], "cache": false, "persistent": true },
+    "test": { "dependsOn": ["^build"], "cache": true },
+    "lint:check": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.oxlintrc.json", "$TURBO_ROOT$/scripts/oxlint-plugin-studio.mjs"],
+      "cache": true
+    },
+    "lint:fix": { "cache": false },
+    "tsc:check": { "dependsOn": ["^build"] },
+    "format:fix": { "cache": false },
+    "format:check": { "cache": true },
+    "quality:fix": { "dependsOn": ["lint:fix", "format:fix"], "cache": false },
+    "quality:check": { "dependsOn": ["lint:check", "format:check", "tsc:check"] },
+    "deploy": { "dependsOn": ["build"], "cache": false }
+  }
+}

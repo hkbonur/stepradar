@@ -1,0 +1,25 @@
+{
+  "name": "@influstep/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint:check": "oxlint ./src",
+    "lint:fix": "oxlint --fix ./src",
+    "tsc:check": "tsc --noEmit",
+    "format:fix": "oxfmt --config ../../.oxfmtrc.json --write ./src",
+    "format:check": "oxfmt --config ../../.oxfmtrc.json --check ./src"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.5",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.1"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@influstep/convex",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./_generated/*": {
+      "types": "./src/_generated/*.d.ts",
+      "default": "./src/_generated/*.js"
+    }
+  },
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "codegen": "convex codegen",
+    "seed": "convex run internal/seed:run",
+    "seed:fresh": "convex run internal/seed:reset && convex run internal/seed:run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "tsc:check": "tsc --noEmit",
+    "lint:check": "oxlint ./src ./test",
+    "lint:fix": "oxlint --fix ./src ./test",
+    "format:fix": "oxfmt --config ../../.oxfmtrc.json --write ./src ./test",
+    "format:check": "oxfmt --config ../../.oxfmtrc.json --check ./src ./test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
+    "@influstep/shared": "workspace:*",
+    "convex": "^1.46.0",
+    "web-push": "^3.6.7",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.5",
+    "@types/web-push": "^3.6.4",
+    "convex-test": "^0.0.58",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

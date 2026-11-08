@@ -1,0 +1,7 @@
+interface:
+  display_name: "Handoff"
+  short_description: "Write a compact continuation handoff"
+  default_prompt: "Use $handoff to prepare a compact handoff for my next task."
+
+policy:
+  allow_implicit_invocation: false

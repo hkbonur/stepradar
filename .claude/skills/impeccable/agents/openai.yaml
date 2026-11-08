@@ -1,0 +1,7 @@
+interface:
+  display_name: "Impeccable"
+  short_description: "Design and refine frontend interfaces"
+  default_prompt: "Use $impeccable to shape and refine this frontend interface."
+
+policy:
+  allow_implicit_invocation: false
