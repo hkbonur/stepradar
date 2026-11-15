@@ -11,6 +11,7 @@ import {
   postsToMetCommunity,
   placeOf,
   type HeardThread,
+  writingTells,
 } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -366,12 +367,11 @@ function briefFor(
 }
 
 async function writeOne(llm: LlmProvider, brief: ReplyBrief, disclosure: DisclosureContext): Promise<WrittenReply> {
-  const { draft, problems } = await draftChecked(
-    (asked) => llm.writeReply(asked),
-    brief,
-    (written: ReplyDraft) =>
-      written.kind === 'skip' ? [] : [...replyProblems(written.text, brief.platform), ...disclosureProblems(written.text, disclosure)]
-  )
+  const { draft, problems } = await draftChecked((asked) => llm.writeReply(asked), brief, {
+    problemsOf: (written: ReplyDraft) =>
+      written.kind === 'skip' ? [] : [...replyProblems(written.text, brief.platform), ...disclosureProblems(written.text, disclosure)],
+    tellsOf: (written: ReplyDraft) => (written.kind === 'skip' ? [] : writingTells(written.text, [brief.affiliationLine])),
+  })
   if (problems.length === 0) return draft
   return { kind: 'skip', reason: `The writer missed the rules twice: ${problems.join(' ')}` }
 }

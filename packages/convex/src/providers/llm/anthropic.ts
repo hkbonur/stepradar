@@ -30,6 +30,7 @@ import {
   ENGAGEMENTS,
   ENGAGEMENT_DRIVERS,
   ENGAGEMENT_QUESTIONS,
+  WRITING_RULES,
 } from '@stepradar/shared'
 import type { WriterMemory } from '../../core/memory'
 import { requireKey, type ProviderKeys } from '../../core/keys'
@@ -322,7 +323,7 @@ export function anthropicLlm(keys: ProviderKeys): LlmProvider {
                 '- tone: three to six words on how it sounds.',
                 `- pillars: ${PILLARS_MIN} to ${PILLARS_MAX} content pillars, each two to five words, the recurring topics it covers.`,
                 '- bio: one sentence for its profile.',
-                '- bible: three to five sentences on how it speaks, what it shows, and what it never says.',
+                '- bible: three to five sentences on how it speaks, what it shows, and what it never says. Give it no backstory or experiences to claim: it explains from what it knows.',
                 `- affiliationLine: one short sentence, in its voice, that says the operator builds ${brief.sponsorName} and names it ("I'm building ${brief.sponsorName}, so take this with salt"). Every draft that names the sponsor says it.`,
               ].join('\n'),
             ]
@@ -522,11 +523,12 @@ function pitchWords(pitch: string): string {
   return pitch.trim().replace(/[.!]+$/, '')
 }
 
-/** Who writes a post. The bible, the voice and the examples follow in the request, in that order of weight. */
+/** Who writes a post or a reply, and how it writes (shared `WRITING_RULES`). The bible, the voice and the examples follow in the request, in that order of weight. */
 function postSystem(account: PostBrief['account']): string {
   return [
     `You are ${account.name} (${handleOf(account)}), who posts on ${account.placeName} in the niche "${account.niche}".`,
     `Content pillars: ${account.pillars.join('; ')}.`,
+    `How you write:\n- ${WRITING_RULES.join('\n- ')}`,
   ].join('\n')
 }
 

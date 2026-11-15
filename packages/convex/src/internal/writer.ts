@@ -15,6 +15,7 @@ import {
   placeOf,
   repeatedShare,
   signalFreshness,
+  writingTells,
 } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -268,11 +269,10 @@ export const writePost = internalAction({
     }
     const keys = await ctx.runQuery(internal.internal.keys.stored, {})
     const llm = llmProvider(keys)
-    const { draft, problems } = await draftChecked(
-      (asked) => llm.writePost(asked),
-      brief,
-      (written) => draftProblems(brief, post, written)
-    )
+    const { draft, problems } = await draftChecked((asked) => llm.writePost(asked), brief, {
+      problemsOf: (written) => draftProblems(brief, post, written),
+      tellsOf: (written) => writingTells([written.title, ...written.parts].join('\n\n'), [brief.affiliationLine]),
+    })
     if (problems.length > 0) throw new Error(`The writer missed the post's rules twice: ${problems.join(' ')}`)
     return ctx.runMutation(internal.internal.writer.storePost, {
       postId: post._id,

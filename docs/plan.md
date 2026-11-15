@@ -517,6 +517,14 @@ Reddit's API now needs Reddit's approval (the Responsible Builder Policy, 2025-1
 
 - [x] A pasted thread may carry its community's rules, copied from the community's page; they are read and stored as the reader's read would be, and the refusal for rules Stepradar cannot read says to paste them. Rules with a thread that names no community are refused. The paste form asks for them on Reddit accounts.
 
+### Slice 28: drafts that read like a person (operator, 2026-11-15)
+
+The operator found the drafts read as machine-written and pointed at the humanizer skill in the Formstep repo. The writer's prompts said nothing about how to write, and the first n8n draft opened on an experience the account never had ("One failure mode I got paged for"), taken from its own bible.
+
+- [x] Every post and reply is written to shared `WRITING_RULES`, condensed from the humanizer (MIT, Siqi Chen): the point first, no invented experience or habit, short varied sentences, none of its structural tells, no dashes, no stock words or chatbot phrases.
+- [x] Shared `writingTells` finds the tells a careful writer almost never makes on purpose (dashes outside code, chatbot phrases, staged openers, "not just X but Y", a short list of stock words), leaving the affiliation line alone. A draft that shows one goes back once with them named; tells left in the second draft stay for the operator to edit and never drop the draft.
+- [x] A proposed bible gives the account no backstory to claim. The n8n and Make accounts' bibles lost the sentences that gave them one.
+
 ### Later
 
 - [ ] The X real reader, once the tier is chosen (decision 3 stands, operator, 2026-10-23).
@@ -564,6 +572,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slice 24: done. The operator's provider keys live in `providerKeys`, set from the setup's new key step and the Providers page's Your keys card; every action reads them once and hands them to the providers it builds (ADR 0005). The review of slices 23 and 24 found that a growth span dropped the change from the read before it, that the digest added karma, followers and likes into one number, that "what works" added reach across platforms and counted clicks against reach never read, and that the leak kept a one-step funnel; all fixed, the leak now one click flow (shared `clickLeak`). A key shorter than 12 characters is refused, and the setup's Add it later shows in mock mode only.
 - Slice 25: done. A Discourse search reads the forum's newest topics without a term. Read live on 2026-11-15, a Sunday: in 12 hours the n8n Community started 3 topics, the Make Community 1, the Bubble Forum 1 and the Softr Community none; the classifier turned down all but the one already drafted (two were product spam, one a services ad, one a beginner's self-hosting question).
 - Slice 26: done. Read live: the n8n account's poll stored 21 signals (20 from the four forums, 1 search suggestion, none from Hacker News) and named Reddit unread with its three keys.
+- Slice 28: done. Read live on the n8n account: three pasted threads drafted without a story or a staged opener; after the rules asked for what to do rather than what "I" do, the third came back in two imperative sentences.
 - Slice 27: done. Seen in the studio: the Reddit account's paste form with the rules field. The browser run it was built for did not happen: the studio's built-in browser does not open reddit.com.
 
 #### Left for later
@@ -585,6 +594,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slice 24: the onboarding does not ask for the Reddit app's keys when a Reddit account is added: connecting it is refused by the missing key's name, which points to the Providers page. With no sign-in, anyone who reaches the backend can replace or remove a key. Switching to real mode is still one `convex env set PROVIDERS_MODE real`.
 - Slice 25: the researcher's poll reads a forum the same way, so a forum's signals are its five topics of the week that move most, with no pillar: a standout from a forum is filed under the first pillar, and a forum's questions never make a round-up. One search page holds 50 topics, which a busy forum may start within a week. A sweep's result counts what it kept and skipped, not what the classifier dropped, so `kept: 0, skipped: 0` reads like an empty search though the forum was read. Reddit and Hacker News still search each pillar as a phrase.
 - Slice 26: a poll's `unread` shows only in the job's result; nothing on Today or the Providers page says research skips Reddit. Whether short search terms beat the pillars on Reddit is to be measured once the keys are set.
+- Slice 28: the chat's answers and the account proposals are not held to the writing rules. The rules' word list and the check's are not one list: the check keeps only words that are tells wherever they appear. Bios still say what the operator does ("I fix the n8n intake workflows that break at 2am"); the writer does not read them.
 - Slice 27: rules pasted for a community whose rules were read within the week are not read again, like a sweep's. A paused account still drafts replies to what is pasted; only its posts stop.
 
 ## Risks worth knowing
