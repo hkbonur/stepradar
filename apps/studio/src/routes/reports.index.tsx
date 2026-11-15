@@ -4,7 +4,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import { Funnel, MetricStrip, reportStrip } from '@/components/charts'
-import { AccountMark } from '@/components/account-mark'
+import { AccountMark, AccountName } from '@/components/account-mark'
 import { AttributionNote, Card, Empty, MockNote, Mono, PageHeader, Skeleton } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { formatCount, formatKnown, formatPercent, plural } from '@/lib/format'
@@ -98,7 +98,7 @@ function AccountTable(props: { report: Report }) {
                 <span className="flex min-w-0 items-center gap-2">
                   <AccountMark platform={row.account.platform} size={20} state={row.account.paused ? 'paused' : 'idle'} />
                   <Link to="/reports/$accountId" params={{ accountId: row.account._id }} className="truncate font-medium hover:underline">
-                    {row.account.name}
+                    <AccountName account={row.account} />
                   </Link>
                   {row.account.paused && <span className="text-xs text-ash">paused</span>}
                 </span>

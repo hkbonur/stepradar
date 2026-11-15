@@ -1,4 +1,4 @@
-import { VOICE_SAMPLE_MIN, handleOf, historyCanComeIn, placeOf, profileEditLink } from '@stepradar/shared'
+import { accountInWords, VOICE_SAMPLE_MIN, historyCanComeIn, placeOf, profileEditLink } from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
@@ -44,7 +44,7 @@ export async function openFirstItems(
   const profile = profileEditLink(placeOf(account), account.handle)
   await ctx.db.insert('checklistItems', {
     accountId: account._id,
-    title: `Put the bio and its link on ${handleOf(account)}'s profile`,
+    title: `Put the bio and its link on the profile of ${accountInWords(account)}`,
     why: `People who read a reply or a post open the profile next. Its bio: "${account.bio}" Its link, so the visits the profile brings count for the account: ${bioLink}`,
     status: 'open',
     ...(profile === null ? {} : { action: { kind: 'visit' as const, url: profile } }),
@@ -62,7 +62,7 @@ export async function openVoiceItem(ctx: MutationCtx, account: Doc<'accounts'>, 
   if ((await openItemsWith(ctx, account._id, 'learn_voice')).length > 0) return
   await ctx.db.insert('checklistItems', {
     accountId: account._id,
-    title: `Teach the writer ${handleOf(account)}'s voice`,
+    title: `Teach the writer the voice of ${accountInWords(account)}`,
     why: `Until the analyst learns it from at least ${VOICE_SAMPLE_MIN} of the account's own posts, the writer writes in English in the account's tone. Bring its posts in on the voice page, then learn the voice.`,
     status: 'open',
     action: { kind: 'learn_voice' },

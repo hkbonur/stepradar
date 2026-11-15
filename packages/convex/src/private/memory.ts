@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { accountTitle } from '@stepradar/shared'
 import type { Id } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'
 import { memoryView, rememberFromOperator, retireMemory } from '../core/memory'
@@ -26,7 +27,7 @@ export const add = mutation({
       case 'invalid':
         throw refusal(outcome.problem)
       case 'known':
-        throw refusal(`${account.name} already remembers that: "${outcome.text}"`)
+        throw refusal(`${accountTitle(account)} already remembers that: "${outcome.text}"`)
       case 'stored':
         return outcome.memoryId
     }

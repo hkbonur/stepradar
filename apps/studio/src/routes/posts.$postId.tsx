@@ -1,3 +1,4 @@
+import { AccountName } from '@/components/account-mark'
 import { api } from '@stepradar/convex/_generated/api'
 import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
@@ -88,7 +89,7 @@ function PostPage() {
             <SponsorPill segment={post.sponsorSegment} />
             <span>
               <Link to="/accounts/$accountId" params={{ accountId: account._id }} className="text-graphite hover:underline">
-                {account.name}
+                <AccountName account={account} />
               </Link>
               {' · '}
               {formatDay(post.plannedFor, { weekday: 'long', month: 'long', day: 'numeric' })}

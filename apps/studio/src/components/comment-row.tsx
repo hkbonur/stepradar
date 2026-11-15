@@ -44,7 +44,7 @@ export function CommentRow(props: { row: WaitingComment; onDone: (message: strin
   }
   const heading = (
     <Link to="/accounts/$accountId" params={{ accountId: account._id }} className="hover:underline">
-      <AccountLabel platform={account.platform} name={account.name} />
+      <AccountLabel account={account} />
     </Link>
   )
   // A drafted answer quotes its comment itself, above the editor.

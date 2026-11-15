@@ -66,7 +66,7 @@ describe('growth', () => {
     const report = await t.query(api.private.report.forAccount, { accountId: account._id })
     expect(report?.leak).toMatchObject({ rate: 0.002, before: 0.01 })
     expect(report?.leak?.text).toBe(
-      "0.20% of the people @ada_automates's linked posts reached in 28 days clicked through against 1.00% in the 28 days before. The strategy review tests how its posts open and end on that next. Mock numbers."
+      '0.20% of the people the linked posts of @ada_automates reached in 28 days clicked through against 1.00% in the 28 days before. The strategy review tests how its posts open and end on that next. Mock numbers.'
     )
     const review = await t.mutation(internal.internal.analyst.reviewStrategy, { accountId: account._id })
     const startedId = review.startedExperimentId

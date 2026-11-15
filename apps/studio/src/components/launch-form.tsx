@@ -1,3 +1,4 @@
+import { AccountName } from '@/components/account-mark'
 import { api } from '@stepradar/convex/_generated/api'
 import { LAUNCH_WHAT_MAX } from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
@@ -69,7 +70,7 @@ function LaunchOutcomes(props: { outcomes: Outcomes }) {
         <li key={outcome.account._id} className="flex items-start gap-2">
           <AccountMark platform={outcome.account.platform} size={20} state="idle" />
           <span className="min-w-0">
-            <span className="font-medium">{outcome.account.name}</span>{' '}
+            <AccountName account={outcome.account} className="font-medium" />{' '}
             {outcome.kind === 'planned' ? (
               <Link to="/posts/$postId" params={{ postId: outcome.postId }} className="underline decoration-fog underline-offset-2">
                 planned

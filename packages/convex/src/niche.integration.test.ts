@@ -162,7 +162,7 @@ describe('what worked', () => {
         minItems: 15,
         minConfidence: 0.9,
       })
-    await expect(start()).rejects.toThrow("No thread found in Ada Automates's niche lately drew at least 2 times what the others did")
+    await expect(start()).rejects.toThrow('No thread found in the niche of Ada Automates lately drew at least 2 times what the others did')
 
     const standoutId = await t.run(async (ctx) => {
       const standoutId = await found(ctx, account, { title: 'I replaced three tools with one n8n flow', score: 400 })
@@ -176,7 +176,7 @@ describe('what worked', () => {
         .filter((step) => step.kind === 'standout')
         .map((step) => step.text)
     expect(await proposed()).toEqual([
-      `People answered "I replaced three tools with one n8n flow" far more than the other threads found in @ada_automates's niche: test posts modeled on what worked.`,
+      `People answered "I replaced three tools with one n8n flow" far more than the other threads found in the niche of @ada_automates: test posts modeled on what worked.`,
     ])
     await start()
     expect(await proposed()).toEqual([])

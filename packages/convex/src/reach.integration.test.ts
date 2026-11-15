@@ -42,7 +42,7 @@ describe('reach', () => {
         kind: 'rising',
         accountId: account._id,
         title: 'Rising in X: "How do you dedupe a webhook that fires twice? (5)"',
-        body: "30 comments in 20 minutes. Answer while it is read: it waits on @ada_automates's replies.",
+        body: '30 comments in 20 minutes. Answer while it is read: it waits on the replies page of @ada_automates.',
         url: `/accounts/${account._id}/replies`,
       },
     ])

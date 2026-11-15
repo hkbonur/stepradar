@@ -1,3 +1,4 @@
+import { AccountName } from '@/components/account-mark'
 import { api } from '@stepradar/convex/_generated/api'
 import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
@@ -7,7 +8,7 @@ import {
   isCold,
   signalFreshness,
   type SignalSource,
-  handleOf,
+  accountInWords,
 } from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
@@ -61,7 +62,7 @@ function SignalsPage() {
               <option value="">All accounts</option>
               {accounts?.map((account) => (
                 <option key={account._id} value={account._id}>
-                  {account.name}
+                  <AccountName account={account} />
                 </option>
               ))}
             </select>
@@ -193,7 +194,7 @@ function SignalRow(props: { signal: SignalRowData; freshness: number; now: numbe
           {props.showAccount && (
             <>
               <span aria-hidden>·</span>
-              <Mono className="text-[11px]">{handleOf(signal.account)}</Mono>
+              <Mono className="text-[11px]">{accountInWords(signal.account)}</Mono>
             </>
           )}
           {signal.status === 'used' && (

@@ -130,3 +130,19 @@ export function communityLabel(platform: Platform, name: string): string {
 export function handleOf(account: { platform: Platform; handle: string }): string {
   return `${PLATFORM_HANDLES[account.platform].prefix}${account.handle}`
 }
+
+/**
+ * An account by its name where the operator reads it among others: on a
+ * forum with the forum's name, since one name can sit on several forums
+ * under the same mark ("onurhkb on n8n Community").
+ */
+export function accountTitle(account: { platform: Platform; forum?: Forum; name: string }): string {
+  const place = placeOf(account)
+  return place.platform === 'forum' ? `${account.name} on ${place.forum.name}` : account.name
+}
+
+/** An account by its handle in a sentence, on a forum with the forum's name ("@onurhkb on n8n Community"), as `accountTitle` names it. */
+export function accountInWords(account: { platform: Platform; forum?: Forum; handle: string }): string {
+  const place = placeOf(account)
+  return place.platform === 'forum' ? `${handleOf(account)} on ${place.forum.name}` : handleOf(account)
+}

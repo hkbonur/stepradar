@@ -15,6 +15,7 @@ import {
   type ExperimentKind,
   type StrategyDefault,
   handleOf,
+  accountTitle,
 } from '@stepradar/shared'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
@@ -65,7 +66,7 @@ function ExperimentsPage() {
   const [creating, setCreating] = React.useState(false)
   const options = accounts?.map((account): AccountOption => ({
     _id: account._id,
-    name: account.name,
+    name: accountTitle(account),
     defaults: account.strategy?.defaults,
   }))
   const first = options?.[0]
@@ -167,8 +168,8 @@ function ExperimentCard(props: { experiment: ExperimentRow }) {
           <p className="mt-1 text-xs text-ash">
             {/* Who chose to run it: the operator on this page, or the account's own strategy review. */}
             {experiment.createdBy === 'operator'
-              ? `Set up by you for ${experiment.account.name}`
-              : `Picked by ${experiment.account.name}`}{' '}
+              ? `Set up by you for ${accountTitle(experiment.account)}`
+              : `Picked by ${accountTitle(experiment.account)}`}{' '}
             <Mono>{handleOf(experiment.account)}</Mono> · {EXPERIMENT_KIND_LABELS[experiment.kind]} on{' '}
             {EXPERIMENT_METRIC_LABELS[experiment.metric]} · decides at {experiment.minItems} {itemsNoun(experiment.kind)} per variant,{' '}
             {formatPercent(experiment.minConfidence, 0)} confidence

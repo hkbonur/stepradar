@@ -1,6 +1,7 @@
+import { AccountName } from '@/components/account-mark'
 import { api } from '@stepradar/convex/_generated/api'
 import type { Id } from '@stepradar/convex/_generated/dataModel'
-import { handleOf } from '@stepradar/shared'
+import { handleOf, accountTitle } from '@stepradar/shared'
 import { useQuery } from 'convex/react'
 import React from 'react'
 import { AccountMark, accountState } from './account-mark'
@@ -48,7 +49,9 @@ export function AccountFrame(props: {
         <div className="flex min-w-0 items-start gap-3.5">
           <AccountMark platform={account.platform} size={40} state={accountState({ working: account.working, paused: account.paused })} />
           <div className="min-w-0">
-            <h1 className="text-metric">{account.name}</h1>
+            <h1 className="text-metric">
+              <AccountName account={account} />
+            </h1>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-ash">
               <Mono className="text-graphite">{handleOf(account)}</Mono>
               <span aria-hidden>·</span>
@@ -60,7 +63,7 @@ export function AccountFrame(props: {
         </div>
         {filled(props.actions) && <div className="flex flex-wrap items-center gap-2">{props.actions}</div>}
       </header>
-      <TabNav label={`${account.name}'s pages`} items={tabsOf(account._id, props.tab)} className="mb-6" />
+      <TabNav label={`${accountTitle(account)}: its pages`} items={tabsOf(account._id, props.tab)} className="mb-6" />
       {props.children}
     </>
   )

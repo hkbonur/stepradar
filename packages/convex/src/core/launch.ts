@@ -1,4 +1,4 @@
-import { LAUNCH_WHAT_MAX, MET_COMMUNITY_NOUNS, handleOf, placeOf, postsToMetCommunity, shortDayLabel } from '@stepradar/shared'
+import { accountInWords, LAUNCH_WHAT_MAX, MET_COMMUNITY_NOUNS, placeOf, postsToMetCommunity, shortDayLabel } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
 import { refusal } from '../lib/errors'
@@ -102,7 +102,7 @@ async function launchPlace(ctx: MutationCtx, account: Doc<'accounts'>, day: stri
   if (postsToMetCommunity(account.platform) && allowed === undefined) {
     return {
       kind: 'left out',
-      why: `No ${MET_COMMUNITY_NOUNS[account.platform].one} ${handleOf(account)} met allows self-promotion, so a launch there would break its rules.`,
+      why: `No ${MET_COMMUNITY_NOUNS[account.platform].one} ${accountInWords(account)} met allows self-promotion, so a launch there would break its rules.`,
     }
   }
   const met = allowed === undefined ? null : { name: allowed.name, selfPromotion: allowed.selfPromotion, weight: allowed.weight }

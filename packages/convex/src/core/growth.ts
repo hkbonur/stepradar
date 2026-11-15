@@ -1,9 +1,9 @@
 import {
+  accountInWords,
   MEASUREMENT_WINDOW_MS,
   accountReachOf,
   countsClicks,
   clickLeak,
-  handleOf,
   reachOf,
   type Leak,
   type ClickFlow,
@@ -110,13 +110,13 @@ export async function leakOf(ctx: Reader, account: Doc<'accounts'>, now: number)
 }
 
 /** Where an account's funnel leaks, in words: fewer clicks is the posts', which the strategy review tests next. */
-export function leakText(account: Pick<Doc<'accounts'>, 'platform' | 'handle'>, leak: AccountLeak): string {
-  const handle = handleOf(account)
+export function leakText(account: Pick<Doc<'accounts'>, 'platform' | 'forum' | 'handle'>, leak: AccountLeak): string {
+  const who = accountInWords(account)
   // A dry step let nothing through, which no rate before makes better or worse.
   const share = leak.rate === 0 ? 'None' : percentText(leak.rate)
   const was = leak.before === null || leak.rate === 0 ? '' : ` against ${percentText(leak.before)} in the ${LEAK_DAYS} days before`
   const mock = leak.mock ? ' Mock numbers.' : ''
-  return `${share} of the people ${handle}'s linked posts reached in ${LEAK_DAYS} days clicked through${was}. The strategy review tests how its posts open and end on that next.${mock}`
+  return `${share} of the people the linked posts of ${who} reached in ${LEAK_DAYS} days clicked through${was}. The strategy review tests how its posts open and end on that next.${mock}`
 }
 
 /** Why the strategy review aimed its next test at a leak, as its journal says it. */

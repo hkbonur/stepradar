@@ -1,6 +1,6 @@
 import { api } from '@stepradar/convex/_generated/api'
 import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
-import { AGENT_ROLE_LABELS, parseChatIntent, handleOf } from '@stepradar/shared'
+import { AGENT_ROLE_LABELS, parseChatIntent, handleOf, accountTitle } from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
 import { useMutation } from 'convex/react'
 import React from 'react'
@@ -61,9 +61,9 @@ export function AccountChat(props: {
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
         {props.messages.length === 0 && (
           <p className="text-ash">
-            Say what you want from {props.account.name}: ask a question, give a rule (“never mention pricing”), change the plan (“move
-            Friday to Saturday”), or ask for a research brief, a comment digest or an analytics summary. A rule becomes a directive every
-            agent reads until you withdraw it.
+            Say what you want from {accountTitle(props.account)}: ask a question, give a rule (“never mention pricing”), change the plan
+            (“move Friday to Saturday”), or ask for a research brief, a comment digest or an analytics summary. A rule becomes a directive
+            every agent reads until you withdraw it.
           </p>
         )}
         {props.messages.map((message) => (
@@ -106,7 +106,7 @@ export function AccountChat(props: {
             }
           }}
           rows={2}
-          placeholder={`Message ${props.account.name}: ask, give a rule, or change the plan`}
+          placeholder={`Message ${accountTitle(props.account)}: ask, give a rule, or change the plan`}
           className="field h-auto resize-none py-2 leading-relaxed"
           aria-label="Message"
         />

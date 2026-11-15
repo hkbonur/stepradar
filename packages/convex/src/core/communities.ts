@@ -1,4 +1,11 @@
-import { COMMUNITY_RULES_TTL_MS, communityLabel, handleOf, postedItemOf, postsToMetCommunity, type SelfPromotion } from '@stepradar/shared'
+import {
+  accountInWords,
+  COMMUNITY_RULES_TTL_MS,
+  communityLabel,
+  postedItemOf,
+  postsToMetCommunity,
+  type SelfPromotion,
+} from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 
@@ -101,7 +108,7 @@ export async function recordRemoval(ctx: MutationCtx, account: Doc<'accounts'>, 
       kind: 'community_weights',
       actor: 'analyst',
       text: `${label} gets ${leftOut} until you look.`,
-      reason: `${label} removed a ${what} of ${handleOf(account)}.`,
+      reason: `${label} removed a ${what} of ${accountInWords(account)}.`,
       evidence: { postIds: item.kind === 'post' ? [item.row._id] : [], signalIds: [], numbers: [] },
       createdAt: now,
     })

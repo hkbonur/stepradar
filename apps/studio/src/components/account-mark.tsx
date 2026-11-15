@@ -1,5 +1,8 @@
 import { ChatsCircleIcon, LinkedinLogoIcon, RedditLogoIcon, XLogoIcon } from '@phosphor-icons/react'
-import type { Platform } from '@stepradar/shared'
+import { placeOf, type Forum, type Platform } from '@stepradar/shared'
+
+/** An account as a row names it: a forum account carries its forum (shared `placeOf`). */
+type AccountNamed = { platform: Platform; forum?: Forum; name: string }
 import { cn } from '@/lib/cn'
 
 /** What an account's agents are doing, as its mark shows it. */
@@ -50,12 +53,27 @@ export function AccountMark(props: { platform: Platform; size: number; state: Ac
   )
 }
 
+/**
+ * An account's name where it is read among others, and on a forum the
+ * forum's, quieter (shared `accountTitle`): one name can sit on several
+ * forums under the same mark.
+ */
+export function AccountName(props: { account: AccountNamed; className?: string }) {
+  const place = placeOf(props.account)
+  return (
+    <span className={props.className}>
+      {props.account.name}
+      {place.platform === 'forum' && <span className="font-normal text-ash"> on {place.forum.name}</span>}
+    </span>
+  )
+}
+
 /** Whose an item is, at the top of its card: the account's mark beside its name. */
-export function AccountLabel(props: { platform: Platform; name: string; className?: string }) {
+export function AccountLabel(props: { account: AccountNamed; className?: string }) {
   return (
     <span className={cn('inline-flex min-w-0 items-center gap-1.5 font-medium text-graphite', props.className)}>
-      <AccountMark platform={props.platform} size={18} state="idle" />
-      <span className="truncate">{props.name}</span>
+      <AccountMark platform={props.account.platform} size={18} state="idle" />
+      <AccountName account={props.account} className="truncate" />
     </span>
   )
 }

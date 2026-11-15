@@ -1,4 +1,5 @@
 import {
+  accountInWords,
   EXPERIMENT_MEMORY_MS,
   fellBehind,
   grouped,
@@ -95,7 +96,7 @@ export function nextSteps(input: NextStepsInput, now: number): NextStep[] {
     steps.push({
       kind: 'comments',
       accountId: account._id,
-      text: `Answer ${counted(waiting, 'comment', 'comments')} for ${handleOf(account)}: the drafts wait under each.`,
+      text: `Answer ${counted(waiting, 'comment', 'comments')} for ${accountInWords(account)}: the drafts wait under each.`,
       url: '/',
       waiting,
     })
@@ -112,7 +113,7 @@ export function nextSteps(input: NextStepsInput, now: number): NextStep[] {
     steps.push({
       kind: 'consistency',
       accountId: account._id,
-      text: `${handleOf(account)} posted ${grouped(week.posted)} of the ${grouped(week.due)} posts due this week: an account that posts on schedule keeps growing. Its drafts wait on its page.`,
+      text: `${accountInWords(account)} posted ${grouped(week.posted)} of the ${grouped(week.due)} posts due this week: an account that posts on schedule keeps growing. Its drafts wait on its page.`,
       url: `/accounts/${account._id}`,
       due: week.due,
       posted: week.posted,
@@ -135,7 +136,7 @@ export function nextSteps(input: NextStepsInput, now: number): NextStep[] {
     steps.push({
       kind: 'draft',
       accountId: soonest.account._id,
-      text: `A draft for ${handleOf(soonest.account)} goes stale ${hours === 0 ? 'within the hour' : `in ${counted(hours, 'hour', 'hours')}`}: post it or let it go.`,
+      text: `A draft for ${accountInWords(soonest.account)} goes stale ${hours === 0 ? 'within the hour' : `in ${counted(hours, 'hour', 'hours')}`}: post it or let it go.`,
       url: `/accounts/${soonest.account._id}/replies`,
       staleInHours: hours,
     })
@@ -170,7 +171,7 @@ export function nextSteps(input: NextStepsInput, now: number): NextStep[] {
     steps.push({
       kind: 'standout',
       accountId: account._id,
-      text: `People answered "${title}" far more than the other threads found in ${handleOf(account)}'s niche: test posts modeled on what worked.`,
+      text: `People answered "${title}" far more than the other threads found in the niche of ${accountInWords(account)}: test posts modeled on what worked.`,
       url: '/experiments',
     })
   }

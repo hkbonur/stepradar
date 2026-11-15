@@ -1,3 +1,4 @@
+import { AccountName } from '@/components/account-mark'
 import { api } from '@stepradar/convex/_generated/api'
 import { ACCOUNT_REACH_LABELS } from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
@@ -37,7 +38,7 @@ function Changes(props: { changes: Overview['changes'] }) {
         {changes.entries.map((entry) => (
           <li key={entry._id} className="min-w-0">
             <Link to="/accounts/$accountId/strategy" params={{ accountId: entry.account._id }} className="line-clamp-2 hover:underline">
-              <span className="font-medium">{entry.account.name}:</span> {entry.text}
+              <AccountName account={entry.account} className="font-medium" />: {entry.text}
             </Link>
             <span className="block text-xs text-ash">
               {relativeTime(entry.createdAt)} · by the {entry.actor}
@@ -83,7 +84,7 @@ function Growth(props: { growth: Overview['growth'] }) {
         {growth.accounts.map((row) => (
           <li key={row.account._id} className="min-w-0">
             <Link to="/reports/$accountId" params={{ accountId: row.account._id }} className="font-medium hover:underline">
-              {row.account.name}
+              <AccountName account={row.account} />
             </Link>
             <p className="tabular flex flex-wrap items-center gap-x-3">
               {/* A number the platform does not count, or not read twice in the span, is left out rather than shown as zero. */}
@@ -119,7 +120,7 @@ function Reached(props: { reached: Overview['reached'] }) {
           <li key={row.account._id} className="tabular grid grid-cols-[auto_1fr_auto] items-center gap-2">
             <AccountMark platform={row.account.platform} size={20} state="idle" />
             <Link to="/reports/$accountId" params={{ accountId: row.account._id }} className="truncate hover:underline">
-              {row.account.name}
+              <AccountName account={row.account} />
             </Link>
             <span className={row.reach === null ? 'text-ash' : undefined}>
               {row.reach === null ? 'not read' : `${formatCount(row.reach)} ${row.reachLabel.toLowerCase()}`}

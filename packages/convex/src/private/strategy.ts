@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import { accountTitle } from '@stepradar/shared'
 import type { Id } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'
 import { strategyView } from '../core/strategy'
@@ -26,7 +27,7 @@ export const reviewNow = mutation({
       .withIndex('by_account', (q) => q.eq('accountId', account._id))
       .collect()
     const pending = jobs.find((job) => job.kind === 'review_strategy' && (job.status === 'queued' || job.status === 'running'))
-    if (pending) throw refusal(`${account.name} is already reviewing the strategy.`)
+    if (pending) throw refusal(`${accountTitle(account)} is already reviewing the strategy.`)
     return enqueueJob(ctx, { kind: 'review_strategy', accountId: account._id })
   },
 })

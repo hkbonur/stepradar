@@ -1,4 +1,12 @@
-import { POST_STATUS_TINTS, SPONSOR_SEGMENT_LABELS, communityLabel, handleOf, letGo, needsOperator, type PostKind } from '@stepradar/shared'
+import {
+  POST_STATUS_TINTS,
+  SPONSOR_SEGMENT_LABELS,
+  communityLabel,
+  letGo,
+  needsOperator,
+  type PostKind,
+  accountInWords,
+} from '@stepradar/shared'
 import { Link } from '@tanstack/react-router'
 import { api } from '@stepradar/convex/_generated/api'
 import type { FunctionReturnType } from 'convex/server'
@@ -48,7 +56,7 @@ export function PostCard(props: { post: CalendarPost }) {
           )}
           {/* One meta row: whose it is and when it is due. */}
           <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-ash">
-            <span className="min-w-0 truncate font-mono">{handleOf(post.account)}</span>
+            <span className="min-w-0 truncate font-mono">{accountInWords(post.account)}</span>
             {post.community !== undefined && (
               <span className="min-w-0 truncate">{communityLabel(post.account.platform, post.community)}</span>
             )}

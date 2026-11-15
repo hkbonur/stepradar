@@ -1,7 +1,7 @@
 import { api } from '@stepradar/convex/_generated/api'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
-import { AccountMark, accountState } from '@/components/account-mark'
+import { AccountMark, accountState, AccountName } from '@/components/account-mark'
 import { Card, Empty, LinkButton, Mono, PageHeader, Pill, Skeleton } from '@/components/ui'
 import { AGENTS_IN_WORDS } from '@/lib/agents'
 import { cn } from '@/lib/cn'
@@ -37,7 +37,7 @@ function AccountsPage() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link to="/accounts/$accountId" params={{ accountId: account._id }} className="text-base font-medium hover:underline">
-                        {account.name}
+                        <AccountName account={account} />
                       </Link>
                       {/* The mark's dot is hidden from screen readers; this says it in words. */}
                       {accountState(account) === 'working' && <span className="sr-only">working</span>}

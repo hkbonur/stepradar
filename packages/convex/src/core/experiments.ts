@@ -1,4 +1,5 @@
 import {
+  accountTitle,
   EXPERIMENT_KIND_LABELS,
   EXPERIMENT_METRIC_LABELS,
   MEASUREMENT_WINDOW_MS,
@@ -410,7 +411,7 @@ export async function postModelStall(ctx: Reader, experiment: Doc<'experiments'>
 function noStandout(account: Doc<'accounts'>): DimensionMetrics {
   return {
     metrics: [],
-    why: `No thread found in ${account.name}'s niche lately drew at least ${STANDOUT_RATIO} times what the others did, so there is nothing to model posts on yet.`,
+    why: `No thread found in the niche of ${accountTitle(account)} lately drew at least ${STANDOUT_RATIO} times what the others did, so there is nothing to model posts on yet.`,
   }
 }
 
@@ -444,7 +445,7 @@ export async function readableMetrics(ctx: Reader, account: Doc<'accounts'>, kin
       const last = hours.at(-1) ?? first
       return {
         metrics: [],
-        why: `${account.name}'s posts run from ${hourText(first)} to ${hourText(last)}, so two hours either way would leave the day. Move its posting hour first.`,
+        why: `The posts of ${accountTitle(account)} run from ${hourText(first)} to ${hourText(last)}, so two hours either way would leave the day. Move its posting hour first.`,
       }
     }
   }
@@ -479,7 +480,7 @@ async function assertMeasurable(
   for (const variant of input.variants) {
     if (planned.some((kind) => kind.key === variant.key)) continue
     throw refusal(
-      `"${variant.label}" is no post kind ${account.name} plans; its cadence plans ${planned.map((kind) => kind.label).join(', ')}.`
+      `"${variant.label}" is no post kind ${accountTitle(account)} plans; its cadence plans ${planned.map((kind) => kind.label).join(', ')}.`
     )
   }
 }
@@ -700,7 +701,7 @@ async function adoptWinner(
     if (publishHour < 0 || publishHour > 23) throw new Error(`posting time "${winner.key}" moves ${account.name} out of the day`)
     await ctx.db.patch(account._id, { publishHour })
     return {
-      changed: `${account.name}'s posts start at ${hourText(publishHour)} now.`,
+      changed: `The posts of ${accountTitle(account)} start at ${hourText(publishHour)} now.`,
       from: `start my posts at ${hourText(publishHour)}.`,
     }
   }

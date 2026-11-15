@@ -171,7 +171,7 @@ function Inbox(props: { today: TodayView; tab: TodayTab; onDone: (message: strin
             place={row.account}
             heading={
               <Link to="/accounts/$accountId/replies" params={{ accountId: row.account._id }} className="hover:underline">
-                <AccountLabel platform={row.account.platform} name={row.account.name} />
+                <AccountLabel account={row.account} />
               </Link>
             }
             onDone={props.onDone}

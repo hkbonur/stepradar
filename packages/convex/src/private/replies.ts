@@ -1,4 +1,4 @@
-import { communityLabel, parseThreadLink, placeOf } from '@stepradar/shared'
+import { accountTitle, communityLabel, parseThreadLink, placeOf } from '@stepradar/shared'
 import { v } from 'convex/values'
 import type { Id } from '../_generated/dataModel'
 import { mutation, query, action } from '../_generated/server'
@@ -62,7 +62,7 @@ export const listenNow = mutation({
   handler: async (ctx, args) => {
     const account = await ctx.db.get(args.accountId)
     if (!account) throw new Error(`account ${args.accountId} not found`)
-    if (!listens(account)) throw refusal(`${account.name} answers nobody: give it a reply budget above 0 first.`)
+    if (!listens(account)) throw refusal(`${accountTitle(account)} answers nobody: give it a reply budget above 0 first.`)
     const reader = await accountReader(ctx, account)
     if (!reader.search) throw refusal(cannotRead(placeOf(account), 'search'))
     return enqueueJob(ctx, { kind: 'listen', accountId: account._id })

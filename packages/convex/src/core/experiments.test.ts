@@ -613,7 +613,7 @@ describe('a post experiment', () => {
       if (!reloaded) throw new Error('account vanished')
       expect(await measurableMetrics(ctx, reloaded, 'posting_time')).toEqual({
         metrics: [],
-        why: "Ada Automates's posts run from 19:00 to 22:00, so two hours either way would leave the day. Move its posting hour first.",
+        why: 'The posts of Ada Automates run from 19:00 to 22:00, so two hours either way would leave the day. Move its posting hour first.',
       })
     })
   })

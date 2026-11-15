@@ -31,7 +31,7 @@ import { useAction, useMutation, useQuery } from 'convex/react'
 import React from 'react'
 import { z } from 'zod'
 import { FormatFields } from '@/components/format-fields'
-import { AccountMark } from '@/components/account-mark'
+import { AccountMark, AccountName } from '@/components/account-mark'
 import { SetupSteps } from '@/components/setup-steps'
 import { Button, ErrorLine, Field, Input, LinkButton, PageHeader, Skeleton, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
@@ -534,7 +534,7 @@ function DoneStep(props: { created: Id<'accounts'>[]; roster: Roster }) {
           {built.map((account) => (
             <li key={account._id} className="flex items-center gap-3 px-3 py-2">
               <AccountMark platform={account.platform} size={32} state="idle" />
-              <span className="font-medium">{account.name}</span>
+              <AccountName account={account} className="font-medium" />
               <span className="font-mono text-xs text-ash">{handleOf(account)}</span>
               <LinkButton to="/accounts/$accountId" params={{ accountId: account._id }} variant="ghost" className="ml-auto">
                 Open

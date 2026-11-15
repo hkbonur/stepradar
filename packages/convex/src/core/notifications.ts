@@ -1,4 +1,5 @@
 import {
+  accountInWords,
   ACCOUNT_REACH_LABELS,
   grouped,
   communityLabel,
@@ -55,7 +56,7 @@ export function commentPayloadOf(account: Doc<'accounts'>, comments: Doc<'commen
     }
   }
   return {
-    title: `${comments.length} new comments for ${handleOf(account)}`,
+    title: `${comments.length} new comments for ${accountInWords(account)}`,
     body: `${who}: ${notificationText(first.text)}`,
     url: comments.every((comment) => comment.inReplyTo === undefined) ? repliesPage : postedPage,
     tag: `comments-${first.externalId}`,
@@ -127,7 +128,7 @@ export async function queueRisingNotification(
   const where = rising.community === null ? placeLabel(placeOf(account)) : communityLabel(account.platform, rising.community)
   const payload: NotificationPayload = {
     title: `Rising in ${where}: "${notificationText(rising.about, RISING_ABOUT_MAX)}"`,
-    body: `${counted(rising.comments, 'comment', 'comments')} in ${counted(rising.minutes, 'minute', 'minutes')}. Answer while it is read: it waits on ${handleOf(account)}'s replies.`,
+    body: `${counted(rising.comments, 'comment', 'comments')} in ${counted(rising.minutes, 'minute', 'minutes')}. Answer while it is read: it waits on the replies page of ${accountInWords(account)}.`,
     url: `/accounts/${account._id}/replies`,
     tag: `rising-${rising.replyId}`,
   }

@@ -184,7 +184,7 @@ describe('onboarding', () => {
         .map(({ title, why, action }) => ({ title, why, action }))
     expect(await openItems()).toEqual([
       {
-        title: "Put the bio and its link on @nora_notion's profile",
+        title: 'Put the bio and its link on the profile of @nora_notion',
         why: expect.stringMatching(
           new RegExp(
             `^People who read a reply or a post open the profile next\\. Its bio: "${proposal.bio}" Its link, so the visits the profile brings count for the account: http://localhost:3300/go/[a-z0-9]+$`
@@ -193,7 +193,7 @@ describe('onboarding', () => {
         action: { kind: 'visit', url: 'https://x.com/settings/profile' },
       },
       {
-        title: "Teach the writer @nora_notion's voice",
+        title: 'Teach the writer the voice of @nora_notion',
         why: "Until the analyst learns it from at least 10 of the account's own posts, the writer writes in English in the account's tone. Bring its posts in on the voice page, then learn the voice.",
         action: { kind: 'learn_voice' },
       },
@@ -203,13 +203,13 @@ describe('onboarding', () => {
     await t.finishAllScheduledFunctions(() => {})
     await t.mutation(api.private.history.learnVoice, { accountId })
     await t.finishAllScheduledFunctions(() => {})
-    expect((await openItems()).map((item) => item.title)).toEqual(["Put the bio and its link on @nora_notion's profile"])
+    expect((await openItems()).map((item) => item.title)).toEqual(['Put the bio and its link on the profile of @nora_notion'])
     // Clear history takes the voice with the posts, so the checklist asks for it again.
     await t.mutation(api.private.history.clearHistory, { accountId })
     await t.finishAllScheduledFunctions(() => {})
     expect((await openItems()).map((item) => item.title)).toEqual([
-      "Teach the writer @nora_notion's voice",
-      "Put the bio and its link on @nora_notion's profile",
+      'Teach the writer the voice of @nora_notion',
+      'Put the bio and its link on the profile of @nora_notion',
     ])
 
     // A forum Stepradar cannot read: its posts never come in, and its profile page is not known.
@@ -217,7 +217,7 @@ describe('onboarding', () => {
     const onZapier = await proposeAndCreate(t, { ...NORA, platform: 'forum', forum: zapier, handle: 'Nora Notes' })
     const zapierItems = (await t.query(api.private.checklist.list, {})).filter((item) => item.accountId === onZapier.accountId)
     expect(zapierItems.map(({ title, action }) => ({ title, action }))).toEqual([
-      { title: "Put the bio and its link on @Nora Notes's profile", action: undefined },
+      { title: 'Put the bio and its link on the profile of @Nora Notes on Zapier Community', action: undefined },
     ])
     // Nor are its categories read, so it plans no post, ever, and says so.
     expect(await t.query(api.private.accounts.get, { accountId: onZapier.accountId })).toMatchObject({

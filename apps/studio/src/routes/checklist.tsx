@@ -38,7 +38,7 @@ function ChecklistPage() {
               key={first.accountId}
               title={
                 <Link to="/accounts/$accountId" params={{ accountId: first.accountId }} className="hover:underline">
-                  <AccountLabel platform={first.account.platform} name={first.account.name} className="font-semibold text-ink" />
+                  <AccountLabel account={first.account} className="font-semibold text-ink" />
                 </Link>
               }
               count={group.length}

@@ -111,7 +111,7 @@ describe('the next steps', () => {
       ['comments', 'Answer 1 comment for u/ada: the drafts wait under each.', '/'],
       [
         'standout',
-        `People answered "I replaced three tools with one n8n flow" far more than the other threads found in u/ada's niche: test posts modeled on what worked.`,
+        `People answered "I replaced three tools with one n8n flow" far more than the other threads found in the niche of u/ada: test posts modeled on what worked.`,
         '/experiments',
       ],
     ])
@@ -138,12 +138,12 @@ describe('the next steps', () => {
       ],
       [
         'leak',
-        "0.40% of the people @max's linked posts reached in 28 days clicked through against 1.20% in the 28 days before. The strategy review tests how its posts open and end on that next.",
+        '0.40% of the people the linked posts of @max reached in 28 days clicked through against 1.20% in the 28 days before. The strategy review tests how its posts open and end on that next.',
         '/reports/a2',
       ],
       [
         'leak',
-        "None of the people u/ada's linked posts reached in 28 days clicked through. The strategy review tests how its posts open and end on that next. Mock numbers.",
+        'None of the people the linked posts of u/ada reached in 28 days clicked through. The strategy review tests how its posts open and end on that next. Mock numbers.',
         '/reports/a1',
       ],
     ])

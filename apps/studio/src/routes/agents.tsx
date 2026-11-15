@@ -1,11 +1,11 @@
 import { api } from '@stepradar/convex/_generated/api'
 import type { Id } from '@stepradar/convex/_generated/dataModel'
-import { AGENT_ROLE_LABELS, JOB_KIND_LABELS, type JobStatus } from '@stepradar/shared'
+import { AGENT_ROLE_LABELS, JOB_KIND_LABELS, type JobStatus, accountTitle } from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
-import { AccountMark, accountState } from '@/components/account-mark'
+import { AccountMark, accountState, AccountName } from '@/components/account-mark'
 import { JobDot } from '@/components/status'
 import { Button, ErrorLine, PageHeader, Skeleton, Spinner } from '@/components/ui'
 import { AGENTS_IN_WORDS } from '@/lib/agents'
@@ -164,7 +164,7 @@ function JobSummary(props: { job: JobRow; roster: Roster; strong?: boolean; chil
                 params={{ accountId: job.account._id }}
                 className="text-graphite hover:text-ink hover:underline"
               >
-                {job.account.name}
+                <AccountName account={job.account} />
               </Link>
             </span>
           )}
@@ -257,7 +257,7 @@ function FinishedJob(props: { job: JobRow; roster: Roster; now: number }) {
     }
   }
   const retryName =
-    job.account === null ? `Retry ${JOB_KIND_LABELS[job.kind]}` : `Retry ${JOB_KIND_LABELS[job.kind]} for ${job.account.name}`
+    job.account === null ? `Retry ${JOB_KIND_LABELS[job.kind]}` : `Retry ${JOB_KIND_LABELS[job.kind]} for ${accountTitle(job.account)}`
   return (
     <li className="flex items-start gap-3 py-2">
       <JobSummary job={job} roster={props.roster}>
