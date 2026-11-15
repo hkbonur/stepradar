@@ -85,7 +85,7 @@ describe('finding a forum', () => {
 })
 
 describe('the Discourse search', () => {
-  it("finds topics by their first post, in their category, kept to the account's categories when asked", async () => {
+  it("finds every topic started since the query's time by its first post, in its category, kept to the account's categories when asked", async () => {
     vi.useFakeTimers({ now: NOW, toFake: ['Date'] })
     const asked = stubForum({
       '/categories.json': CATEGORIES,
@@ -118,10 +118,20 @@ describe('the Discourse search', () => {
             post_number: 1,
             topic_id: 42,
           },
+          {
+            username: 'otto',
+            name: 'Otto',
+            created_at: new Date(NOW - 3 * 86_400_000).toISOString(),
+            like_count: 2,
+            blurb: 'Older than the query',
+            post_number: 1,
+            topic_id: 43,
+          },
         ],
         topics: [
           { id: 41, title: 'Form webhook runs twice', slug: 'form-webhook-runs-twice', posts_count: 5, category_id: 7 },
           { id: 42, title: 'I built a form bot', slug: 'i-built-a-form-bot', posts_count: 1, category_id: 15 },
+          { id: 43, title: 'An old topic', slug: 'an-old-topic', posts_count: 1, category_id: 12 },
         ],
       },
     })
@@ -139,13 +149,13 @@ describe('the Discourse search', () => {
         reach: 4,
         community: 'Nodes',
         comments: 4,
-        topics: ['webhooks'],
+        topics: [],
       },
       expect.objectContaining({ externalId: '42', community: 'Built with n8n', author: { handle: 'mira', name: 'mira' } }),
     ])
-    expect(decodeURIComponent(asked.find((path) => path.startsWith('/search.json')) ?? '')).toBe(
-      '/search.json?q=webhooks after:2026-10-21 in:first order:latest'
-    )
+    expect(asked.filter((path) => path.startsWith('/search.json')).map(decodeURIComponent)).toEqual([
+      '/search.json?q=after:2026-10-21 in:first order:latest',
+    ])
     expect((await search({ ...query, communities: ['nodes'] })).map((thread) => thread.externalId)).toEqual(['41'])
   })
 })

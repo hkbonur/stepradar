@@ -179,33 +179,39 @@ export function discourseReader(forum: Forum): PlatformReader {
     platform: 'forum',
     name: 'discourse',
 
+    /**
+     * Every topic started since the query's time, newest first, with no
+     * term: a product's forum is the niche already, and its questions rarely
+     * say the words of a pillar ("my scenario won't trigger"), which
+     * Discourse would all have to find. The classifier judges what is worth
+     * answering, so the query's terms are not searched and a found topic
+     * names no pillar.
+     */
     async search(query: SearchQuery): Promise<FoundThread[]> {
+      // Discourse filters by the day only, so a topic from earlier that day is left out here.
       const after = new Date(query.since).toISOString().slice(0, 10)
       const kept = query.communities === null ? null : new Set(query.communities.map((name) => name.toLowerCase()))
+      const parsed = searchSchema.parse(await read(`/search.json?q=${encodeURIComponent(`after:${after} in:first order:latest`)}`))
+      const topics = new Map(parsed.topics.map((topic) => [topic.id, topic]))
       const found: FoundThread[] = []
-      for (const term of query.terms) {
-        const parsed = searchSchema.parse(
-          await read(`/search.json?q=${encodeURIComponent(`${term} after:${after} in:first order:latest`)}`)
-        )
-        const topics = new Map(parsed.topics.map((topic) => [topic.id, topic]))
-        for (const post of parsed.posts) {
-          const topic = topics.get(post.topic_id)
-          if (post.post_number !== 1 || topic === undefined) continue
-          const community = await categoryName(topic.category_id)
-          if (kept !== null && (community === null || !kept.has(community.toLowerCase()))) continue
-          found.push({
-            externalId: discourseItemId(topic.id, 1),
-            url: itemUrl(topic.slug, topic.id, 1),
-            title: topic.title,
-            text: discourseText(post.blurb),
-            postedAt: Date.parse(post.created_at),
-            author: { handle: post.username, name: post.name || post.username },
-            reach: post.like_count,
-            community,
-            comments: topic.posts_count - 1,
-            topics: [term],
-          })
-        }
+      for (const post of parsed.posts) {
+        const topic = topics.get(post.topic_id)
+        const postedAt = Date.parse(post.created_at)
+        if (post.post_number !== 1 || topic === undefined || postedAt < query.since) continue
+        const community = await categoryName(topic.category_id)
+        if (kept !== null && (community === null || !kept.has(community.toLowerCase()))) continue
+        found.push({
+          externalId: discourseItemId(topic.id, 1),
+          url: itemUrl(topic.slug, topic.id, 1),
+          title: topic.title,
+          text: discourseText(post.blurb),
+          postedAt,
+          author: { handle: post.username, name: post.name || post.username },
+          reach: post.like_count,
+          community,
+          comments: topic.posts_count - 1,
+          topics: [],
+        })
       }
       return rankFound(found, query.limit)
     },

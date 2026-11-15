@@ -498,6 +498,13 @@ The operator asked to bring their own keys in the dashboard instead of setting t
 - [x] The setup asks for the Anthropic key, which can wait; the Providers page sets, replaces and removes each key and shows only its last four characters.
 - [x] `PROVIDERS_MODE`, the VAPID keys and `CONVEX_SITE_URL` stay on the deployment.
 
+### Slice 25: a forum sweep reads every new topic (operator, 2026-11-15)
+
+The first real sweeps of four forum accounts (the n8n Community, the Make Community, the Softr Community and the Bubble Forum) found almost nothing: the listener searched each pillar as a phrase, every word of which Discourse must find, so "Client onboarding inside portals" matched no topic of the day. The operator chose to read the latest topics over short search terms.
+
+- [x] On a Discourse forum a search reads every topic started since the query's time, newest first, with no term, and the classifier judges which are worth answering. A found topic names no pillar.
+- [x] A topic from earlier on the day the query starts is left out: Discourse filters by the day only.
+
 ### Later
 
 - [ ] The X real reader, once the tier is chosen (decision 3 stands, operator, 2026-10-23).
@@ -543,6 +550,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - The studio's redesign (operator, 2026-10-23: "the UI is generally confusing… hard to see what belongs together"): done (ae1251f Today and the grouping vocabulary; e0796b7 one frame for every account page and the overview; 149c049 replies; 198b21a posted; ede3d9b the account's report; 0a9e946 strategy; 192ca9e memory; 9b15f28 voice; 00c6ea1 the post page; 000f290 the workspace report; 72940d0 experiments; ba4d084 signals; bd95aed agents; 0a95dd6 the checklist and the accounts; b16aedc providers; 9ffe234 setup and onboarding; 1b611ce the post editor on a phone; 752c360 the review: empty slots, one card band, one card table). Every page now sits on a canvas with what belongs together on one card: alerts first (what failed, what waits on the operator), the work in tabs or cards, the rest in collapsibles. An account's seven pages share one frame with tabs, and the Report moved into it. Tabs are links, kept in the address, and their panels stay mounted, so a half-edited draft survives a switch. Seen in the studio at 1440px: every page; at phone width (390px, in a frame): Today, the account overview, the post page and the reports. Not seen: the first run's setup (the local workspace exists), onboarding's later parts and Done, the real-mode alert, a failed post's alert and a weak judgment's alert, for want of local data.
 - Slice 23: done. PostHog, conversions, probable conversions, the value per paying customer and the reworked post are out; the funnel, the ladder, the weights, the goal note, the growth line and the digest read clicks and reach (ADR 0003 amended). `posts.integration.test.ts` "plans post slots by the cadence" failed before the slice and still does.
 - Slice 24: done. The operator's provider keys live in `providerKeys`, set from the setup's new key step and the Providers page's Your keys card; every action reads them once and hands them to the providers it builds (ADR 0005). The review of slices 23 and 24 found that a growth span dropped the change from the read before it, that the digest added karma, followers and likes into one number, that "what works" added reach across platforms and counted clicks against reach never read, and that the leak kept a one-step funnel; all fixed, the leak now one click flow (shared `clickLeak`). A key shorter than 12 characters is refused, and the setup's Add it later shows in mock mode only.
+- Slice 25: done. A Discourse search reads the forum's newest topics without a term. Read live on 2026-11-15, a Sunday: in 12 hours the n8n Community started 3 topics, the Make Community 1, the Bubble Forum 1 and the Softr Community none; the classifier turned down all but the one already drafted (two were product spam, one a services ad, one a beginner's self-hosting question).
 
 #### Left for later
 
@@ -561,6 +569,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - The redesign: an account's settings card ends with its buttons in the form, not on an action band; the seven account tabs scroll sideways on a phone with no sign that more follow; the replies, strategy, memory, voice, experiments and providers pages were checked at phone width only through the shared one-column grids, not in a browser.
 - Slice 23: where nothing reads an account's numbers and its posts link directly (an unconnected Reddit account, LinkedIn), no experiment can be decided on it: signups were the rung that reached it. A community weight has nothing to break a tie on reach. The growth line's karma or followers gained needs two reads in a span, so a new account shows none in its first week.
 - Slice 24: the onboarding does not ask for the Reddit app's keys when a Reddit account is added: connecting it is refused by the missing key's name, which points to the Providers page. With no sign-in, anyone who reaches the backend can replace or remove a key. Switching to real mode is still one `convex env set PROVIDERS_MODE real`.
+- Slice 25: the researcher's poll reads a forum the same way, so a forum's signals are its five topics of the week that move most, with no pillar: a standout from a forum is filed under the first pillar, and a forum's questions never make a round-up. One search page holds 50 topics, which a busy forum may start within a week. A sweep's result counts what it kept and skipped, not what the classifier dropped, so `kept: 0, skipped: 0` reads like an empty search though the forum was read. Reddit and Hacker News still search each pillar as a phrase.
 
 ## Risks worth knowing
 
