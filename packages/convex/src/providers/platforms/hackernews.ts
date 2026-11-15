@@ -16,12 +16,13 @@ import { HN_GUIDELINES } from './guidelines'
 
 const hitSchema = z.object({
   objectID: z.string(),
-  title: z.string().nullable(),
-  url: z.string().nullable(),
+  // Algolia leaves out a field a story lacks as often as it sends null.
+  title: z.string().nullish(),
+  url: z.string().nullish(),
   author: z.string(),
-  story_text: z.string().nullable().optional(),
-  points: z.number().nullable(),
-  num_comments: z.number().nullable(),
+  story_text: z.string().nullish(),
+  points: z.number().nullish(),
+  num_comments: z.number().nullish(),
   created_at_i: z.number(),
 })
 const responseSchema = z.object({ hits: z.array(hitSchema) })

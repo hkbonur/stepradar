@@ -47,7 +47,7 @@ function AccountNumbers(props: { accountId: Id<'accounts'>; numbers: AccountData
       <Link to="/reports/$accountId" params={{ accountId: props.accountId }} className="group w-fit">
         {/* Reach only once some was read, and clicks only where counted: a number not read shows no zero. */}
         {numbers.reach === null ? (
-          <span className="text-ash">No {numbers.reachLabel.toLowerCase()} read</span>
+          <span className="text-ash">Nothing measured yet</span>
         ) : (
           <>
             <span className="tabular font-medium text-ink">{formatCount(numbers.reach)}</span>
@@ -61,9 +61,11 @@ function AccountNumbers(props: { accountId: Id<'accounts'>; numbers: AccountData
             <span className="text-ash"> clicks</span>
           </>
         )}
-        <span className="text-ash group-hover:underline">
-          , last {numbers.days} days{numbers.mock ? ' (mock)' : ''}
-        </span>
+        {numbers.reach !== null && (
+          <span className="text-ash group-hover:underline">
+            , last {numbers.days} days{numbers.mock ? ' (mock)' : ''}
+          </span>
+        )}
       </Link>
       {props.refresh}
       {/* Whether it posts as planned (shared `fellBehind`): this week's due posts so far, and how many went out. */}

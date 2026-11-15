@@ -59,16 +59,14 @@ describe('platform readers', () => {
     const fetch = vi.fn(async (input: string | URL) => {
       const url = new URL(String(input))
       if (url.host === 'hn.algolia.com') {
-        const hit = {
-          objectID: '9001',
-          title: 'Ask HN: How do you collect client documents?',
-          url: null,
-          author: 'dana',
-          created_at_i: now - 600,
-          points: 12,
-          num_comments: 4,
-        }
-        return Response.json({ hits: [hit] })
+        const hit = { url: null, author: 'dana', created_at_i: now - 600, points: 12, num_comments: 4 }
+        // One story on the account's niche (n8n), one off it: the classifier keeps the first and files the second dismissed.
+        return Response.json({
+          hits: [
+            { ...hit, objectID: '9001', title: 'Ask HN: How do you retry n8n webhooks?' },
+            { ...hit, objectID: '9002', title: 'Show HN: A synth in the browser' },
+          ],
+        })
       }
       if (url.host === 'suggestqueries.google.com') return Response.json([url.searchParams.get('q'), []])
       throw new Error(`unexpected fetch ${url}`)
@@ -77,10 +75,22 @@ describe('platform readers', () => {
 
     expect(await t.action(internal.internal.researcher.pollSignals, { accountId: account._id })).toEqual({
       found: 1,
+      kept: 1,
+      offNiche: 1,
       unread: [{ platform: 'reddit', missing: ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET', 'REDDIT_USER_AGENT'] }],
     })
     expect(fetch.mock.calls.some(([input]) => String(input).includes('reddit.com'))).toBe(false)
-    expect(await t.run((ctx) => ctx.db.query('signals').collect())).toMatchObject([{ source: 'hackernews', externalId: '9001' }])
+    expect(await t.run((ctx) => ctx.db.query('signals').collect())).toMatchObject([
+      { source: 'hackernews', externalId: '9001', status: 'new' },
+      { source: 'hackernews', externalId: '9002', status: 'dismissed' },
+    ])
+    // A second poll reads the same stories without asking the classifier again, and keeps their statuses.
+    expect(await t.action(internal.internal.researcher.pollSignals, { accountId: account._id })).toMatchObject({
+      found: 0,
+      kept: 0,
+      offNiche: 0,
+    })
+    expect((await t.run((ctx) => ctx.db.query('signals').collect())).map((signal) => signal.status)).toEqual(['new', 'dismissed'])
   })
 
   it("reads on Reddit, Hacker News and Discourse forums in real mode, Reddit's account only once connected, and nothing on X or LinkedIn", () => {

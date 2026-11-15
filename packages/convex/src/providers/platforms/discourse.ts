@@ -127,6 +127,7 @@ const topicSchema = z.object({
 const postsPageSchema = z.object({ post_stream: z.object({ posts: z.array(postSchema) }) })
 const repliesSchema = z.array(postSchema)
 const summarySchema = z.object({ user_summary: z.object({ likes_received: z.number() }) })
+const profileSchema = z.object({ user: z.object({ profile_hidden: z.boolean().optional() }) })
 
 /** Discourse's user actions: a topic the user started, and a reply they posted. */
 const NEW_TOPIC = 4
@@ -172,6 +173,17 @@ export function discourseReader(forum: Forum): PlatformReader {
   let guidelinesRead: Promise<string> | undefined
   const guidelines = () => (guidelinesRead ??= guidelinesOf(forum))
   const categoryName = async (id: number | null | undefined) => (id == null ? null : ((await categories()).get(id)?.name ?? null))
+  // A user's activity is hidden from visitors both when there is no such user and when they hide their profile; the profile says which.
+  const unreadableUser = async (handle: string) => {
+    const profile = await read(`/u/${encodeURIComponent(handle)}.json`)
+    if (profile === null) return refusal(`${forum.name} has no user named ${handle}.`)
+    if (profileSchema.parse(profile).user.profile_hidden === true) {
+      return refusal(
+        `${handle} hides their profile on ${forum.name}, so Stepradar cannot read what they post there. Turn off "Hide my public profile" in the forum's preferences, or give each reply's link when you mark it posted.`
+      )
+    }
+    return refusal(`${forum.name} shows a visitor none of ${handle}'s posts.`)
+  }
   const itemUrl = (slug: string, topicId: number, postNumber: number) =>
     postNumber === 1 ? `${forum.origin}/t/${slug}/${topicId}` : `${forum.origin}/t/${slug}/${topicId}/${postNumber}`
 
@@ -221,7 +233,7 @@ export function discourseReader(forum: Forum): PlatformReader {
       for (let offset = 0; offset < ACTIVITY_ITEMS; offset += 30) {
         const path = `/user_actions.json?username=${encodeURIComponent(query.handle)}&filter=${NEW_TOPIC},${REPLY}&offset=${offset}`
         const page = await read(path)
-        if (page === null) throw refusal(`${forum.name} has no user named ${query.handle}.`)
+        if (page === null) throw await unreadableUser(query.handle)
         const actions = userActionsSchema.parse(page).user_actions
         const fresh = actions.filter((action) => Date.parse(action.created_at) >= query.since)
         // An excerpt cut short is read whole from its post, a batch at a time.
@@ -308,7 +320,7 @@ export function discourseReader(forum: Forum): PlatformReader {
 
     async account(handle: string): Promise<AccountReach> {
       const summary = await read(`/u/${encodeURIComponent(handle)}/summary.json`)
-      if (summary === null) throw refusal(`${forum.name} has no user named ${handle}.`)
+      if (summary === null) throw await unreadableUser(handle)
       return { platform: 'forum', likesReceived: summarySchema.parse(summary).user_summary.likes_received }
     },
 

@@ -198,4 +198,17 @@ describe('the Hacker News search', () => {
       },
     ])
   })
+
+  it('reads a story that leaves out its link and its counts', async () => {
+    const hit = { objectID: '42', title: 'Ask HN: Form tools?', author: 'kai', created_at_i: NOW / 1000 - 600 }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Response.json({ hits: [hit] }))
+    )
+    const search = hackerNewsReader.search
+    if (!search) throw new Error('the Hacker News reader searches')
+    expect(await search({ terms: ['forms'], since: 0, limit: 5, communities: null, sponsorName: 'Formstep' })).toMatchObject([
+      { externalId: '42', text: '', reach: 0, comments: 0 },
+    ])
+  })
 })

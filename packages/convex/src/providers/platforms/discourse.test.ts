@@ -160,6 +160,19 @@ describe('the Discourse search', () => {
   })
 })
 
+describe('a user whose posts a visitor cannot read', () => {
+  it('says the profile is hidden, and how to fix it, apart from a user who does not exist', async () => {
+    stubForum({ '/u/onurhkb.json': { user: { username: 'onurhkb', profile_hidden: true } } })
+    const reader = discourseReader(FORUM)
+    await expect(reader.activity?.({ handle: 'onurhkb', since: 0, niche: '', pillars: [], now: NOW })).rejects.toThrow(
+      'onurhkb hides their profile on n8n Community, so Stepradar cannot read what they post there. Turn off "Hide my public profile" in the forum\'s preferences, or give each reply\'s link when you mark it posted.'
+    )
+    await expect(reader.account?.('onurhkb')).rejects.toThrow('onurhkb hides their profile on n8n Community')
+    stubForum({})
+    await expect(reader.account?.('nobody')).rejects.toThrow('n8n Community has no user named nobody.')
+  })
+})
+
 describe("the account's own posts", () => {
   it('reads its topics and replies, a reply by its number in the topic, one cut short read whole, and stops at the first older page', async () => {
     const action = (fields: Record<string, unknown>) => ({

@@ -64,6 +64,8 @@ export const poll = internalAction({
         summary: `${comment.likes} likes, from ${comment.author.handle} on ${placeLabel(placeOf(account))}`,
         score: comment.likes * 5 + 5,
         topics: [account.platform],
+        // A comment under the account's own post is on its niche by where it was said.
+        status: 'new' as const,
         publishedAt: comment.at,
       })),
     })
