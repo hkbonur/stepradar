@@ -226,14 +226,20 @@ function AccountLink(props: { account: AccountRow; selected: boolean; collapsed:
         {props.collapsed && <CornerDot mark={mark} />}
       </span>
       {!props.collapsed && (
-        <span
-          className={cn('min-w-0 flex-1 truncate font-medium', {
-            'text-ash': props.account.paused,
-            'text-ink': props.selected && !props.account.paused,
-            'text-graphite': !props.selected && !props.account.paused,
-          })}
-        >
-          {handleOf(props.account)}
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn('block truncate font-medium', {
+              'text-ash': props.account.paused,
+              'text-ink': props.selected && !props.account.paused,
+              'text-graphite': !props.selected && !props.account.paused,
+            })}
+          >
+            {handleOf(props.account)}
+          </span>
+          {/* One handle can sit on several forums, and their marks are alike, so a forum row names its forum. */}
+          {props.account.forum !== undefined && (
+            <span className="block truncate text-[11px] leading-tight text-ash">{props.account.forum.name}</span>
+          )}
         </span>
       )}
       {!props.collapsed && <RowMark mark={mark} />}
