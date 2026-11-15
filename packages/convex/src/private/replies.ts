@@ -77,20 +77,28 @@ export const listenNow = mutation({
  * forum topic's category).
  */
 export const pasteThread = action({
-  args: { accountId: v.id('accounts'), url: v.string(), text: v.string() },
+  args: { accountId: v.id('accounts'), url: v.string(), text: v.string(), rules: v.optional(v.string()) },
   handler: async (ctx, args): Promise<Id<'replies'>> => {
     const { account, workspace, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId: args.accountId })
     const parsed = parseThreadLink(placeOf(account), args.url)
     if (parsed.kind === 'invalid') throw refusal(parsed.problem)
+    const givenRules = args.rules === undefined ? null : args.rules.trim()
+    if (givenRules === '') throw refusal('Paste the community’s rules, or leave the field empty.')
     const keys = await ctx.runQuery(internal.internal.keys.stored, {})
     const reader = actionReader(ctx, account, connection, keys)
     const said = parsed.community ?? (reader.community ? await reader.community(parsed.externalId) : null)
     const link = { ...parsed, community: said }
+    if (link.community === null && givenRules !== null) throw refusal('This thread names no community, so it takes no rules.')
     // The writer answers only where it knows the community's rules (docs/plan.md, ground rule 3).
     if (link.community !== null) {
-      const { unread } = await readCommunityRules(ctx, { account, reader, keys }, [link.community])
+      // Rules the operator copied from the community's page are read in place of the reader's, which may not read them (Reddit without the app's keys).
+      const rulesFrom = givenRules === null ? reader : { ...reader, rules: async () => givenRules }
+      const { unread } = await readCommunityRules(ctx, { account, reader: rulesFrom, keys }, [link.community])
       const [failed] = unread
-      if (failed) throw refusal(`Stepradar could not read the rules of ${communityLabel(account.platform, failed.name)}: ${failed.error}`)
+      if (failed) {
+        const label = communityLabel(account.platform, failed.name)
+        throw refusal(`Stepradar could not read the rules of ${label}: ${failed.error} Paste them with the thread instead.`)
+      }
     }
     const text = args.text.trim()
     if (text === '') throw refusal('Paste the text you want to answer.')

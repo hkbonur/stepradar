@@ -165,7 +165,13 @@ function Replies(props: { data: RepliesData; view: RepliesView }) {
         </div>
         <aside aria-label="Listening" className="space-y-4">
           <BudgetCard data={data} />
-          <PasteThread accountId={data.account._id} placeName={placeLabel(data.account)} open={!data.searches} onDone={onDone} />
+          <PasteThread
+            accountId={data.account._id}
+            placeName={placeLabel(data.account)}
+            takesRules={data.account.platform === 'reddit'}
+            open={!data.searches}
+            onDone={onDone}
+          />
           <p className="text-xs text-ash">
             Every reply waits for you: post it on {placeLabel(data.account)} yourself, then say so here. Stepradar never posts.
           </p>
@@ -178,21 +184,31 @@ function Replies(props: { data: RepliesData; view: RepliesView }) {
 /**
  * Answer a thread the listener cannot hear: its link and the text to answer,
  * which the writer drafts a reply to. Folded where the listener searches,
- * since most threads come from it; open where nothing searches.
+ * since most threads come from it; open where nothing searches. On Reddit
+ * the subreddit's rules can come with it, for when Stepradar cannot read
+ * them without the app's keys.
  */
-function PasteThread(props: { accountId: Id<'accounts'>; placeName: string; open: boolean; onDone: (message: string) => void }) {
+function PasteThread(props: {
+  accountId: Id<'accounts'>
+  placeName: string
+  takesRules: boolean
+  open: boolean
+  onDone: (message: string) => void
+}) {
   const paste = useAction(api.private.replies.pasteThread)
   const [url, setUrl] = React.useState('')
   const [text, setText] = React.useState('')
+  const [rules, setRules] = React.useState('')
   const [state, setState] = React.useState<FormState>({ status: 'idle' })
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (state.status === 'saving') return
     setState({ status: 'saving' })
     try {
-      await paste({ accountId: props.accountId, url, text })
+      await paste({ accountId: props.accountId, url, text, rules: rules.trim() === '' ? undefined : rules })
       setUrl('')
       setText('')
+      setRules('')
       setState({ status: 'idle' })
       props.onDone('The writer is drafting a reply to the thread you pasted. It waits for you once written.')
     } catch (caught) {
@@ -209,6 +225,14 @@ function PasteThread(props: { accountId: Id<'accounts'>; placeName: string; open
           <Field label="What to answer" hint="Paste the post or comment you want to reply to.">
             <Textarea value={text} onChange={(event) => setText(event.target.value)} rows={3} required />
           </Field>
+          {props.takesRules && (
+            <Field
+              label="The subreddit's rules"
+              hint="Optional. Paste them from the subreddit's rules when Stepradar says it cannot read them."
+            >
+              <Textarea value={rules} onChange={(event) => setRules(event.target.value)} rows={3} />
+            </Field>
+          )}
           <Button type="submit" size="sm" variant="primary" busy={state.status === 'saving'}>
             Draft a reply
           </Button>

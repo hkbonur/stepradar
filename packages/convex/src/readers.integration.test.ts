@@ -7,6 +7,12 @@ import { mockClassifier } from './providers/classifier/mock'
 import { N8N_FORUM, insertAccount } from '../test/fixtures'
 import { setup } from '../test/setup'
 
+// Real mode reads Claude for the classifier; these tests read the mock's rules instead.
+vi.mock('./providers/classifier/anthropic', async () => {
+  const { mockClassifier } = await import('./providers/classifier/mock')
+  return { anthropicClassifier: () => mockClassifier }
+})
+
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllEnvs()
@@ -188,6 +194,39 @@ describe('platform readers', () => {
     expect(kept.length).toBeGreaterThan(0)
     expect(kept.every((reply) => reply.thread.community === 'n8n')).toBe(true)
     expect(heard.some((reply) => !reply.inReplyTo.startsWith('mock-reddit-kept-'))).toBe(true)
+  })
+
+  it("answers a pasted Reddit thread under the rules the operator pasted while the app's keys are not set, and asks for them without", async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx, { platform: 'reddit', handle: 'nora' }))
+    vi.stubEnv('PROVIDERS_MODE', 'real')
+    const url = 'https://www.reddit.com/r/n8n/comments/1abcde/form_webhook_runs_twice/'
+    const text = 'My form webhook runs twice. How do you dedupe it?'
+    await expect(t.action(api.private.replies.pasteThread, { accountId: account._id, url, text })).rejects.toThrow(
+      'Stepradar could not read the rules of r/n8n: The Reddit app ID is not set. Add it on the Providers page. Paste them with the thread instead.'
+    )
+    await expect(t.action(api.private.replies.pasteThread, { accountId: account._id, url, text, rules: '  ' })).rejects.toThrow(
+      'Paste the community’s rules, or leave the field empty.'
+    )
+    const rules = '1. No self-promotion outside the weekly thread.'
+    await t.action(api.private.replies.pasteThread, { accountId: account._id, url, text, rules })
+    expect(await t.run((ctx) => ctx.db.query('communities').collect())).toMatchObject([{ name: 'n8n', rulesText: rules }])
+    expect(await t.run((ctx) => ctx.db.query('replies').collect())).toMatchObject([
+      { origin: 'pasted', inReplyTo: 't3_1abcde', thread: { community: 'n8n' } },
+    ])
+  })
+
+  it('refuses rules pasted with a thread that names no community', async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' }))
+    await expect(
+      t.action(api.private.replies.pasteThread, {
+        accountId: account._id,
+        url: 'https://www.linkedin.com/posts/dana-ruiz_retries-activity-7123456789-abcd',
+        text: 'Retries?',
+        rules: 'Be kind.',
+      })
+    ).rejects.toThrow('This thread names no community, so it takes no rules.')
   })
 
   it('answers nothing in a community whose rules it cannot read, and says so', async () => {
