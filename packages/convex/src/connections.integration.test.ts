@@ -28,13 +28,13 @@ async function openConnectItems(t: Test, accountId: Id<'accounts'>) {
   return items.filter((item) => item.accountId === accountId && item.status === 'open' && item.action?.kind === 'connect_account')
 }
 
-/** Real mode with an OAuth app's keys, and Reddit's answers to the code exchange and the identity read. */
-function realReddit(username: string) {
+/** Real mode with the operator's OAuth app keys, and Reddit's answers to the code exchange and the identity read. */
+async function realReddit(t: Test, username: string) {
   vi.stubEnv('PROVIDERS_MODE', 'real')
-  vi.stubEnv('REDDIT_CLIENT_ID', 'client-id')
-  vi.stubEnv('REDDIT_CLIENT_SECRET', 'client-secret')
-  vi.stubEnv('REDDIT_USER_AGENT', 'web:stepradar:test (by /u/nora_builds)')
   vi.stubEnv('CONVEX_SITE_URL', SITE)
+  await t.mutation(api.private.keys.set, { name: 'REDDIT_CLIENT_ID', value: 'client-id-0001' })
+  await t.mutation(api.private.keys.set, { name: 'REDDIT_CLIENT_SECRET', value: 'client-secret-0001' })
+  await t.mutation(api.private.keys.set, { name: 'REDDIT_USER_AGENT', value: 'web:stepradar:test (by /u/nora_builds)' })
   const fetch = vi.fn(async (input: string | URL, _init?: RequestInit) => {
     const url = String(input)
     if (url === 'https://www.reddit.com/api/v1/access_token') {
@@ -54,7 +54,7 @@ async function startConnect(t: Test, accountId: Id<'accounts'>): Promise<string>
   const url = new URL(outcome.url)
   expect(`${url.origin}${url.pathname}`).toBe('https://www.reddit.com/api/v1/authorize')
   expect(Object.fromEntries(url.searchParams)).toMatchObject({
-    client_id: 'client-id',
+    client_id: 'client-id-0001',
     response_type: 'code',
     duration: 'permanent',
     scope: 'identity read history privatemessages',
@@ -93,8 +93,6 @@ describe('connecting a Reddit account', () => {
       sponsorName: 'Formstep',
       sponsorUrl: 'https://formstep.io',
       sponsorPitch: 'Forms that workflows and AI agents send to one customer.',
-      valuePerPaid: 29,
-      currency: 'EUR',
       appUrl: 'http://localhost:3300',
     })
     const identity = { platform: 'reddit' as const, handle: 'Nora_Builds', name: 'Nora', niche: 'n8n', audience: 'ops leads' }
@@ -119,20 +117,20 @@ describe('connecting a Reddit account', () => {
     )
   })
 
-  it('refuses in real mode until the deployment has the OAuth app, naming the key', async () => {
+  it('refuses in real mode until the operator set the OAuth app, naming the key', async () => {
     const t = setup()
     const accountId = await redditAccount(t)
     vi.stubEnv('PROVIDERS_MODE', 'real')
     vi.stubEnv('CONVEX_SITE_URL', SITE)
     await expect(t.action(api.private.connections.connect, { accountId })).rejects.toThrow(
-      'REDDIT_CLIENT_ID is not set on this deployment. The Providers page lists the keys each provider needs.'
+      'The Reddit app ID is not set. Add it on the Providers page.'
     )
   })
 
   it("stores the grant when Reddit sends the operator back, and returns them to the account's page", async () => {
     const t = setup()
     const accountId = await redditAccount(t)
-    const fetch = realReddit('nora_builds')
+    const fetch = await realReddit(t, 'nora_builds')
     const state = await startConnect(t, accountId)
     expect(await connectionOf(t, accountId)).toEqual({ kind: 'pending' })
 
@@ -161,7 +159,7 @@ describe('connecting a Reddit account', () => {
   it('keeps the account unconnected when another Reddit user consented, and says who', async () => {
     const t = setup()
     const accountId = await redditAccount(t)
-    realReddit('someone_else')
+    await realReddit(t, 'someone_else')
     const state = await startConnect(t, accountId)
     expect((await t.fetch(`/oauth/reddit/callback?state=${state}&code=granted`)).status).toBe(302)
     expect(await connectionOf(t, accountId)).toMatchObject({
@@ -174,7 +172,7 @@ describe('connecting a Reddit account', () => {
   it('changes nothing when the operator declines, and refuses a state it did not hand out or one past its window', async () => {
     const t = setup()
     const accountId = await redditAccount(t)
-    realReddit('nora_builds')
+    await realReddit(t, 'nora_builds')
     const state = await startConnect(t, accountId)
     expect((await t.fetch(`/oauth/reddit/callback?state=${state}&error=access_denied`)).status).toBe(302)
     expect(await connectionOf(t, accountId)).toEqual({ kind: 'pending' })
@@ -192,7 +190,7 @@ describe('connecting a Reddit account', () => {
   it('stores why a code exchange failed, so the operator can connect again', async () => {
     const t = setup()
     const accountId = await redditAccount(t)
-    realReddit('nora_builds')
+    await realReddit(t, 'nora_builds')
     const state = await startConnect(t, accountId)
     vi.stubGlobal(
       'fetch',
@@ -218,7 +216,7 @@ describe('connecting a Reddit account', () => {
     expect(await t.run((ctx) => ctx.db.get(imported))).toMatchObject({ status: 'done', result: { added: 40, skipped: 0 } })
 
     // Real mode: Reddit no longer accepts the stored grant.
-    realReddit('nora_builds')
+    await realReddit(t, 'nora_builds')
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => Response.json({ error: 'invalid_grant' }, { status: 400 }))

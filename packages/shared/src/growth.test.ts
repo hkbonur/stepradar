@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { fellBehind, funnelLeak, type StepFlows } from './growth'
+import { clickLeak, fellBehind, type ClickFlow } from './growth'
 
-const flows = (overrides: Partial<StepFlows> = {}): StepFlows => ({
-  click: { from: 10_000, to: 100 },
-  signup: { from: 100, to: 10 },
-  paid: { from: 10, to: 2 },
-  ...overrides,
-})
+const BEFORE: ClickFlow = { reached: 10_000, clicked: 100 }
 
 describe('consistency', () => {
   it('asks to post once at least three posts were due and fewer than half went out', () => {
@@ -17,22 +12,17 @@ describe('consistency', () => {
   })
 })
 
-describe('funnelLeak', () => {
-  it('finds the step whose rate fell furthest under 60% of the window before', () => {
-    const now = flows({ click: { from: 10_000, to: 40 }, signup: { from: 40, to: 2 } })
-    expect(funnelLeak(now, flows())).toEqual({ step: 'click', rate: 0.004, before: 0.01 })
-    // A step under its floor in either window says nothing.
-    expect(funnelLeak(flows({ signup: { from: 29, to: 0 } }), flows())).toBeNull()
+describe('clickLeak', () => {
+  it('finds clicks whose rate fell under 60% of the window before', () => {
+    expect(clickLeak({ reached: 10_000, clicked: 40 }, BEFORE)).toEqual({ rate: 0.004, before: 0.01 })
+    expect(clickLeak({ reached: 10_000, clicked: 70 }, BEFORE)).toBeNull()
+    // A window under the floor says nothing, and a window before under it gives nothing to compare with.
+    expect(clickLeak({ reached: 999, clicked: 0 }, BEFORE)).toBeNull()
+    expect(clickLeak({ reached: 2_000, clicked: 1 }, { reached: 999, clicked: 90 })).toBeNull()
   })
 
-  it('takes a step that let nothing through as the worst leak, whatever came before', () => {
-    const dry = flows({ signup: { from: 120, to: 0 } })
-    expect(funnelLeak(dry, flows({ signup: null }))).toEqual({ step: 'signup', rate: 0, before: null })
-    // Under three times its floor, a dry step is too small to call.
-    expect(funnelLeak(flows({ signup: { from: 60, to: 0 } }), flows({ signup: null }))).toBeNull()
-  })
-
-  it('reads no step a platform does not count', () => {
-    expect(funnelLeak(flows({ click: null, signup: null }), flows())).toBeNull()
+  it('takes no click at all as a leak, whatever came before, once three times the floor was reached', () => {
+    expect(clickLeak({ reached: 3_000, clicked: 0 }, { reached: 0, clicked: 0 })).toEqual({ rate: 0, before: null })
+    expect(clickLeak({ reached: 2_000, clicked: 0 }, { reached: 0, clicked: 0 })).toBeNull()
   })
 })

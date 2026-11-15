@@ -1,9 +1,8 @@
-import { asksSomething, isThreadSource, namesSponsor, placeLabel, placeOf, postedItemOf, roundupOf, standouts } from '@stepradar/shared'
+import { asksSomething, isThreadSource, namesSponsor, roundupOf, standouts } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 import type { BasisThread } from '../lib/validators'
-import { matchedPillar, pillarFor, type PlannerRework, type PlannerRoundup, type PlannerStandout } from './planner'
-import { WHAT_WORKS_DAYS, measuredPostsSince } from './report'
+import { matchedPillar, pillarFor, type PlannerRoundup, type PlannerStandout } from './planner'
 import { workspaceOf } from './workspace'
 
 /**
@@ -51,82 +50,4 @@ export async function whatWorked(
 /** A signal as a post keeps the thread it is drawn from. */
 function threadOf(signal: Doc<'signals'>): BasisThread {
   return { signalId: signal._id, title: signal.title, summary: signal.summary, url: signal.url }
-}
-
-const DAY_MS = 86_400_000
-
-/**
- * The post of another of the operator's accounts, on another platform, that
- * brought the most users in the last WHAT_WORKS_DAYS: the most paid, then
- * the most signups, one at least. Never a post that was itself reworked from
- * another, nor one this account reworked already. Null when none brought any.
- */
-export async function bestToRework(ctx: Reader, account: Doc<'accounts'>, now: number): Promise<PlannerRework | null> {
-  const since = now - WHAT_WORKS_DAYS * DAY_MS
-  const reworked = new Set(
-    (
-      await ctx.db
-        .query('posts')
-        .withIndex('by_account', (q) => q.eq('accountId', account._id))
-        .collect()
-    ).flatMap((post) => (post.basis?.kind === 'rework' ? [post.basis.post.postId] : []))
-  )
-  const others = (await ctx.db.query('accounts').collect()).filter(
-    (other) => other.workspaceId === account.workspaceId && other.platform !== account.platform
-  )
-  let best: { post: Doc<'posts'>; from: Doc<'accounts'>; paid: number; signups: number } | null = null
-  for (const other of others) {
-    const conversions = await ctx.db
-      .query('conversions')
-      .withIndex('by_account_time', (q) => q.eq('accountId', other._id).gte('at', since))
-      .collect()
-    const measured = await ctx.db
-      .query('posts')
-      .withIndex('by_account_status', (q) => q.eq('accountId', other._id).eq('status', 'measured'))
-      .collect()
-    for (const post of measuredPostsSince(measured, since)) {
-      if (post.basis?.kind === 'rework' || reworked.has(post._id)) continue
-      const count = (kind: 'signup' | 'paid') =>
-        conversions.filter((conversion) => conversion.postId === post._id && conversion.kind === kind).length
-      const paid = count('paid')
-      const signups = count('signup')
-      if (paid + signups === 0) continue
-      if (best === null || paid > best.paid || (paid === best.paid && signups > best.signups)) best = { post, from: other, paid, signups }
-    }
-  }
-  if (best === null) return null
-  const { post, from } = best
-  const { sponsorName } = await workspaceOf(ctx, account)
-  return {
-    kind: 'rework',
-    post: {
-      postId: post._id,
-      placeName: placeLabel(placeOf(from)),
-      title: post.title,
-      text: withoutSponsor((post.parts ?? []).join('\n\n'), sponsorName),
-      url: postedItemOf(post.posted)?.url ?? null,
-    },
-  }
-}
-
-/**
- * A post's words without what made it the other account's sponsored post:
- * every link, and every sentence that names the sponsor (its mention and
- * the other account's affiliation line). The reworked post names the
- * sponsor only as its own slot allows, with its own line and link.
- */
-function withoutSponsor(text: string, sponsorName: string): string {
-  return text
-    .split('\n')
-    .map((line) =>
-      line
-        .split(/(?<=[.!?])\s+/)
-        .filter((sentence) => !namesSponsor(sentence, sponsorName))
-        .join(' ')
-        .replace(/https?:\/\/\S+/g, '')
-        .trim()
-    )
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }

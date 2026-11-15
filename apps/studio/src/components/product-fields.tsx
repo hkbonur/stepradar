@@ -5,31 +5,25 @@ import { Field, Input, Textarea } from './ui'
 
 /**
  * The product the accounts promote, as the first-run setup and the Providers
- * page edit it. The value stays text while it is typed, so a cleared field
- * reads as empty rather than as 0.
+ * page edit it.
  */
 export interface ProductDraft {
   sponsorName: string
   sponsorUrl: string
   sponsorPitch: string
-  valuePerPaid: string
-  currency: string
 }
 
-/** A blank product, its currency guessed from the browser's region. */
+/** A blank product. */
 export function emptyProduct(): ProductDraft {
-  return { sponsorName: '', sponsorUrl: '', sponsorPitch: '', valuePerPaid: '', currency: guessCurrency() }
+  return { sponsorName: '', sponsorUrl: '', sponsorPitch: '' }
 }
 
-/** The draft as the backend takes it, trimmed, the value a number and the currency in capitals. */
+/** The draft as the backend takes it, trimmed, the website with its scheme. */
 export function productFields(draft: ProductDraft) {
   return {
     sponsorName: draft.sponsorName.trim(),
     sponsorUrl: withScheme(draft.sponsorUrl),
     sponsorPitch: draft.sponsorPitch.trim(),
-    // An empty value is no number, which the shared check names, rather than a silent 0.
-    valuePerPaid: draft.valuePerPaid.trim() === '' ? Number.NaN : Number(draft.valuePerPaid),
-    currency: draft.currency.trim().toUpperCase(),
   }
 }
 
@@ -93,87 +87,4 @@ export function ProductFields(props: {
       </div>
     </div>
   )
-}
-
-/** What one paying customer is worth, for the reports' estimate. */
-export function ValueFields(props: {
-  value: ProductDraft
-  onChange: (change: Partial<ProductDraft>) => void
-  invalid?: readonly SponsorProblem['field'][]
-}) {
-  const invalid = (field: SponsorProblem['field']) => props.invalid?.includes(field) || undefined
-  return (
-    <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-      <Field label="Value of one paying customer" hint="An estimate is fine. 0 if you would rather not say.">
-        <Input
-          name="valuePerPaid"
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step="any"
-          value={props.value.valuePerPaid}
-          onChange={(event) => props.onChange({ valuePerPaid: event.target.value })}
-          aria-invalid={invalid('valuePerPaid')}
-          placeholder="49"
-        />
-      </Field>
-      <Field label="Currency">
-        <Input
-          name="currency"
-          value={props.value.currency}
-          onChange={(event) => props.onChange({ currency: event.target.value.toUpperCase() })}
-          aria-invalid={invalid('currency')}
-          maxLength={3}
-          className="font-mono uppercase"
-          autoComplete="off"
-        />
-      </Field>
-    </div>
-  )
-}
-
-/** The browser's currency, a fair start; the operator changes it. */
-function guessCurrency(): string {
-  const region = new Intl.Locale(navigator.language).maximize().region
-  return region !== undefined && REGION_CURRENCY[region] !== undefined ? REGION_CURRENCY[region] : 'USD'
-}
-
-const EURO_REGIONS = [
-  'AT',
-  'BE',
-  'CY',
-  'DE',
-  'EE',
-  'ES',
-  'FI',
-  'FR',
-  'GR',
-  'HR',
-  'IE',
-  'IT',
-  'LT',
-  'LU',
-  'LV',
-  'MT',
-  'NL',
-  'PT',
-  'SI',
-  'SK',
-]
-
-const REGION_CURRENCY: Record<string, string> = {
-  ...Object.fromEntries(EURO_REGIONS.map((region) => [region, 'EUR'])),
-  US: 'USD',
-  GB: 'GBP',
-  NO: 'NOK',
-  SE: 'SEK',
-  DK: 'DKK',
-  CH: 'CHF',
-  CA: 'CAD',
-  AU: 'AUD',
-  JP: 'JPY',
-  IN: 'INR',
-  TR: 'TRY',
-  BR: 'BRL',
-  PL: 'PLN',
 }

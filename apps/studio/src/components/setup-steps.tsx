@@ -1,11 +1,11 @@
 import { cn } from '@/lib/cn'
 
-/** The first run's three steps (DESIGN.md, Setup): the product and its value on /setup, then the accounts on /onboarding. */
-export type SetupStep = 'product' | 'value' | 'accounts'
+/** The first run's steps (DESIGN.md, Setup): the product and the Anthropic key on /setup, then the accounts on /onboarding. */
+export type SetupStep = 'product' | 'key' | 'accounts'
 
 const STEPS: { step: SetupStep; label: string }[] = [
   { step: 'product', label: 'Your product' },
-  { step: 'value', label: 'What a customer is worth' },
+  { step: 'key', label: 'Your Anthropic key' },
   { step: 'accounts', label: 'Your accounts' },
 ]
 

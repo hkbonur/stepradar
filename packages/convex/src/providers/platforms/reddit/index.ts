@@ -1,3 +1,4 @@
+import type { ProviderKeys } from '../../../core/keys'
 import type { PlatformReader, ReaderConnection } from '../types'
 import { redditAccount, redditActivity, redditComments, redditCounts, redditMentions } from './account'
 import { redditAppSession, redditSession } from './oauth'
@@ -7,11 +8,12 @@ import { redditRules, redditSearch } from './search'
  * Reddit, through its OAuth API: search as the app for any account, and once
  * the operator connected the account, search as it, hear its mentions, and
  * read its own posts and comments, the answers in its inbox, their numbers
- * and its karma, refreshing the grant once per reader.
+ * and its karma, refreshing the grant once per reader. The app's keys are
+ * the operator's (core/keys.ts), read where each request is made.
  */
-export function redditReader(connection: ReaderConnection | null): PlatformReader {
+export function redditReader(connection: ReaderConnection | null, keys: ProviderKeys): PlatformReader {
   if (connection === null) {
-    const app = redditAppSession()
+    const app = redditAppSession(keys)
     return {
       platform: 'reddit',
       name: 'oauth (app)',
@@ -19,7 +21,7 @@ export function redditReader(connection: ReaderConnection | null): PlatformReade
       rules: (community) => redditRules(app, community),
     }
   }
-  const session = redditSession(connection.refreshToken)
+  const session = redditSession(keys, connection.refreshToken)
   return {
     platform: 'reddit',
     name: 'oauth',

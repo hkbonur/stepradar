@@ -1,9 +1,8 @@
 /**
  * The product a workspace's accounts promote (CONTEXT.md, Sponsor): its name,
- * where it lives, what it does in one sentence, and what one paying customer
- * is worth. The studio's first-run setup and its settings check the fields
- * with these words before they are sent, and the backend refuses with the
- * same ones.
+ * where it lives and what it does in one sentence. The studio's first-run
+ * setup and its settings check the fields with these words before they are
+ * sent, and the backend refuses with the same ones.
  */
 
 /** The longest pitch: one sentence the writer says in its own words, never a paragraph it reads out. */
@@ -16,11 +15,7 @@ export interface SponsorFields {
   sponsorName: string
   sponsorUrl: string
   sponsorPitch: string
-  valuePerPaid: number
-  currency: string
 }
-
-const CURRENCY_PATTERN = /^[A-Z]{3}$/
 
 /** One problem with the fields, naming the field it is about, so a form marks that field and shows only its own step's. */
 export interface SponsorProblem {
@@ -38,8 +33,6 @@ export function sponsorProblems(fields: SponsorFields): SponsorProblem[] {
   if (pitch.length < SPONSOR_PITCH_MIN)
     add('sponsorPitch', `Say what the product does in a sentence of at least ${SPONSOR_PITCH_MIN} characters.`)
   if (pitch.length > SPONSOR_PITCH_MAX) add('sponsorPitch', `Keep what the product does to ${SPONSOR_PITCH_MAX} characters.`)
-  if (!(Number.isFinite(fields.valuePerPaid) && fields.valuePerPaid >= 0)) add('valuePerPaid', 'A paying customer is worth 0 or more.')
-  if (!CURRENCY_PATTERN.test(fields.currency)) add('currency', 'The currency is three capital letters, such as USD or EUR.')
   return problems
 }
 

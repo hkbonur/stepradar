@@ -12,13 +12,19 @@ pnpm backend:up      # local Convex in docker, pushes the backend
 pnpm dev             # the studio on http://localhost:3300, and the Convex watcher
 ```
 
-The first visit opens the setup: name the product your accounts promote, say in one sentence what it does, and what one paying customer is worth; then add one to five of your own accounts.
+The first visit opens the setup: name the product your accounts promote and say in one sentence what it does, paste your Anthropic key (or add it later), then add one to five of your own accounts.
 
 To look around with demo data instead, run `pnpm seed` on an empty backend: it builds a workspace for Formstep (the product Stepradar was first built for) with two accounts on X and one on the n8n Community, and a planned week. `pnpm seed:fresh` wipes the backend first.
 
 Under Vite, `/go/:slug` (a tracked link) is an SPA route that calls the same Convex function as the worker. To exercise the worker itself, run `pnpm --filter @stepradar/app exec wrangler dev --port 3301`. Before a real deploy, override `CONVEX_URL` in `apps/studio/wrangler.toml` (it is committed pointing at the local docker backend) or set it as a Cloudflare variable.
 
-Everything runs with mock providers by default: signals, threads, drafts and numbers are generated so the whole loop can be walked end to end. Set `PROVIDERS_MODE=real` and the keys on the Convex deployment to switch; the Providers page lists the keys each provider needs, and a missing one is refused by name, never served from a mock.
+Everything runs with mock providers by default: signals, threads, drafts and numbers are generated so the whole loop can be walked end to end. To switch, add your keys in the studio (the setup asks for the Anthropic key; the Providers page takes it and the Reddit app's keys any time), then set `PROVIDERS_MODE=real` on the deployment from `packages/convex`:
+
+```bash
+pnpm exec convex env set PROVIDERS_MODE real
+```
+
+A missing key is refused by name, never served from a mock. Hacker News and Discourse forums need no key.
 
 ## Layout
 

@@ -1,11 +1,11 @@
-import { countsClicks, itemTextOf, postedItemOf, type ConversionKind, type ItemRead, type Platform, type Posted } from '@stepradar/shared'
+import { countsClicks, itemTextOf, postedItemOf, type ItemRead, type Platform, type Posted } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { QueryCtx } from '../_generated/server'
 
 /**
  * What went out: the account's posts and replies posted since a time, as the
  * match looks at them, the analyst measures them and the report and the
- * Posted page list them, with what each post did for the sponsor.
+ * Posted page list them, with the clicks each post brought the sponsor.
  */
 
 type Reader = { db: QueryCtx['db'] }
@@ -72,21 +72,6 @@ export async function shownClicks(ctx: Reader, platform: Platform, postId: Id<'p
   return countsClicks(platform) ? postClicks(ctx, postId) : null
 }
 
-export type ConversionLike = { kind: ConversionKind; mock: boolean }
-
-/** The conversions of each kind, and what the paid ones are worth. */
-export function countConversions(conversions: readonly ConversionLike[], valuePerPaid: number) {
-  const count = (kind: ConversionKind) => conversions.filter((conversion) => conversion.kind === kind).length
-  const paid = count('paid')
-  return {
-    demos: count('demo_started'),
-    signups: count('signup'),
-    trials: count('trial_started'),
-    paid,
-    value: paid * valuePerPaid,
-  }
-}
-
 /** What an item that went out says, where and when, and what it brought back: the analyst's last read, or none yet. */
 interface PostedBase {
   postedAt: number
@@ -100,7 +85,7 @@ interface PostedBase {
 
 /**
  * Something that went out, as the report and the Posted page list it: a post,
- * which brings clicks and conversions too, a reply, or, on the Posted page,
+ * which brings clicks too, a reply, or, on the Posted page,
  * an item the operator posted without a draft, which the analyst does not
  * measure.
  */
@@ -113,9 +98,6 @@ export type PostedItem =
       sponsorSegment: Doc<'posts'>['sponsorSegment']
       /** Null where the post links to the sponsor directly (shared `countsClicks`). */
       clicks: number | null
-      signups: number
-      paid: number
-      value: number
     })
   | (PostedBase & {
       kind: 'reply'
@@ -129,23 +111,12 @@ export type PostedItem =
 
 /**
  * The posts and replies read for a window, newest first, with their numbers
- * and, for a post, its clicks and the conversions it brought, from the
- * window's conversions: one that a post brought came after it went out.
+ * and, for a post, its clicks.
  */
-export async function postedItems(
-  ctx: Reader,
-  account: Doc<'accounts'>,
-  rows: PostedRows,
-  conversions: readonly Doc<'conversions'>[],
-  valuePerPaid: number
-): Promise<PostedItem[]> {
+export async function postedItems(ctx: Reader, account: Doc<'accounts'>, rows: PostedRows): Promise<PostedItem[]> {
   const items: PostedItem[] = []
   for (const post of rows.posts) {
     if (post.posted === undefined) continue
-    const { signups, paid, value } = countConversions(
-      conversions.filter((conversion) => conversion.postId === post._id),
-      valuePerPaid
-    )
     items.push({
       ...baseOf(post, post.posted, post.community ?? null),
       kind: 'post',
@@ -154,9 +125,6 @@ export async function postedItems(
       status: post.status,
       sponsorSegment: post.sponsorSegment,
       clicks: await shownClicks(ctx, account.platform, post._id),
-      signups,
-      paid,
-      value,
     })
   }
   for (const reply of rows.replies) {

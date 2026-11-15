@@ -3,8 +3,8 @@ import type { QueryCtx } from '../_generated/server'
 import { refusal } from '../lib/errors'
 
 /**
- * The one workspace today. Every handler that needs the sponsor, the app URL
- * or the value per paid conversion reads it through here, so a missing
+ * The one workspace today. Every handler that needs the sponsor or the app
+ * URL reads it through here, so a missing
  * workspace fails with one message everywhere. The studio's first-run setup
  * makes it (private/workspace.ts `create`).
  */

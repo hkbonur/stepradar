@@ -24,11 +24,10 @@ describe('home overview', () => {
       overview.changes.entries.map((entry) => entry.createdAt).sort((a, b) => b - a)
     )
 
-    // The earnings are the workspace report's rows.
+    // The reach and the clicks are the workspace report's rows.
     const report = await t.query(api.private.report.forWorkspace, {})
-    expect(overview.earned.accounts.map((row) => [row.account.name, row.value])).toEqual(
-      report.accounts.map((row) => [row.account.name, row.funnel.value])
+    expect(Object.fromEntries(overview.reached.accounts.map((row) => [row.account.name, [row.reach, row.clicks]]))).toEqual(
+      Object.fromEntries(report.accounts.map((row) => [row.account.name, [row.funnel.reach, row.funnel.clicks]]))
     )
-    expect(overview.earned.total).toBe(report.total.value)
   })
 })

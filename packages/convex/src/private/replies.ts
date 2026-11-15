@@ -82,18 +82,19 @@ export const pasteThread = action({
     const { account, workspace, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId: args.accountId })
     const parsed = parseThreadLink(placeOf(account), args.url)
     if (parsed.kind === 'invalid') throw refusal(parsed.problem)
-    const reader = actionReader(ctx, account, connection)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const reader = actionReader(ctx, account, connection, keys)
     const said = parsed.community ?? (reader.community ? await reader.community(parsed.externalId) : null)
     const link = { ...parsed, community: said }
     // The writer answers only where it knows the community's rules (docs/plan.md, ground rule 3).
     if (link.community !== null) {
-      const { unread } = await readCommunityRules(ctx, account, reader, [link.community])
+      const { unread } = await readCommunityRules(ctx, { account, reader, keys }, [link.community])
       const [failed] = unread
       if (failed) throw refusal(`Stepradar could not read the rules of ${communityLabel(account.platform, failed.name)}: ${failed.error}`)
     }
     const text = args.text.trim()
     if (text === '') throw refusal('Paste the text you want to answer.')
-    const [fit] = await classifierProvider().classify(classifyBriefOf(account, workspace, [{ origin: 'pasted', text }]))
+    const [fit] = await classifierProvider(keys).classify(classifyBriefOf(account, workspace, [{ origin: 'pasted', text }]))
     if (fit === undefined) throw new Error('the classifier read no pasted thread')
     return ctx.runMutation(internal.internal.replies.storePastedMutation, { accountId: account._id, link, text, fit })
   },

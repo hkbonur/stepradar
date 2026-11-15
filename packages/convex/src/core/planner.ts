@@ -120,9 +120,6 @@ export interface PlannerStandout {
 /** The questions about one pillar a round-up answers, as the post keeps them (core/niche.ts). */
 export type PlannerRoundup = Extract<PostBasis, { kind: 'roundup' }>
 
-/** Another account's post that brought users, to be reworked for this one, as the post keeps it (core/niche.ts). */
-export type PlannerRework = Extract<PostBasis, { kind: 'rework' }>
-
 /** What a post slot sets out to do, how long it runs, and the kind of post that length takes. */
 export interface PostShape {
   intent: PostIntent
@@ -161,19 +158,17 @@ export interface PostSlotsInput {
   standouts: readonly PlannerStandout[]
   /** The round-up the account's questions make; null when they make none (core/niche.ts). */
   roundup: PlannerRoundup | null
-  /** Another account's post that brought users, to rework this week; null when none did (core/niche.ts). */
-  rework: PlannerRework | null
   now: number
 }
 
-/** What a week holds one of at most, in the order its evergreen posts take them: its round-up, then its reworked post. */
-type WeeklyPost = PlannerRoundup | PlannerRework
+/** What a week holds one of at most: its round-up. */
+type WeeklyPost = PlannerRoundup
 
 export function planPostSlots(args: PostSlotsInput): PlannedPostInput[] {
-  // A week that already holds its round-up or its reworked post takes no other.
+  // A week that already holds its round-up takes no other.
   const held = (kind: WeeklyPost['kind']) =>
     args.posts.some((post) => post.basis?.kind === kind && weekStart(post.plannedFor) === args.weekStart)
-  const weekly = [args.roundup, args.rework].flatMap((post) => (post === null || held(post.kind) ? [] : [post]))
+  const weekly = [args.roundup].flatMap((post) => (post === null || held(post.kind) ? [] : [post]))
   const planned = planSlots(args, weekly)
   const roundupPlaced = planned.some((post) => post.basis?.kind === 'roundup')
   if (roundupPlaced || !weekly.some((post) => post.kind === 'roundup')) return planned
@@ -263,7 +258,7 @@ function planSlots(args: PostSlotsInput, weekly: readonly WeeklyPost[]): Planned
     const community = platform === 'hackernews' ? hackerNewsCommunity(intent) : place.community
     // A post drawn from what worked takes an evergreen slot: a reactive one keeps its signal.
     const evergreen = signalId === undefined
-    // The week's round-up first, then its reworked post, each in the first evergreen post that can hold it.
+    // The week's round-up, in the first evergreen post that can hold it.
     const weeklyPost = holdsDrawnPost(platform, { ...shape, intent }, evergreen) ? weeklyLeft.shift() : undefined
     const tagOf = () => {
       if (experiment === null) return null
@@ -272,7 +267,7 @@ function planSlots(args: PostSlotsInput, weekly: readonly WeeklyPost[]): Planned
       if (days !== null) return days.get(day.plannedFor) ?? null
       const counts = groupCounts[carries ? 'sponsored' : 'plain']
       if (experiment.kind !== 'post_model') return nextVariant(experiment, counts)
-      // A round-up or a reworked post is drawn from what worked but modeled on nothing: it is neither variant, and leaves the test.
+      // A round-up is drawn from what worked but modeled on nothing: it is neither variant, and leaves the test.
       if (weeklyPost !== undefined) return null
       return modelTag(experiment, counts, evergreen && standoutsLeft.length > 0)
     }
@@ -330,14 +325,6 @@ function drawnFields(
         signalIds: [],
         basis: drawn,
       }
-    case 'rework':
-      // It keeps the slot's pillar: the week's pillar shares stay as planned, whatever the original was about.
-      return {
-        concept: `From ${drawn.post.placeName}: ${drawn.post.title}`,
-        pillar: day.pillar,
-        signalIds: [],
-        basis: drawn,
-      }
   }
 }
 
@@ -345,11 +332,11 @@ function drawnFields(
 const DRAWN_INTENTS: readonly PostIntent[] = ['teach', 'inform', 'share']
 
 /**
- * Whether a slot can hold the week's round-up or its reworked post: an
+ * Whether a slot can hold the week's round-up: an
  * evergreen slot, room for several questions and answers or a whole point
  * (on X a thread, elsewhere any full post), an intent that answers, and a
  * platform where it fits; Hacker News places a post by what it sets out to
- * do, and has no place for either.
+ * do, and has no place for it.
  */
 function holdsDrawnPost(platform: Platform, shape: PostShape, evergreen: boolean): boolean {
   if (!evergreen) return false

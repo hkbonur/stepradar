@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_REACH_LABELS,
   grouped,
   communityLabel,
   handleOf,
@@ -16,6 +17,7 @@ import type { MutationCtx, QueryCtx } from '../_generated/server'
 import type { PushOutcome } from '../providers/notifier/types'
 import { addDays, dayKey, hourAt, instantAt, weekStart } from './dates'
 import { lastWeekLine } from './growth'
+import { sumKnown } from './report'
 import { workspaceOf } from './workspace'
 import { nextSteps, nextStepsInput } from './steps'
 import { repliesWithStatus, type RisingThread } from './replies'
@@ -251,23 +253,37 @@ export async function morningDigestOf(ctx: Reader, accounts: Doc<'accounts'>[], 
 }
 
 /**
- * Last week's signups and paid conversions over `accounts`, Monday to Sunday
- * where they are, each with how it moved against the week before; null when
- * neither week brought any, which is nothing to say.
+ * Last week's clicks and reach gained over `accounts`, Monday to Sunday where
+ * they are, each with how it moved against the week before. Reach is added
+ * up only where it is counted alike (shared `ACCOUNT_REACH_LABELS`: karma,
+ * followers, likes), each said apart; a number no account counts is left
+ * out. Null when nothing is said, or neither week brought any, which is
+ * nothing to say.
  */
 async function weekLine(ctx: Reader, accounts: Doc<'accounts'>[], now: number): Promise<string | null> {
-  let signups = 0
-  let paid = 0
-  let before = { signups: 0, paid: 0 }
-  for (const account of accounts) {
-    const line = await lastWeekLine(ctx, account, now)
-    signups += line.signups
-    paid += line.paid
-    before = { signups: before.signups + line.before.signups, paid: before.paid + line.before.paid }
-  }
-  if (signups + paid + before.signups + before.paid === 0) return null
-  const moved = (count: number, was: number) => (count === was ? '' : ` (${count > was ? '+' : '−'}${grouped(Math.abs(count - was))})`)
-  return `Last week: ${grouped(signups)} ${signups === 1 ? 'signup' : 'signups'}${moved(signups, before.signups)}, ${grouped(paid)} paid${moved(paid, before.paid)}.`
+  const lines = await Promise.all(
+    accounts.map(async (account) => ({ unit: ACCOUNT_REACH_LABELS[account.platform], line: await lastWeekLine(ctx, account, now) }))
+  )
+  const moved = (count: number, was: number | null) =>
+    was === null || count === was ? '' : ` (${count > was ? '+' : '−'}${grouped(Math.abs(count - was))})`
+  const sums: { said: (count: number) => string; now: number | null; was: number | null }[] = [
+    {
+      said: (count) => `${grouped(count)} ${count === 1 ? 'click' : 'clicks'}`,
+      now: sumKnown(lines.map(({ line }) => line.clicks)),
+      was: sumKnown(lines.map(({ line }) => line.before.clicks)),
+    },
+    ...[...new Set(lines.map(({ unit }) => unit))].map((unit) => {
+      const ofUnit = lines.filter((entry) => entry.unit === unit)
+      return {
+        said: (count: number) => `${count < 0 ? '−' : '+'}${grouped(Math.abs(count))} ${unit.toLowerCase()}`,
+        now: sumKnown(ofUnit.map(({ line }) => line.gained)),
+        was: sumKnown(ofUnit.map(({ line }) => line.before.gained)),
+      }
+    }),
+  ]
+  const said = sums.flatMap((sum) => (sum.now === null ? [] : [{ ...sum, now: sum.now }]))
+  if (said.every((sum) => sum.now === 0 && (sum.was ?? 0) === 0)) return null
+  return `Last week: ${said.map((sum) => `${sum.said(sum.now)}${moved(sum.now, sum.was)}`).join(', ')}.`
 }
 
 /**

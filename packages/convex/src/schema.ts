@@ -14,8 +14,8 @@ import {
   heardFitValidator,
   selfPromotionValidator,
   connectionStatusValidator,
+  providerKeyValidator,
   checklistStatusValidator,
-  conversionKindValidator,
   decisionValidator,
   postBasisValidator,
   judgmentValidator,
@@ -38,8 +38,6 @@ import {
   experimentMetricValidator,
   formatFields,
   forumValidator,
-  platformValidator,
-  probableBasisValidator,
   postIntentValidator,
   postLengthValidator,
   replyOriginValidator,
@@ -65,9 +63,6 @@ export default defineSchema({
     sponsorPitch: v.string(),
     // Public origin of the studio app, for tracked links.
     appUrl: v.string(),
-    // What one paid conversion is worth to the sponsor, for the report's estimate.
-    valuePerPaid: v.number(),
-    currency: v.string(),
     // The operator's quiet hours, when nothing is pushed (shared notifications.ts); absent when they set none.
     quietHours: v.optional(quietHoursValidator),
   }),
@@ -131,8 +126,8 @@ export default defineSchema({
     plannedFor: v.string(),
     scheduledAt: v.number(),
     signalIds: v.array(v.id('signals')),
-    // What the post is drawn from besides its pillar: a standout it is modeled on, the questions a round-up answers, a
-    // post of the account's it reworks (core/niche.ts), or what a launch announces (core/launch.ts); absent otherwise.
+    // What the post is drawn from besides its pillar: a standout it is modeled on, the questions a round-up answers, or
+    // what a launch announces (core/launch.ts); absent otherwise.
     basis: v.optional(postBasisValidator),
     // The judge's latest reading of its words (internal/judge.ts); absent until the judge read it.
     judgment: v.optional(judgmentValidator),
@@ -266,31 +261,6 @@ export default defineSchema({
   })
     .index('by_link', ['linkId'])
     .index('by_account_time', ['accountId', 'at']),
-
-  conversions: defineTable({
-    accountId: v.id('accounts'),
-    postId: v.optional(v.id('posts')),
-    variantKey: v.optional(v.string()),
-    kind: conversionKindValidator,
-    distinctId: v.string(),
-    at: v.number(),
-    mock: v.boolean(),
-  })
-    .index('by_account_time', ['accountId', 'at'])
-    .index('by_distinct', ['distinctId', 'kind']),
-
-  // A sponsor's conversion with no UTM parameters that is probably a platform's (shared probable.ts): it names the
-  // platform, never an account or a post, so the report shows it apart and no experiment reads it.
-  probableConversions: defineTable({
-    platform: platformValidator,
-    basis: probableBasisValidator,
-    kind: conversionKindValidator,
-    distinctId: v.string(),
-    at: v.number(),
-    mock: v.boolean(),
-  })
-    .index('by_platform_time', ['platform', 'at'])
-    .index('by_distinct', ['distinctId', 'kind']),
 
   signals: defineTable({
     accountId: v.id('accounts'),
@@ -519,6 +489,14 @@ export default defineSchema({
     // Connected in mock mode: no token was exchanged, and the mock reader reads as if it were.
     mock: v.boolean(),
   }).index('by_account', ['accountId']),
+
+  // A key the operator brought for a real provider (shared provider-keys.ts, ADR 0005), one row per key. Only internal
+  // functions read the value; the studio sees whether it is set and its last characters.
+  providerKeys: defineTable({
+    name: providerKeyValidator,
+    value: v.string(),
+    setAt: v.number(),
+  }).index('by_name', ['name']),
 
   // A subreddit or Hacker News where an account takes part: met by the listener, with its rules as last read.
   communities: defineTable({

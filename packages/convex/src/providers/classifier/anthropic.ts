@@ -1,6 +1,7 @@
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { HEARD_INTENTS, SELF_PROMOTION, communityLabel, type HeardFit } from '@stepradar/shared'
 import { z } from 'zod'
+import type { ProviderKeys } from '../../core/keys'
 import { anthropicClient } from '../llm/anthropic'
 import type { ClassifierProvider, ClassifyBrief } from './types'
 
@@ -41,8 +42,8 @@ function system(brief: ClassifyBrief): string {
   ].join('\n')
 }
 
-async function classifyBatch(brief: ClassifyBrief, posts: ClassifyBrief['posts']): Promise<HeardFit[]> {
-  const response = await anthropicClient().messages.parse({
+async function classifyBatch(keys: ProviderKeys, brief: ClassifyBrief, posts: ClassifyBrief['posts']): Promise<HeardFit[]> {
+  const response = await anthropicClient(keys).messages.parse({
     model: MODEL,
     max_tokens: 4000,
     output_config: { effort: 'low', format: zodOutputFormat(fitsSchema) },
@@ -72,33 +73,36 @@ function inUnit(value: number): boolean {
 
 const rulesReadSchema = z.object({ selfPromotion: z.enum(SELF_PROMOTION), reason: z.string() })
 
-export const anthropicClassifier: ClassifierProvider = {
-  name: 'anthropic',
-  async communityRules(args) {
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 1000,
-      output_config: { effort: 'low', format: zodOutputFormat(rulesReadSchema) },
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `These are the rules of ${communityLabel(args.platform, args.community)} on ${args.placeName}.`,
-            `<rules>\n${args.rules}\n</rules>`,
-            'May someone who builds a product name it in a helpful answer there, saying they build it? selfPromotion is allowed when the rules permit it, forbidden when they forbid self-promotion or advertising, unknown when they say nothing about it. The reason is a few words.',
-          ].join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The classifier declined these rules')
-    if (!response.parsed_output) throw new Error('The classifier returned no parseable read of the rules')
-    return response.parsed_output
-  },
-  async classify(brief) {
-    const fits: HeardFit[] = []
-    for (let start = 0; start < brief.posts.length; start += BATCH) {
-      fits.push(...(await classifyBatch(brief, brief.posts.slice(start, start + BATCH))))
-    }
-    return fits
-  },
+/** Claude Haiku on the operator's key. */
+export function anthropicClassifier(keys: ProviderKeys): ClassifierProvider {
+  return {
+    name: 'anthropic',
+    async communityRules(args) {
+      const response = await anthropicClient(keys).messages.parse({
+        model: MODEL,
+        max_tokens: 1000,
+        output_config: { effort: 'low', format: zodOutputFormat(rulesReadSchema) },
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `These are the rules of ${communityLabel(args.platform, args.community)} on ${args.placeName}.`,
+              `<rules>\n${args.rules}\n</rules>`,
+              'May someone who builds a product name it in a helpful answer there, saying they build it? selfPromotion is allowed when the rules permit it, forbidden when they forbid self-promotion or advertising, unknown when they say nothing about it. The reason is a few words.',
+            ].join('\n\n'),
+          },
+        ],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The classifier declined these rules')
+      if (!response.parsed_output) throw new Error('The classifier returned no parseable read of the rules')
+      return response.parsed_output
+    },
+    async classify(brief) {
+      const fits: HeardFit[] = []
+      for (let start = 0; start < brief.posts.length; start += BATCH) {
+        fits.push(...(await classifyBatch(keys, brief, brief.posts.slice(start, start + BATCH))))
+      }
+      return fits
+    },
+  }
 }

@@ -1,4 +1,5 @@
 import {
+  ACCOUNT_REACH_LABELS,
   AUTO_MIN_CONFIDENCE,
   EXPERIMENT_KIND_LABELS,
   EXPERIMENT_METRIC_LABELS,
@@ -34,8 +35,8 @@ import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { activeCommunities, communitiesOf, sameCommunity } from './communities'
 import { dayKey } from './dates'
-import { leakOf, leakReason, type AccountLeak } from './growth'
-import { measurableMetrics, startExperiment, variantStatsSince } from './experiments'
+import { growthOver, leakOf, leakReason, type AccountLeak, type GrowthLine } from './growth'
+import { measurableMetrics, percentText, startExperiment, variantStatsSince } from './experiments'
 import { activeEntries, supersedeOthers } from './memory'
 import { WHAT_WORKS_DAYS, measuredPostsSince, postOutcomes, rankGroups, reportFunnel } from './report'
 import { workspaceOf } from './workspace'
@@ -56,7 +57,7 @@ const PILLAR_WINDOW_DAYS = WHAT_WORKS_DAYS
 const DECISION_MEMORY_DAYS = 180
 /** The newest journal entries the strategy page shows. */
 const JOURNAL_PAGE = 200
-/** Paid conversions of this many days, against the same span before it, say where an account stands against the goal. */
+/** What this many days brought, against the same span before it, says where an account stands against the goal. */
 const STANDING_WINDOW_DAYS = 28
 
 export interface ReviewOutcome {
@@ -114,9 +115,9 @@ function lowerFirst(text: string): string {
 }
 
 /**
- * The pillar weights step: each pillar's value per measured post of the last
- * 28 days (paid conversions of its posts times the workspace's value per
- * paid), with signups per post to break a tie, which every platform counts, then
+ * The pillar weights step: each pillar's clicks per reach over its measured
+ * posts of the last 28 days, where the account's posts carry a tracked link,
+ * with reach per post to break a tie, which every platform counts, then
  * shared `shiftPillarWeights`. The scores are the report's "what works" by
  * pillar for this account alone (core/report.ts `rankGroups`), so the
  * operator reads the numbers the review acts on.
@@ -126,24 +127,18 @@ async function reviewPillars(
   account: Doc<'accounts'>,
   strategy: Strategy,
   posts: Doc<'posts'>[],
-  conversions: Doc<'conversions'>[],
   now: number
 ): Promise<{ strategy: Strategy; change: Change } | null> {
-  const workspace = await workspaceOf(ctx, account)
-  const outcomes = await postOutcomes(
-    ctx,
-    account.platform,
-    measuredPostsSince(posts, now - PILLAR_WINDOW_DAYS * DAY_MS),
-    conversions,
-    workspace.valuePerPaid
-  )
+  const outcomes = await postOutcomes(ctx, account.platform, measuredPostsSince(posts, now - PILLAR_WINDOW_DAYS * DAY_MS))
   const groups = rankGroups(outcomes, (post) =>
     post.pillar !== undefined && account.pillars.includes(post.pillar) ? { key: post.pillar, label: post.pillar } : null
   )
+  // Where no click is counted every pillar scores none, and reach per post decides.
   const scores: (PillarScore & { postIds: Id<'posts'>[] })[] = groups.map((group) => ({
     pillar: group.key,
-    score: group.valuePerPost,
-    tiebreak: group.signupsPerPost,
+    score: group.clicksPerReach ?? 0,
+    // One account's posts are on one platform, so reach per post is null only where none was read: nothing to break a tie with.
+    tiebreak: group.reachPerPost ?? 0,
     posts: group.posts,
     postIds: group.postIds,
   }))
@@ -159,14 +154,13 @@ async function reviewPillars(
     if (!entry) throw new Error(`pillar "${pillar}" has no weight`)
     return entry.weight
   }
-  const money = (value: number) => `${grouped(value)} ${workspace.currency}`
-  const onValue =
-    `Over the last ${PILLAR_WINDOW_DAYS} days "${up}" made ${money(upScore.score)} per measured post over ${upScore.posts} posts, ` +
-    `and "${down}" ${money(downScore.score)} over ${downScore.posts}.`
-  const onSignups =
-    `Over the last ${PILLAR_WINDOW_DAYS} days "${up}" and "${down}" made the same value per measured post, ` +
-    `and "${up}" brought ${upScore.tiebreak.toFixed(2)} signups per post against ${downScore.tiebreak.toFixed(2)}.`
-  const reason = upScore.score === downScore.score ? onSignups : onValue
+  const onClicks =
+    `Over the last ${PILLAR_WINDOW_DAYS} days ${percentText(upScore.score)} of the people "${up}" reached clicked through over ${upScore.posts} posts, ` +
+    `and ${percentText(downScore.score)} of those "${down}" reached over ${downScore.posts}.`
+  const onReach =
+    `Over the last ${PILLAR_WINDOW_DAYS} days "${up}" reached ${grouped(upScore.tiebreak)} per measured post over ${upScore.posts} posts, ` +
+    `and "${down}" ${grouped(downScore.tiebreak)} over ${downScore.posts}.`
+  const reason = upScore.score === downScore.score ? onReach : onClicks
   await ctx.db.insert('journal', {
     accountId: account._id,
     kind: 'pillar_weights',
@@ -179,10 +173,10 @@ async function reviewPillars(
       postIds: [...upScore.postIds, ...downScore.postIds],
       signalIds: [],
       numbers: [
-        { label: `"${up}" value per post (${workspace.currency})`, value: Math.round(upScore.score) },
-        { label: `"${down}" value per post (${workspace.currency})`, value: Math.round(downScore.score) },
-        { label: `"${up}" signups per post`, value: Math.round(upScore.tiebreak * 100) / 100 },
-        { label: `"${down}" signups per post`, value: Math.round(downScore.tiebreak * 100) / 100 },
+        { label: `"${up}" clicks per reach (%)`, value: Math.round(upScore.score * 10_000) / 100 },
+        { label: `"${down}" clicks per reach (%)`, value: Math.round(downScore.score * 10_000) / 100 },
+        { label: `"${up}" reach per post`, value: Math.round(upScore.tiebreak) },
+        { label: `"${down}" reach per post`, value: Math.round(downScore.tiebreak) },
         { label: `"${up}" weight (%)`, value: percent(weightOf(shift.weights, up)) },
         { label: `"${down}" weight (%)`, value: percent(weightOf(shift.weights, down)) },
       ],
@@ -207,31 +201,26 @@ async function reviewPillars(
  * The community weights step, on Reddit and on a forum, where the planner
  * sends posts by community (core/planner.ts `communitiesFor`): each
  * subreddit or category the account takes part in (core/communities.ts
- * `activeCommunities`), scored by the signups per measured post of the last
- * 28 days, with reach per post to break a tie, then shared `shiftWeights`:
- * more posts go where they earn more, fewer where they earn nothing. A post
- * there links to the sponsor directly, so no click is counted (shared
- * `countsClicks`); replies are left out, since the weight decides where
- * posts go.
+ * `activeCommunities`), scored by the reach per measured post of the last
+ * 28 days, then shared `shiftWeights`: more posts go where they reach more,
+ * fewer where they reach less. A post there links to the sponsor directly,
+ * so no click is counted (shared `countsClicks`); replies are left out,
+ * since the weight decides where posts go.
  */
-async function reviewCommunities(
-  ctx: MutationCtx,
-  account: Doc<'accounts'>,
-  conversions: readonly Doc<'conversions'>[],
-  now: number
-): Promise<Change | null> {
+async function reviewCommunities(ctx: MutationCtx, account: Doc<'accounts'>, now: number): Promise<Change | null> {
   if (!postsToMetCommunity(account.platform)) return null
   const communities = activeCommunities(await communitiesOf(ctx, account._id))
   if (communities.length < 2) return null
   const since = now - PILLAR_WINDOW_DAYS * DAY_MS
-  const tally = new Map<string, { items: number; signups: number; reach: number }>()
-  const add = (name: string | undefined, signups: number, numbers: ItemRead | undefined) => {
+  const tally = new Map<string, { items: number; reach: number }>()
+  const add = (name: string | undefined, numbers: ItemRead | undefined) => {
     const community = name === undefined ? undefined : communities.find((candidate) => sameCommunity(candidate.name, name))
     if (!community) return
-    const entry = tally.get(community.name) ?? { items: 0, signups: 0, reach: 0 }
-    // A reach not read adds nothing.
+    // A post whose reach was not read says nothing of its community, so it is not one of the items scored.
     const reach = numbers === undefined ? null : reachOf(numbers.counts)
-    tally.set(community.name, { items: entry.items + 1, signups: entry.signups + signups, reach: entry.reach + (reach ?? 0) })
+    if (reach === null) return
+    const entry = tally.get(community.name) ?? { items: 0, reach: 0 }
+    tally.set(community.name, { items: entry.items + 1, reach: entry.reach + reach })
   }
   const posts = await ctx.db
     .query('posts')
@@ -239,14 +228,13 @@ async function reviewCommunities(
     .collect()
   for (const post of posts) {
     if (post.posted === undefined || post.posted.at < since || post.removedAt !== undefined) continue
-    const signups = conversions.filter((conversion) => conversion.kind === 'signup' && conversion.postId === post._id).length
-    add(post.community, signups, post.numbers)
+    add(post.community, post.numbers)
   }
   const total = communities.reduce((sum, community) => sum + community.weight, 0)
   const scores = communities.map((community) => {
-    const entry = tally.get(community.name) ?? { items: 0, signups: 0, reach: 0 }
-    const per = (value: number) => (entry.items === 0 ? 0 : value / entry.items)
-    return { name: community.name, score: per(entry.signups), tiebreak: per(entry.reach), items: entry.items }
+    const entry = tally.get(community.name) ?? { items: 0, reach: 0 }
+    // Reach is the one number every community's posts carry, so nothing is left to break a tie on it.
+    return { name: community.name, score: entry.items === 0 ? 0 : entry.reach / entry.items, tiebreak: 0, items: entry.items }
   })
   const shift = shiftWeights(
     communities.map((community) => ({ name: community.name, weight: community.weight / total })),
@@ -272,14 +260,14 @@ async function reviewCommunities(
     actor: 'analyst',
     text: `${label(up)} gets ${percent(weightOf(up))}% of the posts, and ${label(down)} ${percent(weightOf(down))}%.`,
     reason:
-      `Over the last ${PILLAR_WINDOW_DAYS} days ${label(up)} brought ${scoreOf(up).score.toFixed(2)} signups per post over ${scoreOf(up).items} ` +
-      `and ${label(down)} ${scoreOf(down).score.toFixed(2)} over ${scoreOf(down).items}, reach per post breaking a tie.`,
+      `Over the last ${PILLAR_WINDOW_DAYS} days ${label(up)} reached ${grouped(scoreOf(up).score)} per post over ${scoreOf(up).items} ` +
+      `and ${label(down)} ${grouped(scoreOf(down).score)} over ${scoreOf(down).items}.`,
     evidence: {
       postIds: [],
       signalIds: [],
       numbers: [
-        { label: `${label(up)} signups per post`, value: Math.round(scoreOf(up).score * 100) / 100 },
-        { label: `${label(down)} signups per post`, value: Math.round(scoreOf(down).score * 100) / 100 },
+        { label: `${label(up)} reach per post`, value: Math.round(scoreOf(up).score) },
+        { label: `${label(down)} reach per post`, value: Math.round(scoreOf(down).score) },
         { label: `${label(up)} weight (%)`, value: percent(weightOf(up)) },
         { label: `${label(down)} weight (%)`, value: percent(weightOf(down)) },
       ],
@@ -355,19 +343,25 @@ function hypothesisOf(next: NextExperiment, metric: ExperimentMetric): string {
   return `${describe(next.challenger)} gets more ${EXPERIMENT_METRIC_LABELS[metric]} than ${describe(next.control)}.`
 }
 
-/** Why an experiment aims at its metric (shared `reviewMetric`). */
-function goalOf(kind: ExperimentKind, metric: ExperimentMetric): string {
+/**
+ * Why an experiment aims at its metric (shared `reviewMetric`): on reach,
+ * either because the dimension cannot be decided on clicks (`noClicks`, its
+ * reason from shared `metricsFor`) or because the posts brought too few.
+ */
+function goalOf(kind: ExperimentKind, metric: ExperimentMetric, noClicks: string | null): string {
   if (isReplyExperimentKind(kind))
     return 'It aims at reach per reply: a reply carries no link, so reach is the step toward the goal it moves.'
-  if (metric === 'reach')
-    return `It aims at reach per post: the posts brought too few clicks, signups or paid customers in the last ${LADDER_DAYS} days to test on.`
-  return `It aims at ${EXPERIMENT_METRIC_LABELS[metric]}, the step closest to paying customers that the posts brought enough of in the last ${LADDER_DAYS} days.`
+  if (metric === 'reach' && noClicks !== null) return `It aims at reach per post: ${lowerFirst(noClicks)}`
+  if (metric === 'reach') return `It aims at reach per post: the posts brought too few clicks in the last ${LADDER_DAYS} days to test on.`
+  return `It aims at ${EXPERIMENT_METRIC_LABELS[metric]}, the step closest to the product that the posts brought enough of in the last ${LADDER_DAYS} days.`
 }
 
 /** Why the review starts what it starts: the dimension, and the goal metric. */
 function startReason(args: {
   next: NextExperiment
   metric: ExperimentMetric
+  /** Why the dimension cannot be decided on clicks, or null when it can. */
+  noClicks: string | null
   history: ExperimentHistoryRow[]
   contradiction: Contradiction | undefined
   /** The leak the review aimed the test at, when it did. */
@@ -377,7 +371,7 @@ function startReason(args: {
 }): string {
   const { next } = args
   const dimension = EXPERIMENT_KIND_LABELS[next.kind]
-  const goal = goalOf(next.kind, args.metric)
+  const goal = goalOf(next.kind, args.metric, args.noClicks)
   if (args.contradiction) {
     const { source, winnerRate, runnerUpRate, since } = args.contradiction
     return (
@@ -397,7 +391,7 @@ function startReason(args: {
         ? `${dimension} was last decided on ${dayKey(last, args.timezone)}, more than ${DECISION_MEMORY_DAYS} days ago.`
         : `${dimension} has the fewest decided experiments of the last ${DECISION_MEMORY_DAYS} days, the last on ${dayKey(last, args.timezone)}.`
   // Aimed at a leak (shared `LEAK_DIMENSIONS`), which the journal says in the leak's own words.
-  const aimed = args.leak !== null && LEAK_DIMENSIONS[args.leak.step].includes(next.kind) ? ` ${leakReason(args.leak)}` : ''
+  const aimed = args.leak !== null && LEAK_DIMENSIONS.includes(next.kind) ? ` ${leakReason(args.leak)}` : ''
   return `${known}${aimed} ${goal}`
 }
 
@@ -422,7 +416,11 @@ async function startNextExperiment(
   const { funnel } = await reportFunnel(ctx, account, LADDER_DAYS, now)
   // A test on a metric nothing reads would run forever and hold the slot: each dimension climbs the ladder over what it can be decided on.
   const measured = await Promise.all(
-    EXPERIMENT_KINDS.map(async (kind) => ({ kind, metric: reviewMetric((await measurableMetrics(ctx, account, kind)).metrics, funnel) }))
+    EXPERIMENT_KINDS.map(async (kind) => {
+      const dimension = await measurableMetrics(ctx, account, kind)
+      const noClicks = dimension.metrics.includes('clicks') ? null : dimension.why
+      return { kind, metric: reviewMetric(dimension.metrics, funnel), noClicks }
+    })
   )
   const kinds = measured.flatMap(({ kind, metric }) => (metric === null ? [] : [kind]))
   const contradicted = contradictions.map((contradiction) => contradiction.kind)
@@ -438,7 +436,7 @@ async function startNextExperiment(
   // Where the posts lose people (core/growth.ts `leakOf`), the review first tests a dimension that moves that step and can
   // be decided past reach, a contradicted default still before anything else; with none of those, what it knows least about.
   const leak = await leakOf(ctx, account, now)
-  const aimed = leak === null ? [] : LEAK_DIMENSIONS[leak.step].filter((kind) => decidedPastReach(measured, kind))
+  const aimed = leak === null ? [] : LEAK_DIMENSIONS.filter((kind) => decidedPastReach(measured, kind))
   const aimedPick = aimed.length === 0 ? null : pick(kinds.filter((kind) => aimed.includes(kind) || contradicted.includes(kind)))
   const next = aimedPick ?? pick(kinds)
   if (!next) return null
@@ -447,8 +445,9 @@ async function startNextExperiment(
     throw new Error(`the re-test points at experiment ${next.retestOf}, which the account does not have`)
   const contradiction = retest ? contradictions.find((candidate) => candidate.source._id === retest._id) : undefined
   const name = `${EXPERIMENT_KIND_LABELS[next.kind]}: ${next.challenger.label} vs ${next.control.label}`
-  const metric = measured.find((entry) => entry.kind === next.kind)?.metric
-  if (metric === undefined || metric === null) throw new Error(`the review picked ${next.kind}, which it cannot measure`)
+  const picked = measured.find((entry) => entry.kind === next.kind)
+  if (picked === undefined || picked.metric === null) throw new Error(`the review picked ${next.kind}, which it cannot measure`)
+  const metric = picked.metric
   const experimentId = await startExperiment(
     ctx,
     account,
@@ -462,7 +461,7 @@ async function startNextExperiment(
       minConfidence: AUTO_MIN_CONFIDENCE,
       createdBy: 'analyst',
       ...(retest ? { retestOf: retest._id } : {}),
-      reason: startReason({ next, metric, history, contradiction, leak, timezone: account.timezone, now }),
+      reason: startReason({ next, metric, noClicks: picked.noClicks, history, contradiction, leak, timezone: account.timezone, now }),
     },
     now
   )
@@ -478,75 +477,69 @@ function decidedPastReach(measured: readonly { kind: ExperimentKind; metric: Exp
   return metric !== undefined && metric !== null && metric !== 'reach'
 }
 
-/** Where an account stands against the goal: paid conversions of two spans, what one is worth, and what it tries next. */
+/** Where an account stands against the goal: what its last span brought against the span before, and what it tries next. */
 export interface GoalStanding {
   windowDays: number
-  paid: number
-  previousPaid: number
-  valuePerPaid: number
-  currency: string
+  line: GrowthLine
+  /** What the account's reach line counts (shared `ACCOUNT_REACH_LABELS`): karma, followers or likes. */
+  reachLabel: string
   /** The experiment that runs after the review, or null. */
   testing: string | null
 }
 
 /**
- * The goal note's words: paid customers this span with their value, the
- * trend against the span before, and what the account tries next. The goal
- * itself (shared `workspaceGoal`) is said beside it, never in it.
+ * The goal note's words: the clicks on links to the product this span and
+ * the karma or followers gained, each against the span before, then what the
+ * account tries next. A number the account's platform does not count is left
+ * out. The goal itself (shared `workspaceGoal`) is said beside it, never in
+ * it.
  */
 export function goalNoteText(standing: GoalStanding): string {
-  const { windowDays, paid, previousPaid } = standing
-  const money = (count: number) => `${grouped(count * standing.valuePerPaid)} ${standing.currency}`
-  const customers = (count: number) => `${grouped(count)} paid ${count === 1 ? 'customer' : 'customers'}`
+  const { windowDays, line } = standing
   const span = `in the last ${windowDays} days`
   const before = `in the ${windowDays} days before`
-  const now =
-    paid === 0
-      ? previousPaid === 0
-        ? `No paid customers yet ${span}, nor ${before}.`
-        : `No paid customers ${span}, down from ${grouped(previousPaid)} (${money(previousPaid)}) ${before}.`
-      : paid === previousPaid
-        ? `${customers(paid)} ${span}, worth ${money(paid)}, the same as ${before}.`
-        : previousPaid === 0
-          ? `${customers(paid)} ${span}, worth ${money(paid)}, up from none ${before}.`
-          : `${customers(paid)} ${span}, worth ${money(paid)}, ${paid > previousPaid ? 'up' : 'down'} from ${grouped(previousPaid)} (${money(previousPaid)}) ${before}.`
+  const clicks = (count: number, was: number | null) => {
+    const said = `${grouped(count)} ${count === 1 ? 'click' : 'clicks'} on links to the product ${span}`
+    if (was === null) return `${said}.`
+    if (count === was) return `${said}, the same as ${before}.`
+    return `${said}, ${count > was ? 'up' : 'down'} from ${grouped(was)} ${before}.`
+  }
+  const signed = (count: number) => `${count < 0 ? '−' : '+'}${grouped(Math.abs(count))}`
+  const gained = (count: number, was: number | null) =>
+    `${standing.reachLabel} ${signed(count)} ${span}${was === null ? '' : `, against ${signed(was)} ${before}`}.`
+  const parts = [
+    ...(line.clicks === null ? [] : [clicks(line.clicks, line.before.clicks)]),
+    ...(line.gained === null ? [] : [gained(line.gained, line.before.gained)]),
+  ]
+  const now = parts.length === 0 ? `Nothing read yet ${span}.` : parts.join(' ')
   const next = standing.testing !== null ? `Next: testing "${standing.testing}".` : 'Next: nothing new to test this week.'
   return `${now} ${next}`
 }
 
 /**
  * The goal note every review leaves, changes or not: where the account stands
- * against the workspace's goal (paid conversions by link, this
- * span against the one before, at the workspace's value per paid) and the
- * experiment it runs next. It supersedes the note of the review before.
+ * against the workspace's goal (core/growth.ts `growthOver`, this span
+ * against the one before) and the experiment it runs next. It supersedes the
+ * note of the review before.
  */
 async function writeGoalNote(
   ctx: MutationCtx,
   account: Doc<'accounts'>,
-  conversions: Doc<'conversions'>[],
   running: Doc<'experiments'> | null,
   now: number
 ): Promise<Id<'memories'>> {
-  const workspace = await workspaceOf(ctx, account)
-  const since = now - STANDING_WINDOW_DAYS * DAY_MS
-  const paid = conversions.filter((conversion) => conversion.kind === 'paid' && conversion.at < now)
-  const current = paid.filter((conversion) => conversion.at >= since)
-  const previous = paid.filter((conversion) => conversion.at >= since - STANDING_WINDOW_DAYS * DAY_MS && conversion.at < since)
   const text = goalNoteText({
     windowDays: STANDING_WINDOW_DAYS,
-    paid: current.length,
-    previousPaid: previous.length,
-    valuePerPaid: workspace.valuePerPaid,
-    currency: workspace.currency,
+    line: await growthOver(ctx, account, now, STANDING_WINDOW_DAYS),
+    reachLabel: ACCOUNT_REACH_LABELS[account.platform],
     testing: running === null ? null : running.name,
   })
-  const postIds = [...new Set(current.flatMap((conversion) => (conversion.postId === undefined ? [] : [conversion.postId])))]
   const noteId = await ctx.db.insert('memories', {
     accountId: account._id,
     kind: 'goal_note',
     text,
     actor: 'analyst',
-    evidence: { ...(running === null ? {} : { experimentId: running._id }), postIds, signalIds: [] },
+    evidence: { ...(running === null ? {} : { experimentId: running._id }), postIds: [], signalIds: [] },
     status: 'active',
     createdAt: now,
   })
@@ -570,10 +563,6 @@ export async function reviewStrategy(ctx: MutationCtx, account: Doc<'accounts'>,
     .query('posts')
     .withIndex('by_account', (q) => q.eq('accountId', account._id))
     .collect()
-  const conversions = await ctx.db
-    .query('conversions')
-    .withIndex('by_account_time', (q) => q.eq('accountId', account._id))
-    .collect()
   const experiments = await ctx.db
     .query('experiments')
     .withIndex('by_account_status', (q) => q.eq('accountId', account._id))
@@ -582,19 +571,19 @@ export async function reviewStrategy(ctx: MutationCtx, account: Doc<'accounts'>,
   let strategy: Strategy = account.strategy ?? { pillarWeights: [], defaults: [] }
   const changes: Change[] = []
 
-  const pillars = await reviewPillars(ctx, account, strategy, posts, conversions, now)
+  const pillars = await reviewPillars(ctx, account, strategy, posts, now)
   if (pillars) {
     strategy = pillars.strategy
     changes.push(pillars.change)
   }
-  const communities = await reviewCommunities(ctx, account, conversions, now)
+  const communities = await reviewCommunities(ctx, account, now)
   if (communities) changes.push(communities)
   const contradictions = await findContradictions(ctx, account, strategy, experiments)
   const started = await startNextExperiment(ctx, account, strategy, experiments, contradictions, now)
   if (started) changes.push(started.change)
 
   const running = started ? await ctx.db.get(started.experimentId) : experiments.find((experiment) => experiment.status === 'running')
-  const goalNoteId = await writeGoalNote(ctx, account, conversions, running ?? null, now)
+  const goalNoteId = await writeGoalNote(ctx, account, running ?? null, now)
 
   await ctx.db.patch(account._id, { strategy: { ...strategy, reviewedAt: now } })
   if (changes.length > 0) {

@@ -1,24 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
-import type { ItemCounts } from '@stepradar/shared'
-import { countConversions } from './posted'
+import type { ItemCounts, Platform } from '@stepradar/shared'
 import { buildFunnel, buildReachLine, buildTrend, rankGroups, sumFunnels, type PostOutcome } from './report'
-
-describe('countConversions', () => {
-  it('counts each kind and the estimated value', () => {
-    const out = countConversions(
-      [
-        { kind: 'demo_started', mock: false },
-        { kind: 'signup', mock: false },
-        { kind: 'trial_started', mock: false },
-        { kind: 'paid', mock: false },
-        { kind: 'paid', mock: false },
-      ],
-      29
-    )
-    expect(out).toEqual({ demos: 1, signups: 1, trials: 1, paid: 2, value: 58 })
-  })
-})
 
 const X = (impressions: number, replies: number): ItemCounts => ({
   platform: 'x',
@@ -44,21 +27,17 @@ describe('buildFunnel', () => {
         {},
       ],
       clicks: 3,
-      conversions: [],
-      valuePerPaid: 29,
     })
     expect(funnel).toMatchObject({ items: 3, counted: 2, reach: 40, reached: 1, replies: 15, clicks: 3, mock: false })
   })
 
   it('says nothing read rather than zero, and counts no comments where the platform shows none', () => {
-    const none = buildFunnel({ items: [{}], clicks: 0, conversions: [], valuePerPaid: 29 })
+    const none = buildFunnel({ items: [{}], clicks: 0 })
     expect(none).toMatchObject({ items: 1, counted: 0, reach: null, reached: 0, replies: null })
     // A Reddit comment shows its points but no comments under it.
     const comment = buildFunnel({
       items: [read({ platform: 'reddit', score: 5, replies: null })],
       clicks: 0,
-      conversions: [],
-      valuePerPaid: 29,
     })
     expect(comment).toMatchObject({ reach: 5, replies: null })
   })
@@ -66,16 +45,13 @@ describe('buildFunnel', () => {
 
 describe('sumFunnels', () => {
   it('adds the accounts up, but not their reach, which each platform counts its own way', () => {
-    const base = { conversions: [], valuePerPaid: 29 }
-    const ada = buildFunnel({ ...base, items: [read(X(1_000, 4))], clicks: 5, conversions: [{ kind: 'paid', mock: false }] })
+    const ada = buildFunnel({ items: [read(X(1_000, 4))], clicks: 5 })
     // A Reddit post links to the sponsor directly, so Nora's clicks are not counted, which adds nothing rather than a zero.
-    const nora = buildFunnel({ ...base, items: [read({ platform: 'reddit', score: 30, replies: 2 }, true)], clicks: null })
+    const nora = buildFunnel({ items: [read({ platform: 'reddit', score: 30, replies: 2 }, true)], clicks: null })
     const total = sumFunnels([ada, nora])
-    expect(total).toMatchObject({ items: 2, replies: 6, clicks: 5, paid: 1, value: 29, mock: true })
+    expect(total).toMatchObject({ items: 2, replies: 6, clicks: 5, mock: true })
     expect(total).not.toHaveProperty('reach')
     expect(sumFunnels([nora]).clicks).toBeNull()
-    // Nora's signups came without a counted click, so the total's signups are no share of Ada's clicks.
-    expect([total.everyClickCounted, sumFunnels([ada]).everyClickCounted]).toEqual([false, true])
   })
 })
 
@@ -99,12 +75,11 @@ describe('buildTrend', () => {
       // An item posted before the window is not the funnel's, so its reach is not the trend's either.
       items: new Set(['a', 'b']),
       clicks: [{ day: 'd2' }],
-      conversions: [{ day: 'd1', kind: 'signup' }],
       snapshotDay: (read) => (read.takenAt === 1 ? 'd1' : 'd2'),
     })
     expect(trend).toEqual([
-      { day: 'd1', reach: 100, clicks: 0, signups: 1 },
-      { day: 'd2', reach: 190, clicks: 1, signups: 0 },
+      { day: 'd1', reach: 100, clicks: 0 },
+      { day: 'd2', reach: 190, clicks: 1 },
     ])
   })
 })
@@ -135,61 +110,62 @@ describe('buildReachLine', () => {
 function outcome(
   id: string,
   post: Partial<Doc<'posts'>>,
-  numbers: { reach: number; clicks: number | null; paid: number; signups?: number }
+  numbers: { reach: number | null; clicks: number | null },
+  platform: Platform = 'x'
 ): PostOutcome {
-  return { post: { _id: id as Id<'posts'>, ...post } as Doc<'posts'>, signups: 0, ...numbers, value: numbers.paid * 29 }
+  return { post: { _id: id as Id<'posts'>, ...post } as Doc<'posts'>, platform, ...numbers }
 }
 
 describe('rankGroups', () => {
   const byPillar = (post: Doc<'posts'>) => (post.pillar === undefined ? null : { key: post.pillar, label: post.pillar })
 
-  it('ranks by value per post, so a group is not ahead for having more posts', () => {
+  it('ranks by clicks per reach, so a group is not ahead for having more posts, and leaves out a post in no group', () => {
     const groups = rankGroups(
       [
-        outcome('1', { pillar: 'n8n' }, { reach: 1000, clicks: 10, paid: 1 }),
-        outcome('2', { pillar: 'n8n' }, { reach: 1000, clicks: 10, paid: 1 }),
-        outcome('3', { pillar: 'n8n' }, { reach: 1000, clicks: 10, paid: 0 }),
-        outcome('4', { pillar: 'agents' }, { reach: 1000, clicks: 10, paid: 1 }),
+        outcome('1', { pillar: 'n8n' }, { reach: 1000, clicks: 10 }),
+        outcome('2', { pillar: 'n8n' }, { reach: 1000, clicks: 10 }),
+        outcome('3', { pillar: 'n8n' }, { reach: 1000, clicks: 10 }),
+        outcome('4', { pillar: 'agents' }, { reach: 1000, clicks: 20 }),
+        outcome('5', {}, { reach: 1000, clicks: 90 }),
       ],
       byPillar
     )
-    expect(groups.map((group) => [group.key, group.posts, group.value, group.valuePerPost])).toEqual([
-      ['agents', 1, 29, 29],
-      ['n8n', 3, 58, 58 / 3],
+    expect(groups.map((group) => [group.key, group.posts, group.clicks, group.clicksPerReach])).toEqual([
+      ['agents', 1, 20, 0.02],
+      ['n8n', 3, 30, 0.01],
     ])
     expect(groups[1]?.postIds).toEqual(['1', '2', '3'])
   })
 
-  it('breaks a tie on value with clicks per reach, and leaves out a post in no group', () => {
+  it('counts clicks per reach only over the posts whose clicks are counted and whose reach was read, then ranks by reach per post', () => {
     const groups = rankGroups(
       [
-        outcome('1', { pillar: 'n8n' }, { reach: 1000, clicks: 10, paid: 0 }),
-        outcome('2', { pillar: 'agents' }, { reach: 1000, clicks: 20, paid: 0 }),
-        outcome('3', {}, { reach: 1000, clicks: 90, paid: 0 }),
+        // Its reach was never read, so its clicks are no share of any reach.
+        outcome('1', { pillar: 'n8n' }, { reach: null, clicks: 40 }),
+        outcome('2', { pillar: 'n8n' }, { reach: 1000, clicks: 10 }),
+        outcome('3', { pillar: 'agents' }, { reach: 1000, clicks: 50 }),
+        // A Reddit post links to the sponsor directly: no click counted.
+        outcome('4', { pillar: 'reddit only' }, { reach: 1000, clicks: null }, 'reddit'),
+        outcome('5', { pillar: 'reddit wide' }, { reach: 3000, clicks: null }, 'reddit'),
       ],
       byPillar
     )
-    expect(groups.map((group) => [group.key, group.clicksPerReach])).toEqual([
-      ['agents', 0.02],
-      ['n8n', 0.01],
+    expect(groups.map((group) => [group.key, group.reachPerPost, group.clicks, group.clicksPerReach])).toEqual([
+      ['agents', 1000, 50, 0.05],
+      ['n8n', 1000, 50, 0.01],
+      ['reddit wide', 3000, null, null],
+      ['reddit only', 1000, null, null],
     ])
   })
 
-  it('breaks a tie on signups per post first, and counts clicks per reach only over the posts whose clicks are counted', () => {
-    const groups = rankGroups(
+  it('says no reach per post for a group whose posts are on more than one platform, which each count reach their own way', () => {
+    const [group] = rankGroups(
       [
-        // A Reddit post links to the sponsor directly: no click counted, and its reach is no share of the X post's clicks.
-        outcome('1', { pillar: 'n8n' }, { reach: 4000, clicks: null, paid: 0, signups: 2 }),
-        outcome('2', { pillar: 'n8n' }, { reach: 1000, clicks: 10, paid: 0 }),
-        outcome('3', { pillar: 'agents' }, { reach: 1000, clicks: 50, paid: 0 }),
-        outcome('4', { pillar: 'reddit only' }, { reach: 1000, clicks: null, paid: 0 }),
+        outcome('1', { pillar: 'n8n' }, { reach: 1000, clicks: 10 }),
+        outcome('2', { pillar: 'n8n' }, { reach: 40, clicks: null }, 'hackernews'),
       ],
       byPillar
     )
-    expect(groups.map((group) => [group.key, group.signupsPerPost, group.clicks, group.clicksPerReach])).toEqual([
-      ['n8n', 1, 10, 0.01],
-      ['agents', 0, 50, 0.05],
-      ['reddit only', 0, null, null],
-    ])
+    expect(group).toMatchObject({ reachPerPost: null, clicks: 10, clicksPerReach: 0.01 })
   })
 })

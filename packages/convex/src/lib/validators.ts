@@ -3,8 +3,6 @@ import {
   ACCOUNT_POST_SOURCES,
   AGENT_ROLES,
   CHECKLIST_STATUSES,
-  CONVERSION_KINDS,
-  PROBABLE_BASES,
   POST_STATUSES,
   EXPERIMENT_KINDS,
   EXPERIMENT_METRICS,
@@ -18,6 +16,7 @@ import {
   MEMORY_STATUSES,
   OPERATOR_MEMORY_KINDS,
   PLATFORMS,
+  PROVIDER_KEYS,
   FORUM_SOFTWARE,
   POST_INTENTS,
   POST_KINDS,
@@ -58,6 +57,7 @@ export const pushOutcomeValidator = v.union(
   v.object({ kind: v.literal('failed'), error: v.string() })
 )
 export const sponsorSegmentValidator = literals(SPONSOR_SEGMENTS)
+export const providerKeyValidator = literals(PROVIDER_KEYS)
 export const platformValidator = literals(PLATFORMS)
 
 /** The forum a forum account takes part on (shared `Forum`). */
@@ -71,8 +71,6 @@ export const experimentMetricValidator = literals(EXPERIMENT_METRICS)
 export const experimentKindValidator = literals(EXPERIMENT_KINDS)
 export const experimentStatusValidator = literals(EXPERIMENT_STATUSES)
 export const checklistStatusValidator = literals(CHECKLIST_STATUSES)
-export const conversionKindValidator = literals(CONVERSION_KINDS)
-export const probableBasisValidator = literals(PROBABLE_BASES)
 export const postKindValidator = literals(POST_KINDS)
 export const postIntentValidator = literals(POST_INTENTS)
 export const postLengthValidator = literals(POST_LENGTHS)
@@ -124,27 +122,15 @@ export const replyThreadValidator = v.object(replyThreadFields)
 /** A thread a post is drawn from, as the researcher found it: kept on the post, since its signal may be dismissed and age out. */
 const basisThreadValidator = v.object({ signalId: v.id('signals'), title: v.string(), summary: v.string(), url: v.string() })
 
-/** Another account's post a post reworks, as it went out: kept on the post, since the operator may edit or kill the original. */
-const basisPostValidator = v.object({
-  postId: v.id('posts'),
-  placeName: v.string(),
-  title: v.string(),
-  text: v.string(),
-  url: v.union(v.string(), v.null()),
-})
-
 /**
  * What a post is drawn from besides its pillar: a standout thread it is
  * modeled on, the questions about one pillar a round-up answers (shared
- * what-worked.ts), another account's post that brought users, reworked
- * for this platform (core/niche.ts `bestToRework`), or what the sponsor
- * just shipped, which every account announces on the day the operator picks
+ * what-worked.ts), or what the sponsor just shipped, which every account announces on the day the operator picks
  * (core/launch.ts).
  */
 export const postBasisValidator = v.union(
   v.object({ kind: v.literal('model'), thread: basisThreadValidator }),
   v.object({ kind: v.literal('roundup'), pillar: v.string(), questions: v.array(basisThreadValidator) }),
-  v.object({ kind: v.literal('rework'), post: basisPostValidator }),
   v.object({ kind: v.literal('launch'), what: v.string() })
 )
 export type PostBasis = Infer<typeof postBasisValidator>
@@ -407,28 +393,3 @@ export const connectionStatusValidator = v.union(
   }),
   v.object({ kind: v.literal('revoked'), error: v.string(), at: v.number() })
 )
-
-/** A probable conversion the analytics provider found (shared probable.ts): no UTM parameters, and a platform by what the person said or where they first came from. */
-export const foundProbableValidator = v.object({
-  platform: platformValidator,
-  kind: conversionKindValidator,
-  distinctId: v.string(),
-  at: v.number(),
-  basis: probableBasisValidator,
-})
-
-/**
- * A conversion the analytics provider found: it carries the tracked link's
- * UTM parameters and is matched to its post by campaign slug (ADR 0003).
- */
-export const foundConversionValidator = v.object({
-  kind: conversionKindValidator,
-  distinctId: v.string(),
-  at: v.number(),
-  utm: v.object({
-    source: v.string(),
-    medium: v.optional(v.string()),
-    campaign: v.optional(v.string()),
-    content: v.optional(v.string()),
-  }),
-})

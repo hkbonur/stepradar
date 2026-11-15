@@ -35,7 +35,7 @@ Copy uses the glossary in CONTEXT.md: account, draft, post, reply, match, commen
 
 ## Surfaces
 
-- **Setup** (first run): what Stepradar does, the product (name, website, one-sentence pitch), what one paying customer is worth, then the operator's accounts.
+- **Setup** (first run): what Stepradar does, the product (name, website, one-sentence pitch), then the operator's accounts.
 - **Today** (home): comments waiting with their drafted answers, reply drafts, posts due, next steps, and the week ahead.
 - **Account**: chat with directives, communities with their rules, voice, strategy, memory, report.
 - **Drafts and posted items**: open the thread, copy, mark as posted, skip; what went out with its numbers and comments.

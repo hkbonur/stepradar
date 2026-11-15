@@ -77,8 +77,6 @@ export const run = internalMutation({
       sponsorUrl: 'https://formstep.io',
       sponsorPitch: 'Forms that workflows and AI agents send to one customer; the answers come back into the flow.',
       appUrl: args.appUrl ?? 'http://localhost:3300',
-      valuePerPaid: 29,
-      currency: 'EUR',
     })
 
     const adaId = await ctx.db.insert('accounts', {
@@ -152,19 +150,6 @@ export const run = internalMutation({
           now,
         })
       )
-    }
-    // The paid customers and signups the sponsored posts brought, first touch through their links.
-    for (const [index, kind] of (['signup', 'signup', 'paid', 'signup', 'paid', 'trial_started'] as const).entries()) {
-      const postId = index % 2 === 0 ? adaPosted[2] : adaPosted[5]
-      if (postId === undefined) throw new Error('the seed has no sponsored post to credit')
-      await ctx.db.insert('conversions', {
-        accountId: adaId,
-        postId,
-        kind,
-        distinctId: `seed-ada-${index}`,
-        at: now - (20 - index * 3) * DAY_MS,
-        mock: true,
-      })
     }
     await seedFollowers(ctx, ada, { start: 1_180, perDay: 9, now })
     // Yesterday's post is out: the operator posted it and gave its link, and the analyst has not closed it yet.
@@ -669,8 +654,10 @@ async function seedDraft(
 }
 
 /**
- * Every table in the schema, so `reset` cannot forget one: adding a table
- * to schema.ts without adding it here is a type error.
+ * Every table in the schema and whether `reset` wipes it, so it cannot
+ * forget one: adding a table to schema.ts without adding it here is a type
+ * error. The operator's provider keys are no demo data, so a reset keeps
+ * them.
  */
 const TABLES = {
   workspaces: true,
@@ -682,8 +669,6 @@ const TABLES = {
   accountSnapshots: true,
   links: true,
   linkClicks: true,
-  conversions: true,
-  probableConversions: true,
   replies: true,
   signals: true,
   experiments: true,
@@ -698,11 +683,12 @@ const TABLES = {
   pushSubscriptions: true,
   checklistItems: true,
   jobs: true,
-} satisfies Record<TableNames, true>
+  providerKeys: false,
+} satisfies Record<TableNames, boolean>
 
 /**
  * Wipes the deployment so `run` seeds from nothing: every document in every
- * table, plus the pending scheduled functions (they would wake up to jobs
+ * table but the provider keys, plus the pending scheduled functions (they would wake up to jobs
  * that no longer exist). One transaction, which fits a seed-sized
  * deployment; a deployment with more than a few thousand rows needs this in
  * batches.
@@ -714,7 +700,7 @@ export const reset = internalMutation({
     for (const scheduled of await ctx.db.system.query('_scheduled_functions').collect()) {
       if (scheduled.state.kind === 'pending') await ctx.scheduler.cancel(scheduled._id)
     }
-    for (const table of Object.keys(TABLES) as TableNames[]) {
+    for (const table of (Object.keys(TABLES) as TableNames[]).filter((name) => TABLES[name])) {
       for (const row of await ctx.db.query(table).collect()) {
         await ctx.db.delete(row._id)
         deleted += 1

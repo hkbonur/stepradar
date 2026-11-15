@@ -33,11 +33,6 @@ export function formatPercent(rate: number, digits = 1): string {
   return `${(rate * 100).toFixed(digits)}%`
 }
 
-/** Whole units in the workspace's currency: the report estimates, it does not invoice. */
-export function formatMoney(value: number, currency: string): string {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(value)
-}
-
 export function formatTime(at: number): string {
   return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(at))
 }

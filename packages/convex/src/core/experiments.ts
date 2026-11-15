@@ -74,53 +74,30 @@ type MeasuredItem = { kind: 'reply'; row: Doc<'replies'> } | { kind: 'post'; row
 
 /**
  * What one measured item adds to its variant on the metric: its reach as its
- * platform counts it, or what a post did for the sponsor within its
- * measurement window, its clicks and the signups or paid customers it
- * brought, so an older post is no ahead for having had longer. Null where it
- * says nothing: a reach its platform does not show (a Hacker News comment),
- * or numbers never read.
+ * platform counts it, or a post's clicks within its measurement window, so an
+ * older post is no ahead for having had longer. Null where it says nothing: a
+ * reach its platform does not show (a Hacker News comment), or numbers never
+ * read.
  */
-async function valueOf(ctx: Reader, metric: ExperimentMetric, item: MeasuredItem, conversions: readonly Doc<'conversions'>[]) {
+async function valueOf(ctx: Reader, metric: ExperimentMetric, item: MeasuredItem) {
   if (metric === 'reach') return item.row.numbers === undefined ? null : reachOf(item.row.numbers.counts)
   // `startExperiment` refuses a reply experiment on anything but reach: a reply carries no tracked link.
   if (item.kind === 'reply') throw new Error(`reply ${item.row._id} was counted on ${metric}, which no reply brings`)
-  const closes = wentOutAt(item.row) + MEASUREMENT_WINDOW_MS
-  if (metric === 'clicks') return postClicksUntil(ctx, item.row._id, closes)
-  const kind = metric === 'signups' ? 'signup' : 'paid'
-  return conversions.filter((conversion) => conversion.postId === item.row._id && conversion.kind === kind && conversion.at <= closes)
-    .length
-}
-
-/** The account's conversions since the first item went out, read only for a metric that counts them. */
-async function conversionsFor(
-  ctx: Reader,
-  accountId: Id<'accounts'>,
-  metric: ExperimentMetric,
-  items: readonly { item: MeasuredItem }[]
-): Promise<Doc<'conversions'>[]> {
-  if (metric !== 'signups' && metric !== 'paid') return []
-  const since = Math.min(...items.map(({ item }) => wentOutAt(item.row)))
-  if (!Number.isFinite(since)) return []
-  return ctx.db
-    .query('conversions')
-    .withIndex('by_account_time', (q) => q.eq('accountId', accountId).gte('at', since))
-    .collect()
+  return postClicksUntil(ctx, item.row._id, wentOutAt(item.row) + MEASUREMENT_WINDOW_MS)
 }
 
 /** Each variant's items and their values on the metric; an item that says nothing on it is left out. */
 async function statsOf(
   ctx: Reader,
-  accountId: Id<'accounts'>,
   metric: ExperimentMetric,
   keys: readonly string[],
   items: readonly { key: string; item: MeasuredItem }[]
 ): Promise<VariantStats[]> {
-  const conversions = await conversionsFor(ctx, accountId, metric, items)
   const stats = new Map<string, VariantStats>(keys.map((key) => [key, { key, items: 0, sum: 0, sumSquares: 0 }]))
   for (const { key, item } of items) {
     const entry = stats.get(key)
     if (!entry) continue
-    const value = await valueOf(ctx, metric, item, conversions)
+    const value = await valueOf(ctx, metric, item)
     if (value === null) continue
     entry.items += 1
     entry.sum += value
@@ -132,7 +109,7 @@ async function statsOf(
 /**
  * Whether an item counts toward its experiment: past its measurement window
  * (CONTEXT.md, "Experiment"), so every item had the same week to bring its
- * clicks and conversions, and not removed by its community, which cut its
+ * clicks, and not removed by its community, which cut its
  * reach short whatever its variant.
  */
 function counts(row: Doc<'posts'> | Doc<'replies'>): boolean {
@@ -190,7 +167,7 @@ export async function experimentStats(
 ): Promise<{ stats: VariantStats[]; leftOut: LeftOutPosts | null }> {
   const { counted, leftOut } = await experimentItems(ctx, experiment)
   const keys = experiment.variants.map((variant) => variant.key)
-  return { stats: await statsOf(ctx, experiment.accountId, experiment.metric, keys, counted), leftOut }
+  return { stats: await statsOf(ctx, experiment.metric, keys, counted), leftOut }
 }
 
 /** Each variant's stats from the experiment's replies or posts that count (`experimentItems`). */
@@ -245,7 +222,7 @@ export async function variantStatsSince(
       if (rowKey === key) items.push({ key, item: { kind: 'post', row } })
     }
   }
-  const [only] = await statsOf(ctx, account._id, metric, [key], items)
+  const [only] = await statsOf(ctx, metric, [key], items)
   if (!only) throw new Error(`no stats for ${kind} "${key}"`)
   return only
 }

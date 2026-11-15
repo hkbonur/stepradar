@@ -51,6 +51,7 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, sponsorName
   const store = (signals: FoundSignal[]) =>
     ctx.runMutation(internal.internal.researcher.storeSignals, { accountId: account._id, signals, mock })
   const forums = await ctx.runQuery(internal.internal.data.forums, {})
+  const keys = await ctx.runQuery(internal.internal.keys.stored, {})
   const places: PlatformPlace[] = [
     ...PLATFORMS.flatMap((platform) => (platform === 'forum' ? [] : [{ platform }])),
     ...forums.map((forum) => ({ platform: 'forum' as const, forum })),
@@ -58,7 +59,7 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, sponsorName
   let found = 0
   for (const place of places) {
     // A search for the niche reads for no account, so it needs no connection.
-    const search = platformReader(place, null).search
+    const search = platformReader(place, null, keys).search
     if (search) found += await store((await search(query)).map((thread) => signalOf(place, thread)))
   }
   found += await store(await suggestionsProvider().find(query))
@@ -173,7 +174,8 @@ export const importHistory = internalAction({
   handler: async (ctx, args): Promise<{ added: number; skipped: number }> => {
     const accountId = args.accountId
     const { account, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
-    const activity = actionReader(ctx, account, connection).activity
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const activity = actionReader(ctx, account, connection, keys).activity
     if (!activity) throw refusal(cannotRead(placeOf(account), 'activity'))
     const posts = await activity({ handle: account.handle, since: 0, niche: account.niche, pillars: account.pillars, now: Date.now() })
     return ctx.runMutation(internal.internal.researcher.storeAccountPosts, {

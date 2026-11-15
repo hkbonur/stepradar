@@ -121,11 +121,9 @@ export const get = query({
       numbers: {
         posting,
         days: HEADER_WINDOW_DAYS,
-        value: window.funnel.value,
-        paid: window.funnel.paid,
         reach: window.funnel.reach,
         reachLabel: ITEM_REACH_LABELS[account.platform],
-        currency: window.currency,
+        clicks: window.funnel.clicks,
         mock: window.funnel.mock,
       },
       messages,

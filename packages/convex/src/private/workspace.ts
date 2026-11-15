@@ -5,9 +5,8 @@ import { requireWorkspace } from '../core/workspace'
 import { refusal } from '../lib/errors'
 
 /**
- * The operator's workspace: the product the accounts promote, where tracked
- * links go, and what one paid conversion is worth so the report can put a
- * value on a post. One workspace today; the studio's first-run setup
+ * The operator's workspace: the product the accounts promote and where
+ * tracked links go. One workspace today; the studio's first-run setup
  * creates it.
  */
 
@@ -15,8 +14,6 @@ const sponsorArgs = {
   sponsorName: v.string(),
   sponsorUrl: v.string(),
   sponsorPitch: v.string(),
-  valuePerPaid: v.number(),
-  currency: v.string(),
 }
 
 /** The workspace; null before the first-run setup made it. */
@@ -49,15 +46,13 @@ export const update = mutation({
 })
 
 /** The product's fields, trimmed, refused with the shared words the studio already showed. */
-function checked(args: { sponsorName: string; sponsorUrl: string; sponsorPitch: string; valuePerPaid: number; currency: string }) {
+function checked(args: { sponsorName: string; sponsorUrl: string; sponsorPitch: string }) {
   const [problem] = sponsorProblems(args)
   if (problem !== undefined) throw refusal(problem.message)
   return {
     sponsorName: args.sponsorName.trim(),
     sponsorUrl: args.sponsorUrl.trim(),
     sponsorPitch: args.sponsorPitch.trim(),
-    valuePerPaid: args.valuePerPaid,
-    currency: args.currency,
   }
 }
 

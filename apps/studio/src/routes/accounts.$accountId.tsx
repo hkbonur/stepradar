@@ -26,7 +26,7 @@ import { QueuedLine, useQueuedAction } from '@/components/queued-action'
 import { JobDot, PostKindIcon, StatusPill } from '@/components/status'
 import { Alert, Button, Card, CardList, Collapsible, Skeleton } from '@/components/ui'
 import { cn } from '@/lib/cn'
-import { formatCount, formatDate, formatDay, formatMoney, languageName, plural, relativeTime, todayKey } from '@/lib/format'
+import { formatCount, formatDate, formatDay, languageName, plural, relativeTime, todayKey } from '@/lib/format'
 import { ideaLine } from '@/lib/ideas'
 
 export const Route = createFileRoute('/accounts/$accountId')({ component: AccountPage })
@@ -36,8 +36,8 @@ type AccountData = NonNullable<FunctionReturnType<typeof api.private.accounts.ge
 type HeaderActionKey = 'plan' | 'metrics' | 'pause'
 
 /**
- * The account's own numbers in its header, over the report's window: what it
- * earned, the paid conversions behind that, and its views, linked to its
+ * The account's own numbers in its header, over the report's window: its
+ * views and the clicks on its links, linked to its
  * report, so the operator does not have to open it to see if the account works.
  */
 function AccountNumbers(props: { accountId: Id<'accounts'>; numbers: AccountData['numbers']; refresh: React.ReactNode }) {
@@ -45,16 +45,20 @@ function AccountNumbers(props: { accountId: Id<'accounts'>; numbers: AccountData
   return (
     <span className="mt-1 flex flex-wrap items-center gap-x-2">
       <Link to="/reports/$accountId" params={{ accountId: props.accountId }} className="group w-fit">
-        <span className="tabular font-medium text-ink">{formatMoney(numbers.value, numbers.currency)}</span>
-        <span className="text-ash"> earned from </span>
-        <span className="tabular text-graphite">{numbers.paid}</span>
-        <span className="text-ash"> paid</span>
-        {/* Reach only once some was read: a platform whose reader reads none shows no zero. */}
-        {numbers.reach !== null && (
+        {/* Reach only once some was read, and clicks only where counted: a number not read shows no zero. */}
+        {numbers.reach === null ? (
+          <span className="text-ash">No {numbers.reachLabel.toLowerCase()} read</span>
+        ) : (
+          <>
+            <span className="tabular font-medium text-ink">{formatCount(numbers.reach)}</span>
+            <span className="text-ash"> {numbers.reachLabel.toLowerCase()}</span>
+          </>
+        )}
+        {numbers.clicks !== null && (
           <>
             <span className="text-ash"> · </span>
-            <span className="tabular text-graphite">{formatCount(numbers.reach)}</span>
-            <span className="text-ash"> {numbers.reachLabel.toLowerCase()}</span>
+            <span className="tabular text-graphite">{formatCount(numbers.clicks)}</span>
+            <span className="text-ash"> clicks</span>
           </>
         )}
         <span className="text-ash group-hover:underline">

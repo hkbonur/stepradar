@@ -125,17 +125,26 @@ describe('notifications', () => {
     const monday = instantAt('2026-10-19', 7, TIMEZONE)
     const DAY = 86_400_000
     await t.run(async (ctx) => {
-      const conversion = (kind: 'signup' | 'paid', at: number) =>
-        ctx.db.insert('conversions', { accountId: account._id, kind, distinctId: `${kind}-${at}`, at, mock: true })
-      await conversion('signup', monday - 2 * DAY)
-      await conversion('signup', monday - 3 * DAY)
-      await conversion('paid', monday - 3 * DAY)
-      await conversion('signup', monday - 9 * DAY)
+      const followers = (at: number, count: number) =>
+        ctx.db.insert('accountSnapshots', { accountId: account._id, takenAt: at, reach: { platform: 'x', followers: count }, mock: true })
+      await followers(monday - 13 * DAY, 200)
+      await followers(monday - 8 * DAY, 203)
+      await followers(monday - 6 * DAY, 203)
+      await followers(monday - DAY, 211)
+      const linkId = await ctx.db.insert('links', {
+        kind: 'bio',
+        slug: 'bio1234',
+        accountId: account._id,
+        clicks: 3,
+        createdAt: monday - 20 * DAY,
+      })
+      for (const at of [monday - 2 * DAY, monday - 3 * DAY, monday - 9 * DAY])
+        await ctx.db.insert('linkClicks', { linkId, accountId: account._id, at })
     })
     vi.setSystemTime(monday)
     expect(await t.mutation(internal.internal.notifications.morningDigest, {})).toEqual({ queued: 1 })
     const [digest] = await t.run((ctx) => ctx.db.query('notifications').collect())
-    expect(digest?.body).toContain('Last week: 2 signups (+1), 1 paid (+1).')
+    expect(digest?.body).toContain('Last week: 2 clicks (+1), +8 followers (+5).')
     // A Monday with nothing waiting and no week to tell of says nothing.
     vi.setSystemTime(instantAt('2026-11-02', 7, TIMEZONE))
     expect(await t.mutation(internal.internal.notifications.morningDigest, {})).toEqual({ queued: 0 })

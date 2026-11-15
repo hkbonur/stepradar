@@ -124,8 +124,8 @@ describe('the next steps', () => {
         ...NONE,
         behind: [{ account: ADA, week: { due: 4, posted: 1 } }],
         leaks: [
-          { account: MAX, leak: { step: 'click', rate: 0.004, before: 0.012, mock: false } },
-          { account: ADA, leak: { step: 'signup', rate: 0, before: null, mock: true } },
+          { account: MAX, leak: { rate: 0.004, before: 0.012, mock: false } },
+          { account: ADA, leak: { rate: 0, before: null, mock: true } },
         ],
       },
       NOW
@@ -143,7 +143,7 @@ describe('the next steps', () => {
       ],
       [
         'leak',
-        'None of the clicks from u/ada in 28 days became signups: the page they land on loses them, not the posts. Mock numbers.',
+        "None of the people u/ada's linked posts reached in 28 days clicked through. The strategy review tests how its posts open and end on that next. Mock numbers.",
         '/reports/a1',
       ],
     ])

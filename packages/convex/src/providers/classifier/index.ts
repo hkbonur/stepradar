@@ -1,4 +1,5 @@
 import { placeLabel, placeOf } from '@stepradar/shared'
+import type { ProviderKeys } from '../../core/keys'
 import { providersMode } from '../../lib/env'
 import { anthropicClassifier } from './anthropic'
 import { mockClassifier } from './mock'
@@ -10,8 +11,8 @@ import type { Doc } from '../../_generated/dataModel'
  * once it matches Haiku on the operator's labelled threads (docs/plan.md,
  * slice 3).
  */
-export function classifierProvider(): ClassifierProvider {
-  return providersMode() === 'real' ? anthropicClassifier : mockClassifier
+export function classifierProvider(keys: ProviderKeys): ClassifierProvider {
+  return providersMode() === 'real' ? anthropicClassifier(keys) : mockClassifier
 }
 
 /** What the classifier reads the account's posts against: its platform, niche, audience, pillars and its workspace's sponsor. */

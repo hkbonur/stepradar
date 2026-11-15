@@ -35,7 +35,7 @@ import { sponsorLinkOf } from '../core/links'
 import { POST_LENGTH_TARGETS, llmProvider, type PostBrief, type PostDraft, type PostedLately } from '../providers/llm'
 import type { BriefBasis, BriefVariant, WriterResearch } from '../providers/llm/types'
 import { variantsOf } from '../core/variants'
-import { bestToRework, whatWorked } from '../core/niche'
+import { whatWorked } from '../core/niche'
 import { postPartsValidator } from '../lib/validators'
 
 /**
@@ -81,7 +81,6 @@ export const planWeek = internalMutation({
       kindSwaps: await kindSwapsOf(ctx, account._id, now),
       standouts: worked.standouts,
       roundup: worked.roundup,
-      rework: await bestToRework(ctx, account, now),
       now,
     })
     for (const post of posts) await createIdea(ctx, account, post)
@@ -267,7 +266,8 @@ export const writePost = internalAction({
       problems: [],
       judged: judgedOf(post),
     }
-    const llm = llmProvider()
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const llm = llmProvider(keys)
     const { draft, problems } = await draftChecked(
       (asked) => llm.writePost(asked),
       brief,
@@ -368,7 +368,7 @@ function modelProblems(text: string, basis: BriefBasis | null): string[] {
  */
 function linkProblems(text: string, brief: PostBrief): string[] {
   const own = brief.sponsor?.link ?? null
-  // A tracked link that is not this post's own counts its clicks for another post: one a reworked original carried, say.
+  // A tracked link that is not this post's own counts its clicks for another post.
   const foreign = (text.match(/\S*\/go\/[a-z0-9]+\S*/gi) ?? []).filter((link) => own === null || !link.includes(own))
   const problems = foreign.length === 0 ? [] : [`Leave out ${foreign.join(', ')}: a post carries no link but its own.`]
   if (own === null || SPONSOR_LINKS[brief.account.platform].placement !== 'text') return problems

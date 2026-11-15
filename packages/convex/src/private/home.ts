@@ -1,8 +1,9 @@
+import { ITEM_REACH_LABELS } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import { query } from '../_generated/server'
 import { reportFunnel } from '../core/report'
 import { accountRefOf } from '../core/accounts'
-import { GROWTH_DAYS, growthLine } from '../core/growth'
+import { GROWTH_DAYS, growthOver } from '../core/growth'
 
 /**
  * The bottom of Today: what the accounts changed on their own this week,
@@ -15,8 +16,8 @@ import { GROWTH_DAYS, growthLine } from '../core/growth'
 const SHOWN = 4
 /** The changes of "this week": the last seven days, whatever the account's timezone. */
 const WEEK_MS = 7 * 86_400_000
-/** The report's window, so the earnings here are the workspace report's own. */
-const EARNED_DAYS = 28
+/** The report's window, so the reach here is the workspace report's own. */
+const REACHED_DAYS = 28
 
 export const overview = query({
   args: {},
@@ -41,15 +42,18 @@ export const overview = query({
     }
     changes.sort((a, b) => b.createdAt - a.createdAt)
 
-    // What it earned: each account's value over the window, from the report's own reading.
-    const earned = []
-    let currency: string | null = null
+    // What each account's posts and replies reached over the window, and their clicks, from the report's own reading.
+    const reached = []
     for (const account of accounts) {
-      const window = await reportFunnel(ctx, account, EARNED_DAYS, now)
-      currency = window.currency
-      earned.push({ account: who(account._id), value: window.funnel.value, paid: window.funnel.paid, mock: window.funnel.mock })
+      const { funnel } = await reportFunnel(ctx, account, REACHED_DAYS, now)
+      reached.push({
+        account: who(account._id),
+        reach: funnel.reach,
+        reachLabel: ITEM_REACH_LABELS[account.platform],
+        clicks: funnel.clicks,
+        mock: funnel.mock,
+      })
     }
-    earned.sort((a, b) => b.value - a.value || b.paid - a.paid)
 
     // What the last week brought against the week before, and what each account tests now (core/growth.ts).
     const growth = []
@@ -58,7 +62,7 @@ export const overview = query({
         .query('experiments')
         .withIndex('by_account_status', (q) => q.eq('accountId', account._id).eq('status', 'running'))
         .first()
-      growth.push({ account: who(account._id), ...(await growthLine(ctx, account, now)), testing: running?.name ?? null })
+      growth.push({ account: who(account._id), ...(await growthOver(ctx, account, now, GROWTH_DAYS)), testing: running?.name ?? null })
     }
 
     return {
@@ -73,13 +77,7 @@ export const overview = query({
         })),
         count: changes.length,
       },
-      earned: {
-        days: EARNED_DAYS,
-        currency,
-        accounts: earned,
-        total: earned.reduce((sum, row) => sum + row.value, 0),
-        mock: earned.some((row) => row.mock),
-      },
+      reached: { days: REACHED_DAYS, accounts: reached, mock: reached.some((row) => row.mock) },
       growth: { days: GROWTH_DAYS, accounts: growth, mock: growth.some((row) => row.mock) },
     }
   },

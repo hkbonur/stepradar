@@ -22,9 +22,6 @@ export const JOB_KINDS = {
   judge_post: { role: 'judge' },
   poll_comments: { role: 'researcher' },
   pull_metrics: { role: 'analyst' },
-  // Once a day for the whole workspace: every platform's probable conversions (shared probable.ts). They name a
-  // platform, not an account, so the job runs under the first active account only to be listed on the Agents page.
-  pull_probable: { role: 'analyst' },
   review_strategy: { role: 'analyst' },
   import_history: { role: 'researcher' },
   learn_voice: { role: 'analyst' },
@@ -51,7 +48,6 @@ export const JOB_KIND_LABELS: Record<JobKind, string> = {
   judge_post: 'Judge the post',
   poll_comments: 'Read comments',
   pull_metrics: 'Pull metrics',
-  pull_probable: 'Probable conversions',
   review_strategy: 'Review strategy',
   import_history: 'Import history',
   learn_voice: 'Learn the voice',

@@ -38,7 +38,7 @@ describe('isRetirable', () => {
 })
 
 describe('workspaceGoal', () => {
-  it('is paying customers of the sponsor', () => {
-    expect(workspaceGoal('Formstep')).toBe('Paying Formstep customers')
+  it('is people who find the sponsor', () => {
+    expect(workspaceGoal('Formstep')).toBe('People who find Formstep')
   })
 })

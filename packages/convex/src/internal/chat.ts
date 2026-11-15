@@ -14,7 +14,15 @@ import { internalAction, internalMutation, internalQuery, type MutationCtx, type
 import { applyChatIntent, changeablePlan } from '../core/chat'
 import { reportFunnel } from '../core/report'
 import { accountBriefOf } from '../core/accounts'
-import { llmProvider, type ChatTurn, type AccountBrief, type PlanRow, type TaskReportArgs, type TaskSignal } from '../providers/llm'
+import {
+  llmProvider,
+  type LlmProvider,
+  type ChatTurn,
+  type AccountBrief,
+  type PlanRow,
+  type TaskReportArgs,
+  type TaskSignal,
+} from '../providers/llm'
 
 /**
  * The account's chat: the account reads each message once and answers with
@@ -42,7 +50,8 @@ export const handleMessage = internalAction({
   args: { messageId: v.id('messages') },
   handler: async (ctx, args): Promise<void> => {
     const chat: ChatReading = await ctx.runQuery(internal.internal.chat.chatReading, { messageId: args.messageId })
-    const understood = await understand(chat)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const understood = await understand(llmProvider(keys), chat)
     if (!understood.ok) {
       await ctx.runMutation(internal.internal.chat.storeReply, {
         accountId: chat.accountId,
@@ -114,8 +123,7 @@ export const chatReading = internalQuery({
 /** What the model made of a message: an intent, with the account's reply when the intent is a directive or a conversation. */
 type Understood = { ok: true; intent: ChatIntent; reply: string | null } | { ok: false; error: string }
 
-async function understand(chat: ChatReading): Promise<Understood> {
-  const llm = llmProvider()
+async function understand(llm: LlmProvider, chat: ChatReading): Promise<Understood> {
   try {
     const intent = validIntent(await llm.interpret(chat))
     if (intent.kind !== 'directive' && intent.kind !== 'conversation') return { ok: true, intent, reply: null }
@@ -213,7 +221,8 @@ export const runTask = internalAction({
   args: { jobId: v.id('jobs') },
   handler: async (ctx, args): Promise<{ messageId: Id<'messages'> }> => {
     const report: TaskReportArgs = await ctx.runQuery(internal.internal.chat.taskReading, { jobId: args.jobId })
-    const text = await llmProvider().taskReport(report)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const text = await llmProvider(keys).taskReport(report)
     const messageId: Id<'messages'> = await ctx.runMutation(internal.internal.chat.storeTaskMessage, { jobId: args.jobId, text })
     return { messageId }
   },
@@ -245,7 +254,7 @@ export const taskReading = internalQuery({
     }
     // The report's own funnel over the window (core `reportFunnel`), so the chat and the page never disagree about a week.
     const window = await reportFunnel(ctx, account, TASK_WINDOW_DAYS, now)
-    const data = { days: window.days, funnel: window.funnel, reachLabel: ITEM_REACH_LABELS[account.platform], currency: window.currency }
+    const data = { days: window.days, funnel: window.funnel, reachLabel: ITEM_REACH_LABELS[account.platform] }
     return { account: brief, task: job.kind, topic, data }
   },
 })

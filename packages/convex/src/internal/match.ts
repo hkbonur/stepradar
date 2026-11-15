@@ -20,7 +20,8 @@ export const match = internalAction({
   handler: async (ctx, args): Promise<MatchResult> => {
     const accountId = args.accountId
     const { account, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
-    const activity = actionReader(ctx, account, connection).activity
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const activity = actionReader(ctx, account, connection, keys).activity
     if (!activity) throw refusal(cannotRead(placeOf(account), 'activity'))
     const now = Date.now()
     const items = await activity({

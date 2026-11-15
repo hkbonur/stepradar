@@ -32,7 +32,7 @@ import {
   ENGAGEMENT_QUESTIONS,
 } from '@stepradar/shared'
 import type { WriterMemory } from '../../core/memory'
-import { requireEnv } from '../../lib/env'
+import { requireKey, type ProviderKeys } from '../../core/keys'
 import {
   POST_LENGTH_TARGETS,
   type AccountPostSample,
@@ -95,9 +95,9 @@ const accountProposalSchema = z.object({
   bible: z.string(),
 })
 
-/** The Anthropic client every Claude adapter calls through: the llm here and the classifier. */
-export function anthropicClient(): Anthropic {
-  return new Anthropic({ apiKey: requireEnv('ANTHROPIC_API_KEY') })
+/** The Anthropic client every Claude adapter calls through, the llm here and the classifier, on the operator's key. */
+export function anthropicClient(keys: ProviderKeys): Anthropic {
+  return new Anthropic({ apiKey: requireKey(keys, 'ANTHROPIC_API_KEY') })
 }
 
 /**
@@ -126,271 +126,279 @@ function accountSystem(account: AccountBrief): string {
   ].join('\n')
 }
 
-export const anthropicLlm: LlmProvider = {
-  name: 'anthropic',
-  async writePost(brief: PostBrief): Promise<PostDraft> {
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 8000,
-      output_config: { effort: 'medium', format: zodOutputFormat(postDraftSchema) },
-      system: [{ type: 'text', text: postSystem(brief.account), cache_control: { type: 'ephemeral' } }],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `Intent: ${POST_INTENT_LABELS[brief.intent]}. ${POST_INTENT_BRIEFS[brief.intent]}`,
-            `Hook: ${brief.hook.description}`,
-            `Ending: ${brief.callToAction.description}`,
-            postShapeInstruction(brief),
-            brief.community?.rules
-              ? `The rules of ${communityLabel(brief.account.platform, brief.community.name)}, which win over anything else here:\n${brief.community.rules}`
-              : '',
-            voiceInstruction(brief),
-            examplesInstruction(brief.examples),
-            postedInstruction(brief.posted, 'posts'),
-            `Account bible:\n${brief.account.bible}`,
-            memoryInstruction(brief.memory),
-            brief.directives.length > 0 ? `Standing directives from the operator:\n- ${brief.directives.join('\n- ')}` : '',
-            `Concept: ${brief.concept}`,
-            `Pillar: ${brief.pillar}`,
-            postSponsorInstruction(brief),
-            basisInstruction(brief),
-            brief.signals.length > 0
-              ? `What the audience is talking about:\n${brief.signals.map((signal) => `- ${signalLine(signal)}`).join('\n')}`
-              : '',
-            movedInstruction(brief.research),
-            problemsInstruction(brief.research),
-            brief.problems.length > 0 ? `Your last draft broke these rules. Fix every one:\n- ${brief.problems.join('\n- ')}` : '',
-            judgedInstruction(brief),
-            POST_TITLE_MAX[brief.account.platform] === null
-              ? "Return a short title for the operator's list, in English, which is never posted, and the parts in order."
-              : `Return the title as ${brief.account.placeName} shows it, and the parts in order.`,
-          ]
-            .filter(Boolean)
-            .join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to write this post')
-    if (!response.parsed_output) throw new Error('The model returned no parseable post')
-    const { title, parts } = response.parsed_output
-    return { title, parts }
-  },
-  async judgePost(brief: JudgeBrief): Promise<JudgeDraft> {
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 2000,
-      output_config: { effort: 'medium', format: zodOutputFormat(judgeDraftSchema) },
-      system: [{ type: 'text', text: JUDGE_SYSTEM, cache_control: { type: 'ephemeral' } }],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `The post goes out on ${brief.account.placeName}${brief.community === null ? '' : ` in ${communityLabel(brief.account.platform, brief.community)}`}, from an account in the niche "${brief.account.niche}"${brief.account.audience ? ` that talks to ${brief.account.audience}` : ''}. What it sets out to do: ${POST_INTENT_LABELS[brief.intent].toLowerCase()}.`,
-            `<post>\n${brief.title}\n\n${brief.parts.join('\n\n')}\n</post>`,
-          ].join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to judge this post')
-    if (!response.parsed_output) throw new Error('The model returned no parseable judgment')
-    const { fix, ...answers } = response.parsed_output
-    const reason = (text: string) => (text.trim() === '' ? null : text.trim())
-    return {
-      reasons: { read: reason(answers.read), comment: reason(answers.comment), like: reason(answers.like), follow: reason(answers.follow) },
-      fix: fix.trim(),
-    }
-  },
-  async writeReply(brief: ReplyBrief): Promise<ReplyDraft> {
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 4000,
-      output_config: { effort: 'low', format: zodOutputFormat(replyDraftSchema) },
-      system: [{ type: 'text', text: postSystem(brief.account), cache_control: { type: 'ephemeral' } }],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `Write a reply on ${brief.account.placeName} to this thread${threadPlace(brief)}. ${ORIGIN_CONTEXT[brief.origin]}${brief.pillar === null ? '' : ` Your pillar it touches: ${brief.pillar}.`}`,
-            `<thread>\n${brief.thread.title === null ? '' : `${brief.thread.title}\n\n`}${brief.thread.text}\n</thread>`,
-            brief.community === null
-              ? ''
-              : `The rules of ${communityLabel(brief.platform, brief.community.name)}, which win over anything else here:\n${brief.community.rules}`,
-            voiceInstruction(brief),
-            `Account bible:\n${brief.account.bible}`,
-            postedInstruction(brief.posted, 'replies'),
-            memoryInstruction(brief.memory),
-            brief.directives.length > 0 ? `Standing directives from the operator:\n- ${brief.directives.join('\n- ')}` : '',
-            replySponsorInstruction(brief),
-            'Speak only as the account: never as a customer, a reviewer or someone who happened to find a product.',
-            brief.operatorAsked
-              ? 'Your operator asked you to answer this thread, so answer it: skip is false.'
-              : 'Pass on the thread (skip true, with a one-sentence reason in your own words) when one of your rules says not to answer it, or when you have nothing worth adding. Otherwise skip is false and the reason is empty.',
-            `Reply style: ${brief.style.description}`,
-            `Reply length: ${brief.length.description}`,
-            SHAPE_INSTRUCTIONS[PLATFORM_DRAFT_SHAPES[brief.platform]](brief),
-            brief.problems.length > 0 ? `Your last draft broke these rules. Fix every one:\n- ${brief.problems.join('\n- ')}` : '',
-          ]
-            .filter(Boolean)
-            .join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to write this reply')
-    if (!response.parsed_output) throw new Error('The model returned no parseable reply')
-    const { skip, reason, text } = response.parsed_output
-    if (skip && !brief.operatorAsked) {
-      if (reason.trim() === '') throw new Error('The model passed on the post without a reason')
-      return { kind: 'skip', reason: reason.trim() }
-    }
-    return { kind: 'reply', text: text.trim() }
-  },
-  async learnVoice(brief: VoiceBrief): Promise<VoiceDraft> {
-    const { stats } = brief
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 8000,
-      output_config: { effort: 'medium', format: zodOutputFormat(voiceDraftSchema) },
-      system: [
-        {
-          type: 'text',
-          text: [
-            `You are the analyst for ${brief.account.name} (@${brief.account.handle}), an account on X in the niche "${brief.account.niche}".`,
-            "Read the account's own posts and describe how it writes, so a writer can post in the same voice. Describe the style, not the topics.",
-          ].join('\n'),
-        },
-      ],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `Counted from ${stats.sampleSize} original posts (replies to others left out): ${Math.round(stats.lengthMix.short * 100)}% one-liners, ${Math.round(stats.lengthMix.medium * 100)}% full posts, ${Math.round(stats.lengthMix.long * 100)}% threads; emoji ${stats.emoji}; hashtags ${stats.hashtags}. These are facts; do not restate them as traits.`,
-            `The posts with the most likes and reposts:\n${samplesBlock(brief.top)}`,
-            brief.newest.length > 0 ? `The newest posts:\n${samplesBlock(brief.newest)}` : '',
-            [
-              'Return:',
-              '- language: the BCP 47 tag of the language the account posts in (en, nb, tr, ...), the one most of its posts are written in.',
-              '- summary: two or three sentences on how the account sounds, written for the writer who will imitate it.',
-              `- traits: 1 to ${VOICE_TRAITS_MAX} recurring moves, each a short phrase (how it opens, line breaks, lists, punctuation, questions, how it closes).`,
-            ].join('\n'),
-          ]
-            .filter(Boolean)
-            .join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to describe this voice')
-    if (!response.parsed_output) throw new Error('The model returned no parseable voice')
-    const { language, summary } = response.parsed_output
-    const traits = response.parsed_output.traits.map((trait) => trait.trim()).filter((trait) => trait.length > 0)
-    if (language.trim().length === 0) throw new Error('The model returned a voice without a language')
-    if (summary.trim().length === 0) throw new Error('The model returned a voice without a summary')
-    if (traits.length === 0 || traits.length > VOICE_TRAITS_MAX)
-      throw new Error(`The model returned ${traits.length} traits; a voice has 1 to ${VOICE_TRAITS_MAX}`)
-    return { language: language.trim(), summary: summary.trim(), traits }
-  },
-  async proposeAccount(brief: ProposalBrief): Promise<AccountProposal> {
-    const roster = brief.roster.map((account) => `- ${account.name} (${handleOf(account)}): ${account.niche}`).join('\n')
-    const response = await anthropicClient().messages.parse({
-      model: MODEL,
-      max_tokens: 4000,
-      output_config: { effort: 'medium', format: zodOutputFormat(accountProposalSchema) },
-      system: [
-        {
-          type: 'text',
-          text: [
-            'You help the operator of Stepradar set up one of their own accounts. Stepradar drafts posts and replies for it, which the operator posts by hand, so the people there discover the sponsor.',
-            `The sponsor is ${brief.sponsorName}: ${brief.sponsorPitch} The account helps people first: the sponsor comes up only sometimes, in its own words.`,
-          ].join('\n'),
-        },
-      ],
-      messages: [
-        {
-          role: 'user',
-          content: [
-            `Propose how ${brief.name} sounds and what it covers on ${brief.placeName}. Niche: ${brief.niche}. Audience: ${brief.audience}.`,
-            roster ? `The workspace already runs these; do not repeat their angle:\n${roster}` : '',
-            [
-              'Return:',
-              '- tone: three to six words on how it sounds.',
-              `- pillars: ${PILLARS_MIN} to ${PILLARS_MAX} content pillars, each two to five words, the recurring topics it covers.`,
-              '- bio: one sentence for its profile.',
-              '- bible: three to five sentences on how it speaks, what it shows, and what it never says.',
-              `- affiliationLine: one short sentence, in its voice, that says the operator builds ${brief.sponsorName} and names it ("I'm building ${brief.sponsorName}, so take this with salt"). Every draft that names the sponsor says it.`,
-            ].join('\n'),
-          ]
-            .filter(Boolean)
-            .join('\n\n'),
-        },
-      ],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to propose an account')
-    if (!response.parsed_output) throw new Error('The model returned no parseable account')
-    const proposal = response.parsed_output
-    return {
-      tone: proposal.tone.trim(),
-      pillars: proposal.pillars.map((pillar) => pillar.trim()).filter((pillar) => pillar.length > 0),
-      bio: proposal.bio.trim(),
-      bible: proposal.bible.trim(),
-      affiliationLine: proposal.affiliationLine.trim(),
-    }
-  },
-  async reply(args) {
-    const response = await anthropicClient().messages.create({
-      model: MODEL,
-      max_tokens: 2000,
-      output_config: { effort: 'low' },
-      system: [
-        { type: 'text', text: accountSystem(args.account), cache_control: { type: 'ephemeral' } },
-        {
-          type: 'text',
-          text: `You are chatting with your operator inside Stepradar. Answer in two or three sentences. ${args.directive ? `The operator's last message was stored as a standing directive: "${args.directive}". Confirm it and say how the next posts and replies change.` : ''}`,
-        },
-      ],
-      messages: args.history.map((turn) => ({ role: turn.author === 'operator' ? 'user' : 'assistant', content: turn.text })),
-    })
-    const text = response.content.find((block) => block.type === 'text')
-    if (!text) throw new Error('The model returned no text')
-    return text.text
-  },
-  async interpret(args) {
-    let response
-    try {
-      response = await anthropicClient().messages.parse({
+/** Claude on the operator's key, read where each call is made, so a missing key fails that step and names the key. */
+export function anthropicLlm(keys: ProviderKeys): LlmProvider {
+  return {
+    name: 'anthropic',
+    async writePost(brief: PostBrief): Promise<PostDraft> {
+      const response = await anthropicClient(keys).messages.parse({
         model: MODEL,
         max_tokens: 8000,
-        output_config: { effort: 'low', format: zodOutputFormat(chatIntentSchema) },
-        system: [{ type: 'text', text: INTERPRET_SYSTEM, cache_control: { type: 'ephemeral' } }],
-        messages: [{ role: 'user', content: interpretRequest(args) }],
+        output_config: { effort: 'medium', format: zodOutputFormat(postDraftSchema) },
+        system: [{ type: 'text', text: postSystem(brief.account), cache_control: { type: 'ephemeral' } }],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `Intent: ${POST_INTENT_LABELS[brief.intent]}. ${POST_INTENT_BRIEFS[brief.intent]}`,
+              `Hook: ${brief.hook.description}`,
+              `Ending: ${brief.callToAction.description}`,
+              postShapeInstruction(brief),
+              brief.community?.rules
+                ? `The rules of ${communityLabel(brief.account.platform, brief.community.name)}, which win over anything else here:\n${brief.community.rules}`
+                : '',
+              voiceInstruction(brief),
+              examplesInstruction(brief.examples),
+              postedInstruction(brief.posted, 'posts'),
+              `Account bible:\n${brief.account.bible}`,
+              memoryInstruction(brief.memory),
+              brief.directives.length > 0 ? `Standing directives from the operator:\n- ${brief.directives.join('\n- ')}` : '',
+              `Concept: ${brief.concept}`,
+              `Pillar: ${brief.pillar}`,
+              postSponsorInstruction(brief),
+              basisInstruction(brief),
+              brief.signals.length > 0
+                ? `What the audience is talking about:\n${brief.signals.map((signal) => `- ${signalLine(signal)}`).join('\n')}`
+                : '',
+              movedInstruction(brief.research),
+              problemsInstruction(brief.research),
+              brief.problems.length > 0 ? `Your last draft broke these rules. Fix every one:\n- ${brief.problems.join('\n- ')}` : '',
+              judgedInstruction(brief),
+              POST_TITLE_MAX[brief.account.platform] === null
+                ? "Return a short title for the operator's list, in English, which is never posted, and the parts in order."
+                : `Return the title as ${brief.account.placeName} shows it, and the parts in order.`,
+            ]
+              .filter(Boolean)
+              .join('\n\n'),
+          },
+        ],
       })
-    } catch (error) {
-      // The SDK checks the answer against the schema itself and throws a plain AnthropicError when it does not fit
-      // (a code with a dash, say). A reading that does not fit changes nothing, so it is conversation; a failed
-      // request (an APIError) stays an error, and the chat says it could not read the message.
-      if (error instanceof Anthropic.APIError || !(error instanceof Anthropic.AnthropicError)) throw error
-      console.warn(`The interpreter's answer did not fit the chat intent schema; it is read as conversation. ${error.message}`)
-      return CONVERSATION
-    }
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to read this message')
-    if (!response.parsed_output) throw new Error('The model returned no parseable reading of the message')
-    return response.parsed_output
-  },
-  async taskReport(args) {
-    const response = await anthropicClient().messages.create({
-      model: MODEL,
-      max_tokens: 8000,
-      output_config: { effort: 'low' },
-      system: [
-        { type: 'text', text: accountSystem(args.account), cache_control: { type: 'ephemeral' } },
-        { type: 'text', text: TASK_REPORT_INSTRUCTION },
-      ],
-      messages: [{ role: 'user', content: taskRequest(args) }],
-    })
-    if (response.stop_reason === 'refusal') throw new Error('The model declined to write this report')
-    const text = response.content.find((block) => block.type === 'text')
-    if (!text) throw new Error('The model returned no text')
-    return text.text
-  },
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to write this post')
+      if (!response.parsed_output) throw new Error('The model returned no parseable post')
+      const { title, parts } = response.parsed_output
+      return { title, parts }
+    },
+    async judgePost(brief: JudgeBrief): Promise<JudgeDraft> {
+      const response = await anthropicClient(keys).messages.parse({
+        model: MODEL,
+        max_tokens: 2000,
+        output_config: { effort: 'medium', format: zodOutputFormat(judgeDraftSchema) },
+        system: [{ type: 'text', text: JUDGE_SYSTEM, cache_control: { type: 'ephemeral' } }],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `The post goes out on ${brief.account.placeName}${brief.community === null ? '' : ` in ${communityLabel(brief.account.platform, brief.community)}`}, from an account in the niche "${brief.account.niche}"${brief.account.audience ? ` that talks to ${brief.account.audience}` : ''}. What it sets out to do: ${POST_INTENT_LABELS[brief.intent].toLowerCase()}.`,
+              `<post>\n${brief.title}\n\n${brief.parts.join('\n\n')}\n</post>`,
+            ].join('\n\n'),
+          },
+        ],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to judge this post')
+      if (!response.parsed_output) throw new Error('The model returned no parseable judgment')
+      const { fix, ...answers } = response.parsed_output
+      const reason = (text: string) => (text.trim() === '' ? null : text.trim())
+      return {
+        reasons: {
+          read: reason(answers.read),
+          comment: reason(answers.comment),
+          like: reason(answers.like),
+          follow: reason(answers.follow),
+        },
+        fix: fix.trim(),
+      }
+    },
+    async writeReply(brief: ReplyBrief): Promise<ReplyDraft> {
+      const response = await anthropicClient(keys).messages.parse({
+        model: MODEL,
+        max_tokens: 4000,
+        output_config: { effort: 'low', format: zodOutputFormat(replyDraftSchema) },
+        system: [{ type: 'text', text: postSystem(brief.account), cache_control: { type: 'ephemeral' } }],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `Write a reply on ${brief.account.placeName} to this thread${threadPlace(brief)}. ${ORIGIN_CONTEXT[brief.origin]}${brief.pillar === null ? '' : ` Your pillar it touches: ${brief.pillar}.`}`,
+              `<thread>\n${brief.thread.title === null ? '' : `${brief.thread.title}\n\n`}${brief.thread.text}\n</thread>`,
+              brief.community === null
+                ? ''
+                : `The rules of ${communityLabel(brief.platform, brief.community.name)}, which win over anything else here:\n${brief.community.rules}`,
+              voiceInstruction(brief),
+              `Account bible:\n${brief.account.bible}`,
+              postedInstruction(brief.posted, 'replies'),
+              memoryInstruction(brief.memory),
+              brief.directives.length > 0 ? `Standing directives from the operator:\n- ${brief.directives.join('\n- ')}` : '',
+              replySponsorInstruction(brief),
+              'Speak only as the account: never as a customer, a reviewer or someone who happened to find a product.',
+              brief.operatorAsked
+                ? 'Your operator asked you to answer this thread, so answer it: skip is false.'
+                : 'Pass on the thread (skip true, with a one-sentence reason in your own words) when one of your rules says not to answer it, or when you have nothing worth adding. Otherwise skip is false and the reason is empty.',
+              `Reply style: ${brief.style.description}`,
+              `Reply length: ${brief.length.description}`,
+              SHAPE_INSTRUCTIONS[PLATFORM_DRAFT_SHAPES[brief.platform]](brief),
+              brief.problems.length > 0 ? `Your last draft broke these rules. Fix every one:\n- ${brief.problems.join('\n- ')}` : '',
+            ]
+              .filter(Boolean)
+              .join('\n\n'),
+          },
+        ],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to write this reply')
+      if (!response.parsed_output) throw new Error('The model returned no parseable reply')
+      const { skip, reason, text } = response.parsed_output
+      if (skip && !brief.operatorAsked) {
+        if (reason.trim() === '') throw new Error('The model passed on the post without a reason')
+        return { kind: 'skip', reason: reason.trim() }
+      }
+      return { kind: 'reply', text: text.trim() }
+    },
+    async learnVoice(brief: VoiceBrief): Promise<VoiceDraft> {
+      const { stats } = brief
+      const response = await anthropicClient(keys).messages.parse({
+        model: MODEL,
+        max_tokens: 8000,
+        output_config: { effort: 'medium', format: zodOutputFormat(voiceDraftSchema) },
+        system: [
+          {
+            type: 'text',
+            text: [
+              `You are the analyst for ${brief.account.name} (@${brief.account.handle}), an account on X in the niche "${brief.account.niche}".`,
+              "Read the account's own posts and describe how it writes, so a writer can post in the same voice. Describe the style, not the topics.",
+            ].join('\n'),
+          },
+        ],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `Counted from ${stats.sampleSize} original posts (replies to others left out): ${Math.round(stats.lengthMix.short * 100)}% one-liners, ${Math.round(stats.lengthMix.medium * 100)}% full posts, ${Math.round(stats.lengthMix.long * 100)}% threads; emoji ${stats.emoji}; hashtags ${stats.hashtags}. These are facts; do not restate them as traits.`,
+              `The posts with the most likes and reposts:\n${samplesBlock(brief.top)}`,
+              brief.newest.length > 0 ? `The newest posts:\n${samplesBlock(brief.newest)}` : '',
+              [
+                'Return:',
+                '- language: the BCP 47 tag of the language the account posts in (en, nb, tr, ...), the one most of its posts are written in.',
+                '- summary: two or three sentences on how the account sounds, written for the writer who will imitate it.',
+                `- traits: 1 to ${VOICE_TRAITS_MAX} recurring moves, each a short phrase (how it opens, line breaks, lists, punctuation, questions, how it closes).`,
+              ].join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n\n'),
+          },
+        ],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to describe this voice')
+      if (!response.parsed_output) throw new Error('The model returned no parseable voice')
+      const { language, summary } = response.parsed_output
+      const traits = response.parsed_output.traits.map((trait) => trait.trim()).filter((trait) => trait.length > 0)
+      if (language.trim().length === 0) throw new Error('The model returned a voice without a language')
+      if (summary.trim().length === 0) throw new Error('The model returned a voice without a summary')
+      if (traits.length === 0 || traits.length > VOICE_TRAITS_MAX)
+        throw new Error(`The model returned ${traits.length} traits; a voice has 1 to ${VOICE_TRAITS_MAX}`)
+      return { language: language.trim(), summary: summary.trim(), traits }
+    },
+    async proposeAccount(brief: ProposalBrief): Promise<AccountProposal> {
+      const roster = brief.roster.map((account) => `- ${account.name} (${handleOf(account)}): ${account.niche}`).join('\n')
+      const response = await anthropicClient(keys).messages.parse({
+        model: MODEL,
+        max_tokens: 4000,
+        output_config: { effort: 'medium', format: zodOutputFormat(accountProposalSchema) },
+        system: [
+          {
+            type: 'text',
+            text: [
+              'You help the operator of Stepradar set up one of their own accounts. Stepradar drafts posts and replies for it, which the operator posts by hand, so the people there discover the sponsor.',
+              `The sponsor is ${brief.sponsorName}: ${brief.sponsorPitch} The account helps people first: the sponsor comes up only sometimes, in its own words.`,
+            ].join('\n'),
+          },
+        ],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              `Propose how ${brief.name} sounds and what it covers on ${brief.placeName}. Niche: ${brief.niche}. Audience: ${brief.audience}.`,
+              roster ? `The workspace already runs these; do not repeat their angle:\n${roster}` : '',
+              [
+                'Return:',
+                '- tone: three to six words on how it sounds.',
+                `- pillars: ${PILLARS_MIN} to ${PILLARS_MAX} content pillars, each two to five words, the recurring topics it covers.`,
+                '- bio: one sentence for its profile.',
+                '- bible: three to five sentences on how it speaks, what it shows, and what it never says.',
+                `- affiliationLine: one short sentence, in its voice, that says the operator builds ${brief.sponsorName} and names it ("I'm building ${brief.sponsorName}, so take this with salt"). Every draft that names the sponsor says it.`,
+              ].join('\n'),
+            ]
+              .filter(Boolean)
+              .join('\n\n'),
+          },
+        ],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to propose an account')
+      if (!response.parsed_output) throw new Error('The model returned no parseable account')
+      const proposal = response.parsed_output
+      return {
+        tone: proposal.tone.trim(),
+        pillars: proposal.pillars.map((pillar) => pillar.trim()).filter((pillar) => pillar.length > 0),
+        bio: proposal.bio.trim(),
+        bible: proposal.bible.trim(),
+        affiliationLine: proposal.affiliationLine.trim(),
+      }
+    },
+    async reply(args) {
+      const response = await anthropicClient(keys).messages.create({
+        model: MODEL,
+        max_tokens: 2000,
+        output_config: { effort: 'low' },
+        system: [
+          { type: 'text', text: accountSystem(args.account), cache_control: { type: 'ephemeral' } },
+          {
+            type: 'text',
+            text: `You are chatting with your operator inside Stepradar. Answer in two or three sentences. ${args.directive ? `The operator's last message was stored as a standing directive: "${args.directive}". Confirm it and say how the next posts and replies change.` : ''}`,
+          },
+        ],
+        messages: args.history.map((turn) => ({ role: turn.author === 'operator' ? 'user' : 'assistant', content: turn.text })),
+      })
+      const text = response.content.find((block) => block.type === 'text')
+      if (!text) throw new Error('The model returned no text')
+      return text.text
+    },
+    async interpret(args) {
+      let response
+      try {
+        response = await anthropicClient(keys).messages.parse({
+          model: MODEL,
+          max_tokens: 8000,
+          output_config: { effort: 'low', format: zodOutputFormat(chatIntentSchema) },
+          system: [{ type: 'text', text: INTERPRET_SYSTEM, cache_control: { type: 'ephemeral' } }],
+          messages: [{ role: 'user', content: interpretRequest(args) }],
+        })
+      } catch (error) {
+        // The SDK checks the answer against the schema itself and throws a plain AnthropicError when it does not fit
+        // (a code with a dash, say). A reading that does not fit changes nothing, so it is conversation; a failed
+        // request (an APIError) stays an error, and the chat says it could not read the message.
+        if (error instanceof Anthropic.APIError || !(error instanceof Anthropic.AnthropicError)) throw error
+        console.warn(`The interpreter's answer did not fit the chat intent schema; it is read as conversation. ${error.message}`)
+        return CONVERSATION
+      }
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to read this message')
+      if (!response.parsed_output) throw new Error('The model returned no parseable reading of the message')
+      return response.parsed_output
+    },
+    async taskReport(args) {
+      const response = await anthropicClient(keys).messages.create({
+        model: MODEL,
+        max_tokens: 8000,
+        output_config: { effort: 'low' },
+        system: [
+          { type: 'text', text: accountSystem(args.account), cache_control: { type: 'ephemeral' } },
+          { type: 'text', text: TASK_REPORT_INSTRUCTION },
+        ],
+        messages: [{ role: 'user', content: taskRequest(args) }],
+      })
+      if (response.stop_reason === 'refusal') throw new Error('The model declined to write this report')
+      const text = response.content.find((block) => block.type === 'text')
+      if (!text) throw new Error('The model returned no text')
+      return text.text
+    },
+  }
 }
 
 const CONVERSATION: ChatIntent = { kind: 'conversation' }
@@ -449,11 +457,11 @@ function taskRequest(args: TaskReportArgs): string {
     if (args.data.total === 0) return `The operator asked what people say in the comments. There are no comments ${window}.`
     return `The operator asked what people say in the comments. Say what they praise, ask and complain about. ${args.data.total} comments ${window}; the ${args.data.comments.length} most liked:\n${signalsBlock(args.data.comments)}`
   }
-  const { funnel, days, reachLabel, currency } = args.data
+  const { funnel, days, reachLabel } = args.data
   return [
     `The operator asked how the last ${days} days went. Say what stands out.`,
-    `Posts and replies posted ${funnel.items}, of them read ${funnel.counted}; ${reachLabel.toLowerCase()} ${funnel.reach ?? 'not read'}, comments under them ${funnel.replies ?? 'not read'}, link clicks ${funnel.clicks ?? 'not counted, since the posts link to the sponsor directly'}, demos started ${funnel.demos}, signups ${funnel.signups}, trials ${funnel.trials}, paid ${funnel.paid}, value ${funnel.value} ${currency}.`,
-    `The ${reachLabel.toLowerCase()} and the comments are the latest counts read from the platform for what was posted in the window; "not read" means the platform's reader read none, which is no zero. Conversions are first-touch and undercount; say so if you mention them.`,
+    `Posts and replies posted ${funnel.items}, of them read ${funnel.counted}; ${reachLabel.toLowerCase()} ${funnel.reach ?? 'not read'}, comments under them ${funnel.replies ?? 'not read'}, link clicks ${funnel.clicks ?? 'not counted, since the posts link to the sponsor directly'}.`,
+    `The ${reachLabel.toLowerCase()} and the comments are the latest counts read from the platform for what was posted in the window; "not read" means the platform's reader read none, which is no zero.`,
     funnel.mock ? 'Some of these numbers are mock data; say so.' : '',
   ]
     .filter(Boolean)
@@ -635,9 +643,8 @@ function judgedInstruction(brief: PostBrief): string {
 /**
  * What a post is drawn from besides its pillar: a standout it takes the
  * topic of, in its own intent and never in the standout's words; the
- * questions a round-up answers together, naming no one who asked; one of the
- * operator's own posts that brought users elsewhere, reworked for this
- * platform; or what the sponsor just shipped.
+ * questions a round-up answers together, naming no one who asked; or what
+ * the sponsor just shipped.
  */
 function basisInstruction(brief: PostBrief): string {
   const basis = brief.basis
@@ -654,12 +661,6 @@ function basisInstruction(brief: PostBrief): string {
         `This post is a round-up of what people asked lately about ${basis.pillar}:`,
         basis.questions.map((question) => `- ${signalLine(question)}`).join('\n'),
         'Gather them in one post: each question in a line, in your own words, answered in a line or two from your own work. Name no one who asked, and link none of the threads. End by asking readers which question you missed.',
-      ].join('\n')
-    case 'rework':
-      return [
-        `This post reworks one of your own posts on ${basis.post.placeName} that brought users:`,
-        `<post>\n${basis.post.title}\n\n${basis.post.text}\n</post>`,
-        `Keep its point and make it a post for ${brief.account.placeName}: this platform's shape, length and readers, in this post's intent. Write it anew rather than pasting it, and do not say it was posted elsewhere. Name ${brief.sponsorName} only as the sponsor instruction says.`,
       ].join('\n')
     case 'launch':
       return `This post announces what ${brief.sponsorName} just shipped: ${basis.what}. Show it plainly: what it does, who it is for, why it was built, and what you want to hear back. It is a launch, so it names ${brief.sponsorName}, as the sponsor instruction says.`

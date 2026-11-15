@@ -1,22 +1,16 @@
-import { CONVERSION_KIND_LABELS, METRIC_LABELS, VALUE_LABEL } from '@stepradar/shared'
+import { METRIC_LABELS } from '@stepradar/shared'
 import { cn } from '@/lib/cn'
-import { formatCount, formatDay, formatKnown, formatMoney, formatPercent } from '@/lib/format'
+import { formatCount, formatDay, formatKnown, formatPercent } from '@/lib/format'
 
 /**
  * The report's charts, hand-drawn SVG so the colors stay the fixed series of
- * DESIGN.md: comments cyan, reach violet, clicks amber, signups emerald, paid
- * red. Demos and trials are the lighter shade of the step they lead from
- * (clicks and signups), so the funnel stays five hues.
+ * DESIGN.md: comments cyan, reach violet, clicks amber.
  */
 
 const SERIES = {
   reach: 'var(--color-chart-2)',
   replies: 'var(--color-chart-1)',
   clicks: 'var(--color-chart-3)',
-  demos: 'color-mix(in oklch, var(--color-chart-3) 55%, transparent)',
-  signups: 'var(--color-chart-4)',
-  trials: 'color-mix(in oklch, var(--color-chart-4) 55%, transparent)',
-  paid: 'var(--color-chart-5)',
 } as const
 
 /** What an account's platform counts as reach, and how much, null when none was read; no reach across platforms, which each count it their own way. */
@@ -28,41 +22,24 @@ export interface FunnelData {
   replies: number | null
   /** Null where no click is counted (shared `countsClicks`): the posts link to the sponsor directly. */
   clicks: number | null
-  /** Whether the demos and signups are a share of the clicks: not when some came where no click is counted. */
-  everyClickCounted: boolean
-  demos: number
-  signups: number
-  trials: number
-  paid: number
 }
 
-type FunnelStep = Exclude<keyof FunnelData, 'reach' | 'everyClickCounted'> | 'reach'
+type FunnelStep = keyof FunnelData
 
 /** The label of each step after reach. */
 const STEP_LABELS: Record<Exclude<FunnelStep, 'reach'>, string> = {
   replies: 'Comments',
   clicks: METRIC_LABELS.clicks,
-  demos: CONVERSION_KIND_LABELS.demo_started,
-  signups: CONVERSION_KIND_LABELS.signup,
-  trials: CONVERSION_KIND_LABELS.trial_started,
-  paid: CONVERSION_KIND_LABELS.paid,
 }
 
 /**
- * Each step's rate is a share of the step it leads from, not of the bar above
- * it: comments and clicks are both taken from reach, demos and signups from
- * clicks, trials and paid from signups. Demos and trials are optional
- * sub-steps, so a strict previous-bar rate would read "signups of demos".
- * The rates then say what the metric strip's notes say.
+ * Each step's rate is a share of reach, not of the bar above it: comments and
+ * clicks are both taken from reach, as the metric strip's notes say.
  */
 const FUNNEL_STEPS: { key: FunnelStep; rateFrom?: FunnelStep }[] = [
   { key: 'reach' },
   { key: 'replies', rateFrom: 'reach' },
   { key: 'clicks', rateFrom: 'reach' },
-  { key: 'demos', rateFrom: 'clicks' },
-  { key: 'signups', rateFrom: 'clicks' },
-  { key: 'trials', rateFrom: 'signups' },
-  { key: 'paid', rateFrom: 'signups' },
 ]
 
 /** A step's value; null for a number not read, or reach across platforms, which has no bar. */
@@ -70,7 +47,7 @@ function stepValue(data: FunnelData, key: FunnelStep): number | null {
   return key === 'reach' ? (data.reach?.value ?? null) : data[key]
 }
 
-/** Up to seven bars on a log-ish scale, each with its rate from the step it leads from; reach only where one platform counts it. */
+/** Up to three bars on a log-ish scale, each with its rate from the step it leads from; reach only where one platform counts it. */
 export function Funnel(props: { data: FunnelData }) {
   const steps = FUNNEL_STEPS.flatMap((step) => {
     const value = stepValue(props.data, step.key)
@@ -83,10 +60,7 @@ export function Funnel(props: { data: FunnelData }) {
     <ol className="grid gap-2">
       {steps.map((step) => {
         const value = step.value
-        const from =
-          step.rateFrom === undefined || (step.rateFrom === 'clicks' && !props.data.everyClickCounted)
-            ? null
-            : stepValue(props.data, step.rateFrom)
+        const from = step.rateFrom === undefined ? null : stepValue(props.data, step.rateFrom)
         const width = value === 0 ? 0 : Math.max(2, (Math.log10(value + 1) / Math.log10(max + 1)) * 100)
         return (
           <li key={step.key} className="grid grid-cols-[5rem_1fr_6.5rem] items-center gap-3 text-sm sm:grid-cols-[9rem_1fr_5rem]">
@@ -112,10 +86,9 @@ export interface TrendPoint {
   day: string
   reach: number
   clicks: number | null
-  signups: number
 }
 
-/** One line chart with three series on their own scales; the reader compares shape, not height. Reach is named as its platform counts it. */
+/** One line chart with two series on their own scales; the reader compares shape, not height. Reach is named as its platform counts it. */
 export function Trend(props: { points: TrendPoint[]; reachLabel: string; className?: string }) {
   const width = 640
   const height = 160
@@ -123,8 +96,8 @@ export function Trend(props: { points: TrendPoint[]; reachLabel: string; classNa
   const innerW = width - pad.left - pad.right
   const innerH = height - pad.top - pad.bottom
   // A series no day counts (clicks where the posts link to the sponsor directly) has no line.
-  const keys = (['reach', 'clicks', 'signups'] as const).filter((key) => props.points.some((point) => point[key] !== null))
-  const labels = { reach: props.reachLabel, clicks: METRIC_LABELS.clicks, signups: CONVERSION_KIND_LABELS.signup }
+  const keys = (['reach', 'clicks'] as const).filter((key) => props.points.some((point) => point[key] !== null))
+  const labels = { reach: props.reachLabel, clicks: METRIC_LABELS.clicks }
   const x = (index: number) => pad.left + (props.points.length <= 1 ? innerW / 2 : (index / (props.points.length - 1)) * innerW)
   const paths = keys.map((key) => {
     const values = props.points.map((point) => point[key] ?? 0)
@@ -137,12 +110,7 @@ export function Trend(props: { points: TrendPoint[]; reachLabel: string; classNa
   const labelEvery = Math.max(1, Math.round(props.points.length / 6))
   return (
     <figure className={cn('grid gap-2', props.className)}>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-40 w-full"
-        role="img"
-        aria-label={`${props.reachLabel}, clicks and signups per day`}
-      >
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" role="img" aria-label={`${props.reachLabel} and clicks per day`}>
         {[0.25, 0.5, 0.75].map((fraction) => (
           <line
             key={fraction}
@@ -197,7 +165,7 @@ export interface StripItem {
 
 export function MetricStrip(props: { items: StripItem[] }) {
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
       {props.items.map((item) => (
         <div key={item.label} className="min-w-0">
           <dt className="eyebrow">{item.label}</dt>
@@ -214,23 +182,18 @@ export function MetricStrip(props: { items: StripItem[] }) {
 interface StripFunnel {
   replies: number | null
   clicks: number | null
-  everyClickCounted: boolean
-  signups: number
-  paid: number
-  value: number
 }
 
 /** The reach a strip leads with: an account's, as its platform counts it, null when none was read; none across platforms. */
 export type StripReach = { label: string; value: number | null; note: string; source: string } | null
 
 /**
- * The six values every report leads with (DESIGN.md, Report), each with the
- * rate it leads to and its source: an account's reach first, or, across
- * accounts, which each count reach their own way, the comments alone.
+ * The values every report leads with (DESIGN.md, Report), each with the rate
+ * it leads to and its source: an account's reach first, or, across accounts,
+ * which each count reach their own way, the comments alone.
  */
-export function reportStrip(funnel: StripFunnel, reach: StripReach, platformSource: string, currency: string): StripItem[] {
+export function reportStrip(funnel: StripFunnel, reach: StripReach, platformSource: string): StripItem[] {
   const clicks = funnel.clicks
-  const signupRate = clicks === null || clicks === 0 || !funnel.everyClickCounted ? null : funnel.signups / clicks
   const lead: StripItem[] =
     reach === null ? [] : [{ label: reach.label, value: formatKnown(reach.value), note: reach.note, source: reach.source }]
   return [
@@ -242,14 +205,6 @@ export function reportStrip(funnel: StripFunnel, reach: StripReach, platformSour
       note: reach?.value && clicks !== null ? `${formatPercent(clicks / reach.value, 2)} of ${reach.label.toLowerCase()}` : undefined,
       source: clicks === null ? 'Not counted: the posts link to the sponsor directly' : 'Tracked links',
     },
-    {
-      label: CONVERSION_KIND_LABELS.signup,
-      value: formatCount(funnel.signups),
-      note: signupRate === null ? undefined : `${formatPercent(signupRate)} of clicks`,
-      source: 'PostHog, first touch',
-    },
-    { label: CONVERSION_KIND_LABELS.paid, value: formatCount(funnel.paid), source: 'PostHog, first touch' },
-    { label: VALUE_LABEL, value: formatMoney(funnel.value, currency), source: 'Paid times the value per paid customer' },
   ]
 }
 

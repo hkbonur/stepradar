@@ -73,11 +73,11 @@ export function sameMemoryText(a: string, b: string): boolean {
 }
 
 /**
- * The one goal every account of a workspace works toward: paying customers of
- * its sponsor. The strategy review's goal metric ladder (paid over signups
- * over clicks over follows) aims at it, and each review's goal note says
+ * The one goal every account of a workspace works toward: people who find
+ * its sponsor through the accounts. The strategy review's goal metric
+ * ladder (clicks over reach) aims at it, and each review's goal note says
  * where the account stands against it.
  */
 export function workspaceGoal(sponsorName: string): string {
-  return `Paying ${sponsorName} customers`
+  return `People who find ${sponsorName}`
 }

@@ -51,8 +51,7 @@ export async function sponsorLinkOf(
 
 /**
  * The account's bio link: the one the operator puts on the account's profile,
- * so a visit from the profile that turns into a signup counts for the
- * account. It names no post. Where the platform's posts carry tracked links
+ * so a visit from the profile counts for the account. It names no post. Where the platform's posts carry tracked links
  * it is one too, a `links` row of kind bio whose clicks are counted and which
  * sends readers to the sponsor's website as it is when they click; elsewhere
  * it is the sponsor's website with the UTM parameters and `utm_campaign=bio`

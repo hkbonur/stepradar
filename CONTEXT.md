@@ -11,11 +11,11 @@ The person who owns an Stepradar workspace, connects their own accounts, posts t
 _Avoid_: user (ambiguous with the readers), admin, owner.
 
 **Reader**:
-Someone who reads the operator's post or reply on a platform. A reader who follows the account is a **follower**; a reader who signs up for the sponsor is a **conversion**.
+Someone who reads the operator's post or reply on a platform. A reader who follows the account is a **follower**; a reader who clicks a tracked link is a **click**. Whether a reader signs up is the sponsor's own analytics' to say: every link carries UTM parameters for it.
 _Avoid_: viewer, customer (that is the sponsor's relationship), audience (fine for the group, not the individual), lead.
 
 **Sponsor**:
-The product the operator builds and promotes, set up on the first run (**Setup**) and kept on the workspace: its name, its website (where tracked links send readers), its **pitch** (what it does, in one sentence the writer says in its own words, never as an ad read), and what one paying customer is worth. A draft either names the sponsor, with the affiliation line, or leaves it out so the account helps on its own. The demo seed's sponsor is Formstep.
+The product the operator builds and promotes, set up on the first run (**Setup**) and kept on the workspace: its name, its website (where tracked links send readers), and its **pitch** (what it does, in one sentence the writer says in its own words, never as an ad read). A draft either names the sponsor, with the affiliation line, or leaves it out so the account helps on its own. The demo seed's sponsor is Formstep.
 _Avoid_: client, advertiser, brand.
 
 ## Accounts
@@ -37,7 +37,7 @@ What lets Stepradar read an account on a platform that needs the operator's perm
 _Avoid_: integration, login, OAuth (fine as the mechanism).
 
 **Setup**:
-The first run (`/setup`): what Stepradar does, the product, what one paying customer is worth, then the operator's accounts. "Add account" in the sidebar runs the account step again.
+The first run (`/setup`): what Stepradar does, the product, then the operator's accounts. "Add account" in the sidebar runs the account step again.
 _Avoid_: wizard, onboarding (that was the persona roster), signup.
 
 **Agent**:
@@ -124,7 +124,7 @@ _Avoid_: diff, edit distance (fine as the mechanism), accuracy.
 
 **Measurement window**:
 The seven days after an item is posted during which the analyst snapshots its numbers before marking it measured and feeding its experiment.
-_Avoid_: attribution window (that is for conversions), cooldown.
+_Avoid_: attribution window, cooldown.
 
 ## Listening and research
 
@@ -173,20 +173,16 @@ Whether an account posts as planned: its week's posts due so far (a post is due 
 _Avoid_: streak, cadence (that is the account's plan), schedule.
 
 **Leak**:
-Where an account's funnel lets fewer through than it did: the **funnel step** (who its linked posts reached clicking through, who clicked signing up, who signed up paying) whose rate over the last 28 days fell under 60% of the 28 days before, both windows past the step's floor, or a **dry** step that let nothing through though three times its floor came to it. The click step reads only the posts that carry a tracked link; a platform whose posts link straight to the sponsor has only the paid step. Fewer clicks is the posts' to fix, and the strategy review tests how posts open and end on it; fewer signups or fewer paying is the product's page or the product, which no post fixes.
+Where fewer of those an account's linked posts reached click through than did: the click rate over the last 28 days fell under 60% of the 28 days before, both windows past the floor, or **dry**: no click at all though three times the floor was reached. It reads only the posts that carry a tracked link; a platform whose posts link straight to the sponsor has nothing to leak. Fewer clicks is the posts' to fix, and the strategy review tests how posts open and end on it.
 _Avoid_: drop-off (fine casually), churn, bottleneck.
 
 **Growth line**:
-What an account's last seven days brought in signups and paid conversions against the seven before, beside the test it runs now, at the bottom of Today.
+What an account's last seven days brought in clicks and in karma or followers gained against the seven before, beside the test it runs now, at the bottom of Today. The karma or followers gained run from the last read before the span to its last read; a number the platform does not count, or that was not read in the span, is left out.
 _Avoid_: trend (that is the report's per-day line), KPI, stats.
 
 **Rising thread**:
 A thread the listener found and kept that is under two hours old and drew at least five comments at ten or more an hour: a reply now lands while people still read it, so the operator gets a push at once, one a sweep for the fastest, once per thread. None is pushed in the quiet hours: by their end the thread is no longer rising.
 _Avoid_: viral, trending, hot, standout (that is something else).
-
-**Reworked post**:
-An account's post drawn from another of the operator's accounts' post, on another platform, that brought the most users in the last 28 days (the most paid, then the most signups): the same point, written anew in this platform's shape, one a week in an evergreen post (after the week's round-up, which takes the first one that can hold it), never on Hacker News, never one reworked already. The writer reads the source without its sentences naming the product and without its links, and names the product only as this post's sponsor rule says.
-_Avoid_: cross-post, repost, syndication.
 
 **Launch**:
 When the product ships something, one post per account on the day the operator picks, announcing it and naming the product with the account's affiliation line: a thread on X where the cadence has threads, a Show HN on Hacker News, and on Reddit or a forum only in a community the listener met whose rules allow self-promotion. It takes the place and the hour of the day's idea not yet written. An account where it cannot go is left out, with why: its sponsor dial is 0, the day holds a launch already or a post already written, the day's posting hour has passed, or no community lets it name the product. A launch is the operator's explicit call, so it is planned outside the sponsor dial's ramp; if its community stops allowing the product before it is written, it is skipped.
@@ -211,7 +207,7 @@ A web push to the operator's devices: a comment (several within ten minutes go a
 _Avoid_: alert, ping, toast (that is in-app UI).
 
 **Morning digest**:
-The notification each morning that says how many drafts are ready, which posts are due and the next steps; on Monday it also says what last week, Monday to Sunday, brought in signups and paid conversions against the week before, and says nothing of it when neither week brought anyone.
+The notification each morning that says how many drafts are ready, which posts are due and the next steps; on Monday it also says what last week, Monday to Sunday, brought in clicks and in karma, followers or likes gained against the week before, each kind of reach added up and said apart, and says nothing of it when neither week brought any.
 _Avoid_: brief (that is the researcher's note), summary, newsletter.
 
 **Quiet hours**:
@@ -229,7 +225,7 @@ One arm of an experiment, with a key and a description the writer follows. The *
 _Avoid_: option, arm (fine in statistics), treatment, version.
 
 **Metric**:
-What an experiment is decided on, per item: `paid`, `signups`, `clicks` or `reach`, the goal metric ladder. Reach comes from the platforms, clicks from tracked links, signups and paid from PostHog. A report shows these and the comments under the items.
+What an experiment is decided on, per item: `clicks` or `reach`, the goal metric ladder. Reach comes from the platforms, clicks from tracked links. A report shows these and the comments under the items.
 _Avoid_: KPI, goal, stat.
 
 **Reach**:
@@ -247,7 +243,7 @@ What an account does by default and what it tests next: a default per dimension,
 _Avoid_: plan (that is the week's posts), playbook, settings (those are the operator's), config.
 
 **Strategy review**:
-The analyst's weekly look at one account (Monday morning, before the week is planned, or when the operator asks): it shifts weight toward the communities and pillars that earn most, moves a posting hour that another hour clearly beats, re-tests a default that later data contradicts, and starts the next experiment when none runs: where the account's funnel leaks at the click step, a hook or call to action test it can decide past reach first, else the dimension it knows least about. Every rule is fixed and needs no model; a review that finds nothing to change changes nothing.
+The analyst's weekly look at one account (Monday morning, before the week is planned, or when the operator asks): it shifts weight toward the pillars whose readers click through most, and the communities whose posts reach most, moves a posting hour that another hour clearly beats, re-tests a default that later data contradicts, and starts the next experiment when none runs: where the account's funnel leaks at the click step, a hook or call to action test it can decide past reach first, else the dimension it knows least about. Every rule is fixed and needs no model; a review that finds nothing to change changes nothing.
 _Avoid_: audit, retro, optimization.
 
 **Dimension**:
@@ -283,7 +279,7 @@ When a post is due against the account's usual hour: at it, two hours earlier or
 _Avoid_: schedule, slot.
 
 **Post model** (dimension):
-Whether a post is planned from the pillars and the news as usual, or modeled on a standout. Only an evergreen post can be modeled: a reactive one keeps its signal. Under a test the posts take the variants in turn, and a modeled post takes the next standout, the most out of line first; where none is left, or the post is reactive, the turn goes to the control, and a round-up or a reworked post leaves the test. A post counts as modeled only when it was modeled on a standout. The test starts only once something stood out, takes only the catalog's two variants, and the analyst stops it when its modeled variant got no post for 14 days with nothing standing out. A decided "Modeled on what worked" has every evergreen post take a standout while one is left. Today proposes the test while the account is free to run one and has not tested it within 180 days, since the strategy review would reach it last.
+Whether a post is planned from the pillars and the news as usual, or modeled on a standout. Only an evergreen post can be modeled: a reactive one keeps its signal. Under a test the posts take the variants in turn, and a modeled post takes the next standout, the most out of line first; where none is left, or the post is reactive, the turn goes to the control, and a round-up leaves the test. A post counts as modeled only when it was modeled on a standout. The test starts only once something stood out, takes only the catalog's two variants, and the analyst stops it when its modeled variant got no post for 14 days with nothing standing out. A decided "Modeled on what worked" has every evergreen post take a standout while one is left. Today proposes the test while the account is free to run one and has not tested it within 180 days, since the strategy review would reach it last.
 _Avoid_: copy test, remix.
 
 **Experiment catalog**:
@@ -295,7 +291,7 @@ What an account does on one dimension when no experiment varies it: the winning 
 _Avoid_: preference, setting, baseline (that is the control), winner (fine in copy).
 
 **Goal metric**:
-The metric the strategy review gives a new experiment: on posts, the one closest to paying customers that the posts brought enough of in four weeks, down the ladder paid, signups, clicks, then the platform's reach; on replies, which carry no link, and on post kinds, which decide where a post goes, reach. No test aims at reach where no reader reads it, nor a reply test where a reply shows no reach (Hacker News).
+The metric the strategy review gives a new experiment: on posts, clicks once the posts brought thirty in four weeks, else the platform's reach; on replies, which carry no link, and on post kinds, which decide where a post goes, reach. No test aims at reach where no reader reads it, nor a reply test where a reply shows no reach (Hacker News).
 _Avoid_: KPI, north star, objective, target.
 
 **Journal**:
@@ -315,11 +311,11 @@ Something the writer must always or never do, from the operator ("never name a c
 _Avoid_: constraint, guideline, policy, directive (that is a focus for a while).
 
 **Goal**:
-The one thing every account works toward: paying customers of the sponsor ("Paying Formstep customers").
+The one thing every account works toward: people who find the sponsor through it ("People who find Formstep"), read as clicks on its links and the karma or followers it gains.
 _Avoid_: objective, target, north star, KPI.
 
 **Goal note**:
-The memory entry every strategy review leaves: the account's paid customers in the last 28 days with what they are worth, the trend, and what it tries next.
+The memory entry every strategy review leaves: the account's clicks and karma or followers gained in the last 28 days against the 28 before, where its platform counts them, and what it tries next.
 _Avoid_: status report, scorecard, progress note.
 
 **Learning**:
@@ -333,23 +329,15 @@ _Avoid_: tip, suggestion, insight, action item.
 ## Attribution
 
 **Tracked link**:
-A short link (`/go/<slug>`) a sponsored post on X or LinkedIn carries. The worker counts each click and redirects to the sponsor's website with UTM parameters naming the account, the post, its variant and the platform, so PostHog can tie a signup back to it. On Reddit, Hacker News and forums a sponsored post links to the sponsor's website directly with the same UTM parameters, since those communities distrust redirect domains, so its clicks are not counted; on Hacker News that link is the submission's URL. A reply carries no link. Each account also has one **bio link**, which names no post, for the operator to put on its profile: a tracked link where its posts carry them, sending readers on with `utm_campaign=bio`, else the sponsor's website with the UTM parameters, so what the profile brings counts for the account.
+A short link (`/go/<slug>`) a sponsored post on X or LinkedIn carries. The worker counts each click and redirects to the sponsor's website with UTM parameters naming the account, the post, its variant and the platform, so the sponsor's own analytics can tie a visit back to it. On Reddit, Hacker News and forums a sponsored post links to the sponsor's website directly with the same UTM parameters, since those communities distrust redirect domains, so its clicks are not counted; on Hacker News that link is the submission's URL. A reply carries no link. Each account also has one **bio link**, which names no post, for the operator to put on its profile: a tracked link where its posts carry them, sending readers on with `utm_campaign=bio`, else the sponsor's website with the UTM parameters, so what the profile brings counts for the account.
 _Avoid_: affiliate link, short URL, redirect.
 
-**Conversion**:
-A sponsor's event tied to an account by UTM: a demo started, a signup, a trial or a paid subscription, read from PostHog.
-_Avoid_: sale, lead, goal (that is the workspace's goal).
-
-**Probable conversion**:
-A conversion with no UTM whose person answered the sponsor's "where did you hear about us" with a platform, or else first arrived from a platform's domain (reddit.com, news.ycombinator.com, t.co, x.com, twitter.com, linkedin.com, lnkd.in, or one of the workspace's forums). It names the platform, never an account or a post: reported apart from conversions, labeled probable, and read by no experiment.
-_Avoid_: assisted conversion, dark conversion (fine casually), estimate.
-
 **Report**:
-The page that answers "is this working?": per account, its reach line (karma or followers), the funnel from reach to replies, clicks (its bio link's among them), signups and paid with where it leaks, how it posted as planned over the last four weeks, its posted items and its open experiments; across accounts, the same added up with one row per account and what works. Every number says where it comes from.
+The page that answers "is this working?": per account, its reach line (karma or followers), the funnel from reach to replies and clicks (its bio link's among them) with where it leaks, how it posted as planned over the last four weeks, its posted items and its open experiments; across accounts, the same added up with one row per account and what works. Every number says where it comes from.
 _Avoid_: dashboard (fine casually), analytics (that is the data), insights.
 
 **What works**:
-Ranked lists on the workspace report over the last 28 days' measured items: by community, by pillar and by reply style, each ranked by value per item, then clicks, then reach.
+Ranked lists on the workspace report over the last 28 days' measured items: by community, by pillar and by reply style, each ranked by clicks per reach where clicks are counted, then reach per item.
 _Avoid_: insights, best practices, leaderboard.
 
 ## Operations
@@ -363,7 +351,7 @@ One unit of work a cron, an agent or the operator queued: a kind, a payload, the
 _Avoid_: task (that is the chat request), action, run, step.
 
 **Provider**:
-An external capability behind an interface with a mock and a real adapter: `llm`, the `classifier` (a fast model that reads every heard post for whether it is on topic and worth an answer), a **platform reader** per platform, the search `suggestions` (Google's autocomplete), `analytics` (PostHog) and the `notifier` (web push). The mode is chosen explicitly per deployment; nothing falls back to mock when a key is missing.
+An external capability behind an interface with a mock and a real adapter: `llm`, the `classifier` (a fast model that reads every heard post for whether it is on topic and worth an answer), a **platform reader** per platform, the search `suggestions` (Google's autocomplete) and the `notifier` (web push). The mode is chosen explicitly per deployment; the operator's keys (the Anthropic key, the Reddit app's) are stored from the setup and the Providers page, write-only; nothing falls back to mock when a key is missing.
 _Avoid_: integration, service, plugin, connector.
 
 **Platform reader**:

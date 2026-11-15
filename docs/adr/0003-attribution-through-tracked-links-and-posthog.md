@@ -1,6 +1,6 @@
 # ADR 0003: Attribution runs through tracked links and PostHog
 
-**Status**: accepted, 2026-10-09
+**Status**: accepted, 2026-10-09; PostHog removed 2026-11-08 (see the last amendment)
 
 ## Context
 
@@ -24,3 +24,10 @@ Every publication carries one tracked link, `/go/<slug>`, served by the Worker. 
 - Conversions are stored as conversions, not metric snapshots; Polar and the discount codes are gone.
 - A conversion is an account's when the person's first link named the account's handle as the source and its platform as the medium. So a handle is unique on its platform only: the same handle on two platforms is two accounts, and one handle in two cases on one platform is the same one, on every platform, Hacker News included.
 - A forum account's medium is its forum's host (`utm_medium=community.n8n.io`), not the platform's name, since every forum is its own site and one username on two forums is two accounts. Its posts link directly, as on Reddit, and its probable conversions are the ones that first arrived from the workspace's forums' hosts, or whose person named a forum.
+
+## Amended, 2026-11-08 (PostHog out)
+
+- Stepradar reads no product analytics. The analytics provider, conversions, probable conversions, the value of one paying customer and the post reworked from what brought users are gone (docs/plan.md, slice 23). The operator wanted one key fewer, and a product without PostHog could not run in real mode at all: the daily metrics pull failed before it closed a post or decided an experiment.
+- The tracked links and their UTM parameters stay exactly as above: Stepradar counts the clicks on X and LinkedIn, and the sponsor's own analytics, whatever it is, can still tie a visit or a signup back to an account, a post and a variant.
+- The funnel ends at clicks. The goal metric ladder is clicks, then reach; pillars are weighed on clicks per reach, then reach per post, and communities on reach per post; the goal note, the growth line and the Monday digest say the clicks and the karma or followers gained.
+- Where nothing reads an account's numbers (an unconnected Reddit account, LinkedIn) and its posts link directly, no experiment can be decided on that account any more: signups were the rung that reached it.

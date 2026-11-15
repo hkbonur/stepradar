@@ -26,7 +26,8 @@ export const judgePost = internalAction({
   handler: async (ctx, args): Promise<JudgeResult> => {
     const brief: JudgeBrief | null = await ctx.runQuery(internal.internal.judge.judgeContext, { postId: args.postId })
     if (brief === null) return { skipped: 'The post is no longer a draft to judge.' }
-    const judged = await llmProvider().judgePost(brief)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const judged = await llmProvider(keys).judgePost(brief)
     return ctx.runMutation(internal.internal.judge.storeJudgment, {
       postId: args.postId,
       wordsBy: args.wordsBy,

@@ -34,7 +34,7 @@ pnpm --filter @stepradar/convex codegen   # regenerate src/_generated after an A
 - Formatting is **oxfmt** and linting is **oxlint**. Never run prettier or eslint.
 - Turbo tasks depend on `^build`.
 - The studio app's `tsc:check` runs `gen:routes` first; `src/routeTree.gen.ts` is generated and gitignored.
-- Providers run in mock mode unless `PROVIDERS_MODE=real` is set on the Convex deployment. Real adapters need their keys; a missing key is an error, never a fallback to mock (ADR 0002).
+- Providers run in mock mode unless `PROVIDERS_MODE=real` is set on the Convex deployment. Real adapters need their keys, which the operator stores from the setup and the Providers page (`providerKeys`, ADR 0005); a missing key is an error, never a fallback to mock (ADR 0002).
 
 ### Local backend notes
 

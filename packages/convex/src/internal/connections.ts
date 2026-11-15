@@ -1,3 +1,4 @@
+import type { ProviderKeys } from '../core/keys'
 import { handleOf, placeOf, placeLabel } from '@stepradar/shared'
 import { v } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -60,8 +61,13 @@ export const fail = internalMutation({
  * revoked, which opens the checklist item again, and the step fails with
  * words the operator reads.
  */
-export function actionReader(ctx: ActionCtx, account: Doc<'accounts'>, connection: ReaderConnection | null): PlatformReader {
-  const reader = platformReader(placeOf(account), connection)
+export function actionReader(
+  ctx: ActionCtx,
+  account: Doc<'accounts'>,
+  connection: ReaderConnection | null,
+  keys: ProviderKeys
+): PlatformReader {
+  const reader = platformReader(placeOf(account), connection, keys)
   const guard = <A extends unknown[], R>(read: ((...args: A) => Promise<R>) | undefined) =>
     read && ((...args: A) => readingAs(ctx, account, () => read(...args)))
   return {

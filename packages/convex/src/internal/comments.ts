@@ -34,7 +34,8 @@ export const poll = internalAction({
   handler: async (ctx, args): Promise<{ comments: number; drafting: HeardResult | null }> => {
     const accountId = args.accountId
     const { account, workspace, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
-    const reader = actionReader(ctx, account, connection)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const reader = actionReader(ctx, account, connection, keys)
     // The schedule queues this only for a reader that reads comments or mentions, so one that cannot changed since.
     if (!reader.comments && !reader.mentions) throw refusal(cannotRead(placeOf(account), 'comments'))
     const now = Date.now()
@@ -68,7 +69,7 @@ export const poll = internalAction({
     })
     if (!listens(account)) return { comments: heard.length, drafting: null }
     const unanswered: HeardComment[] = await ctx.runQuery(internal.internal.comments.unanswered, { accountId })
-    const drafting = unanswered.length === 0 ? null : await judgeAndStore(ctx, { account, workspace, reader }, unanswered)
+    const drafting = unanswered.length === 0 ? null : await judgeAndStore(ctx, { account, workspace, reader, keys }, unanswered)
     return { comments: heard.length, drafting }
   },
 })

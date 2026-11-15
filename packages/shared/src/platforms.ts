@@ -57,7 +57,7 @@ export function placeLabel(place: PlatformPlace): string {
 /**
  * What a sponsor link's utm_medium names the place by (ADR 0003): the
  * platform, or a forum's host, so one handle on two forums is two accounts
- * to the conversions too.
+ * to the sponsor's own analytics too.
  */
 export function utmMediumOf(place: PlatformPlace): string {
   return place.platform === 'forum' ? forumHost(place.forum) : place.platform

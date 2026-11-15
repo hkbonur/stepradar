@@ -127,7 +127,7 @@ describe('writerMemory', () => {
       const memory = await writerMemory(ctx, account._id, 'Formstep')
 
       expect(memory).toEqual({
-        goal: 'Paying Formstep customers',
+        goal: 'People who find Formstep',
         standing: 'The note in force.',
         rules: ['Always show the URL bar.', 'Never say "guys".'],
         facts: ['Viewers like dark mode.'],
@@ -141,7 +141,7 @@ describe('writerMemory', () => {
     await t.run(async (ctx) => {
       const account = await insertAccount(ctx)
       expect(await writerMemory(ctx, account._id, 'Formstep')).toEqual({
-        goal: 'Paying Formstep customers',
+        goal: 'People who find Formstep',
         standing: null,
         rules: [],
         facts: [],

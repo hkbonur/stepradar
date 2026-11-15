@@ -1,3 +1,4 @@
+import type { ProviderKeys } from '../core/keys'
 import { v } from 'convex/values'
 import {
   answersFirst,
@@ -93,7 +94,8 @@ export const listen = internalAction({
     const accountId = args.accountId
     const { account, workspace, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
     if (!listens(account)) return { skipped: 'replies are off' }
-    const reader = actionReader(ctx, account, connection)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const reader = actionReader(ctx, account, connection, keys)
     if (!reader.search) throw refusal(cannotRead(placeOf(account), 'search'))
     const own = postsToMetCommunity(account.platform)
       ? await ctx.runQuery(internal.internal.replies.searchedCommunitiesOf, { accountId })
@@ -103,7 +105,7 @@ export const listen = internalAction({
     const found = await sweepSearch(reader.search, query, own)
     return judgeAndStore(
       ctx,
-      { account, workspace, reader },
+      { account, workspace, reader, keys },
       found.map((thread) => heardOf(thread, account.pillars))
     )
   },
@@ -118,13 +120,13 @@ export const listen = internalAction({
  */
 export async function judgeAndStore(
   ctx: ActionCtx,
-  source: { account: Doc<'accounts'>; workspace: Doc<'workspaces'>; reader: PlatformReader },
+  source: { account: Doc<'accounts'>; workspace: Doc<'workspaces'>; reader: PlatformReader; keys: ProviderKeys },
   heard: HeardThread[]
 ): Promise<HeardResult> {
-  const { account, workspace, reader } = source
+  const { account, workspace, reader, keys } = source
   // The classifier reads only what the rules keep, so no read is spent on a post they would drop anyway.
   const posts: HeardThread[] = await ctx.runQuery(internal.internal.replies.ruledIn, { accountId: account._id, posts: heard })
-  const fits = await classifierProvider().classify(
+  const fits = await classifierProvider(keys).classify(
     // A thread's title is half of what it asks, so the classifier reads both.
     classifyBriefOf(
       account,
@@ -141,7 +143,7 @@ export async function judgeAndStore(
   const met = judged
     .filter(({ fit }) => fitVerdict(fit).kind !== 'drop')
     .flatMap(({ post }) => (post.community === null ? [] : [post.community]))
-  const { unread } = await readCommunityRules(ctx, account, reader, met)
+  const { unread } = await readCommunityRules(ctx, { account, reader, keys }, met)
   const kept = judged.filter(
     ({ post }) => !unread.some((community) => post.community !== null && sameCommunity(community.name, post.community))
   )
@@ -277,7 +279,8 @@ export const writeReplies = internalAction({
   handler: async (ctx, args): Promise<{ drafts: number; skipped: number }> => {
     const accountId = args.accountId
     const context = await ctx.runQuery(internal.internal.replies.writingContext, { accountId })
-    const llm = llmProvider()
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const llm = llmProvider(keys)
     const outcome = { drafts: 0, skipped: 0 }
     // The week grows with each draft this run writes, so a run of drafts cannot pass the dial together.
     let week = context.week

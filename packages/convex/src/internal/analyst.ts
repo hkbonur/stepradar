@@ -5,11 +5,7 @@ import {
   experimentVerdict,
   itemsNoun,
   variantRate,
-  reachOf,
   voiceStatsOf,
-  forumHost,
-  placeOf,
-  utmMediumOf,
   type ItemCounts,
 } from '@stepradar/shared'
 import { internal } from '../_generated/api'
@@ -27,56 +23,38 @@ import { analystDecisionNote, applyExperimentDecision, postModelStall, stopExper
 import { reviewStrategy as reviewStrategyRule, type ReviewOutcome } from '../core/strategy'
 import { accountBriefOf } from '../core/accounts'
 import { closeItemsWith } from '../core/checklist'
-import { shownClicks } from '../core/posted'
 import { providersMode } from '../lib/env'
-import { analyticsProvider, type FoundConversion, type MockPostVisits } from '../providers/analytics'
 import type { PlatformReader } from '../providers/platforms'
 import { llmProvider, type AccountPostSample } from '../providers/llm'
-import {
-  accountReachValidator,
-  foundConversionValidator,
-  foundProbableValidator,
-  itemCountsValidator,
-  itemRefValidator,
-  voiceValidator,
-} from '../lib/validators'
+import { accountReachValidator, itemCountsValidator, itemRefValidator, voiceValidator } from '../lib/validators'
 import { actionReader } from './connections'
 
 /**
- * The analyst (CONTEXT.md, "Agent"): reads the numbers and the conversions,
- * closes measured posts, decides experiments, reviews the strategy and learns
+ * The analyst (CONTEXT.md, "Agent"): reads the numbers, closes measured posts, decides experiments, reviews the strategy and learns
  * the voice. A thrown error fails the job in dispatch.ts.
  */
 
 /**
  * The analyst's read of an account's numbers: each post and reply in its
  * measurement window (core/measure.ts) and the account's karma or followers
- * through its reader, then the conversions, the items past their window, and
- * the experiments. A reader that cannot read numbers leaves them to the
- * operator, and the pull reads the conversions all the same.
+ * through its reader, then closes the items past their window and asks
+ * about the experiments. A reader that cannot read numbers leaves them to
+ * the operator, and the pull closes and decides all the same.
  */
 export const pullMetrics = internalAction({
   args: { accountId: v.id('accounts') },
-  handler: async (
-    ctx,
-    args
-  ): Promise<{ counted: number; removed: number; conversions: number; measured: { posts: number; replies: number } }> => {
+  handler: async (ctx, args): Promise<{ counted: number; removed: number; measured: { posts: number; replies: number } }> => {
     const accountId = args.accountId
     const { account, connection } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
-    const reader = actionReader(ctx, account, connection)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const reader = actionReader(ctx, account, connection, keys)
     const mock = providersMode() === 'mock'
     const { numbers, removed } = await readNumbers(ctx, account, reader)
     const reach = reader.account ? await reader.account(account.handle) : null
     await ctx.runMutation(internal.internal.analyst.storeNumbers, { accountId, numbers, removed, reach, mock })
-    const since = Date.now() - 30 * 24 * 3_600_000
-    // Only the mock reads the visits; the product's own analytics have the conversions.
-    const mockVisits = mock ? await ctx.runQuery(internal.internal.analyst.mockVisits, { accountId, since }) : []
-    const medium = utmMediumOf(placeOf(account))
-    const found = await analyticsProvider().conversions({ accountHandle: account.handle, medium, since, mockVisits })
-    const conversions = await ctx.runMutation(internal.internal.analyst.storeConversions, { accountId, conversions: found, mock })
     const measured = await ctx.runMutation(internal.internal.analyst.closeMeasured, { accountId })
     await ctx.runMutation(internal.internal.analyst.evaluateExperiments, { accountId })
-    return { counted: numbers.length, removed: removed.length, conversions, measured }
+    return { counted: numbers.length, removed: removed.length, measured }
   },
 })
 
@@ -110,35 +88,6 @@ export const toMeasure = internalQuery({
   handler: async (ctx, args): Promise<ToMeasure[]> => itemsToMeasure(ctx, args.accountId, Date.now()),
 })
 
-/**
- * The account's sponsored posts since a time as the mock analytics reads
- * them (providers/analytics MockPostVisits): a tracked link's clicks, or on a
- * platform whose posts link to the sponsor directly, the post's reach at its
- * last read.
- */
-export const mockVisits = internalQuery({
-  args: { accountId: v.id('accounts'), since: v.number() },
-  handler: async (ctx, args): Promise<MockPostVisits[]> => {
-    const account = await ctx.db.get(args.accountId)
-    if (!account) throw new Error(`account ${args.accountId} not found`)
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_account_posted', (q) => q.eq('accountId', args.accountId).gte('posted.at', args.since))
-      .collect()
-    const sponsored = posts.flatMap((post) =>
-      post.sponsorLink === undefined || post.posted === undefined ? [] : [{ post, postedAt: post.posted.at }]
-    )
-    return Promise.all(
-      sponsored.map(async ({ post, postedAt }) => {
-        const clicks = await shownClicks(ctx, account.platform, post._id)
-        // Where no click is counted, the post's reach at its last read stands in for its visits.
-        const visits = clicks ?? (post.numbers === undefined ? 0 : (reachOf(post.numbers.counts) ?? 0))
-        return { slug: post.slug, variantKey: post.variantKey, postedAt, visits }
-      })
-    )
-  },
-})
-
 export const storeNumbers = internalMutation({
   args: {
     accountId: v.id('accounts'),
@@ -148,82 +97,6 @@ export const storeNumbers = internalMutation({
     mock: v.boolean(),
   },
   handler: async (ctx, args) => storeNumbersRule(ctx, args.accountId, args, Date.now()),
-})
-
-function postOfConversion(conversion: FoundConversion, posts: Doc<'posts'>[]): Doc<'posts'> | undefined {
-  if (!conversion.utm.campaign) return undefined
-  return posts.find((candidate) => candidate.slug === conversion.utm.campaign)
-}
-
-export const storeConversions = internalMutation({
-  args: {
-    accountId: v.id('accounts'),
-    mock: v.boolean(),
-    conversions: v.array(foundConversionValidator),
-  },
-  handler: async (ctx, args): Promise<number> => {
-    let inserted = 0
-    const posts = await ctx.db
-      .query('posts')
-      .withIndex('by_account', (q) => q.eq('accountId', args.accountId))
-      .collect()
-    for (const conversion of args.conversions) {
-      const kind = conversion.kind
-      const existing = await ctx.db
-        .query('conversions')
-        .withIndex('by_distinct', (q) => q.eq('distinctId', conversion.distinctId).eq('kind', kind))
-        .first()
-      if (existing) continue
-      const post = postOfConversion(conversion, posts)
-      await ctx.db.insert('conversions', {
-        accountId: args.accountId,
-        postId: post?._id,
-        variantKey: conversion.utm.content,
-        kind,
-        distinctId: conversion.distinctId,
-        at: conversion.at,
-        mock: args.mock,
-      })
-      inserted += 1
-    }
-    return inserted
-  },
-})
-
-/**
- * The workspace's probable conversions of the last 30 days (shared
- * probable.ts), read once a day for every platform: they name a platform,
- * not an account. A forum's visitors come from the workspace's forums.
- */
-export const pullProbable = internalAction({
-  args: {},
-  handler: async (ctx): Promise<{ probable: number }> => {
-    const forums = await ctx.runQuery(internal.internal.data.forums, {})
-    const found = await analyticsProvider().probableConversions({
-      since: Date.now() - 30 * 24 * 3_600_000,
-      forumHosts: forums.map(forumHost),
-    })
-    const mock = providersMode() === 'mock'
-    return { probable: await ctx.runMutation(internal.internal.analyst.storeProbable, { conversions: found, mock }) }
-  },
-})
-
-/** The probable conversions found, each person's conversion of a kind once. */
-export const storeProbable = internalMutation({
-  args: { mock: v.boolean(), conversions: v.array(foundProbableValidator) },
-  handler: async (ctx, args): Promise<number> => {
-    let inserted = 0
-    for (const conversion of args.conversions) {
-      const existing = await ctx.db
-        .query('probableConversions')
-        .withIndex('by_distinct', (q) => q.eq('distinctId', conversion.distinctId).eq('kind', conversion.kind))
-        .first()
-      if (existing) continue
-      await ctx.db.insert('probableConversions', { ...conversion, mock: args.mock })
-      inserted += 1
-    }
-    return inserted
-  },
 })
 
 /** Posts and replies past their measurement window become measured (core/measure.ts). */
@@ -328,9 +201,10 @@ export const learnVoice = internalAction({
   handler: async (ctx, args): Promise<{ language: string; sampleSize: number; examples: number }> => {
     const accountId = args.accountId
     const { account } = await ctx.runQuery(internal.internal.data.getAccount, { accountId })
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
     const reading: VoiceReading = await ctx.runQuery(internal.internal.analyst.voiceReading, { accountId, read: VOICE_READ_POSTS })
     const stats = voiceStatsOf(voiceSampleOf(reading.counts))
-    const draft = await llmProvider().learnVoice({
+    const draft = await llmProvider(keys).learnVoice({
       account: accountBriefOf(account),
       stats,
       top: reading.top.map(sampleOf),

@@ -167,7 +167,7 @@ export function PostEditor(props: { post: Doc<'posts'>; place: PlatformPlace }) 
 /** What the operator does with a sponsored post's link (shared SPONSOR_LINKS): submit the post with it, or keep it in the text. */
 function linkHint(platform: Platform): string {
   const rule = SPONSOR_LINKS[platform]
-  const ties = rule.kind === 'tracked' ? 'it counts the click and ties a signup to this post' : 'it ties a signup to this post'
+  const ties = rule.kind === 'tracked' ? 'it counts the click on this post' : 'its UTM parameters name this post to your analytics'
   if (rule.placement === 'submission') return `Submit the post with this link: ${ties}.`
   if (PLATFORM_DRAFT_SHAPES[platform] === 'rewrite') return `Keep this link as it is in what you post: ${ties}.`
   return `Keep this link in the post as it is: ${ties}.`

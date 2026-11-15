@@ -1,14 +1,13 @@
 import { api } from '@stepradar/convex/_generated/api'
-import { CONVERSION_KIND_LABELS, ITEM_REACH_LABELS, METRIC_LABELS, ACCOUNT_REACH_LABELS, VALUE_LABEL } from '@stepradar/shared'
+import { ITEM_REACH_LABELS, METRIC_LABELS, ACCOUNT_REACH_LABELS } from '@stepradar/shared'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import { Funnel, MetricStrip, reportStrip } from '@/components/charts'
 import { AccountMark } from '@/components/account-mark'
-import { ProbableLine } from '@/components/probable'
 import { AttributionNote, Card, Empty, MockNote, Mono, PageHeader, Skeleton } from '@/components/ui'
 import { cn } from '@/lib/cn'
-import { formatCount, formatKnown, formatMoney, formatPercent, plural } from '@/lib/format'
+import { formatCount, formatKnown, formatPercent, plural } from '@/lib/format'
 
 export const Route = createFileRoute('/reports/')({ component: WorkspaceReport })
 
@@ -41,22 +40,19 @@ function WorkspaceReport() {
               <div className="space-y-1.5">
                 <AttributionNote />
                 <MockNote when={total.mock} />
-                {report.probable.map((probable) => (
-                  <ProbableLine key={probable.platform} probable={probable} currency={report.currency} />
-                ))}
               </div>
             }
           >
             {/* Each platform counts reach its own way, so the accounts' rows below carry it, and the total starts at the comments. */}
-            <MetricStrip items={reportStrip(total, null, 'Read from each platform', report.currency)} />
+            <MetricStrip items={reportStrip(total, null, 'Read from each platform')} />
           </Card>
 
-          <Card title="Accounts" count={report.accounts.length} description="The most value first. Each opens its own report." flush>
+          <Card title="Accounts" count={report.accounts.length} description="The most clicks first. Each opens its own report." flush>
             <AccountTable report={report} />
           </Card>
 
           <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-            <Card title="From a comment to a paid plan">
+            <Card title="Comments and clicks">
               <Funnel data={{ ...total, reach: null }} />
             </Card>
             <WhatWorks report={report} />
@@ -71,21 +67,16 @@ const NUMBER_CELL = 'py-2.5 pl-3 text-right'
 const HEAD_CELL = 'py-2 pl-3 text-right font-medium'
 
 /**
- * One row per account, the most value first: its reach and its karma or
+ * One row per account, the most clicks first: its reach and its karma or
  * followers as its platform counts them, then the strip's columns; the
  * totals close it, without reach, which no two platforms count alike.
  */
 function AccountTable(props: { report: Report }) {
   const { report } = props
-  const cells = (funnel: Omit<Total, 'everyClickCounted'>) => (
+  const cells = (funnel: Total) => (
     <>
       <td className={NUMBER_CELL}>{formatKnown(funnel.replies)}</td>
       <td className={NUMBER_CELL}>{formatKnown(funnel.clicks)}</td>
-      <td className={cn(NUMBER_CELL, 'hidden lg:table-cell')}>{funnel.demos}</td>
-      <td className={NUMBER_CELL}>{funnel.signups}</td>
-      <td className={cn(NUMBER_CELL, 'hidden lg:table-cell')}>{funnel.trials}</td>
-      <td className={NUMBER_CELL}>{funnel.paid}</td>
-      <td className={NUMBER_CELL}>{formatMoney(funnel.value, report.currency)}</td>
     </>
   )
   return (
@@ -98,11 +89,6 @@ function AccountTable(props: { report: Report }) {
             <th className={cn(HEAD_CELL, 'hidden sm:table-cell')}>Karma or followers</th>
             <th className={HEAD_CELL}>Comments</th>
             <th className={HEAD_CELL}>{METRIC_LABELS.clicks}</th>
-            <th className={cn(HEAD_CELL, 'hidden lg:table-cell')}>{CONVERSION_KIND_LABELS.demo_started}</th>
-            <th className={HEAD_CELL}>{CONVERSION_KIND_LABELS.signup}</th>
-            <th className={cn(HEAD_CELL, 'hidden lg:table-cell')}>{CONVERSION_KIND_LABELS.trial_started}</th>
-            <th className={HEAD_CELL}>{CONVERSION_KIND_LABELS.paid}</th>
-            <th className={HEAD_CELL}>{VALUE_LABEL}</th>
           </tr>
         </thead>
         <tbody className="tabular">
@@ -167,34 +153,30 @@ function NamedCount(props: { value: number | null; unit: string; className?: str
  * `whatWorks`): the facts the weekly strategy review moves pillar weight on.
  */
 function WhatWorks(props: { report: Report }) {
-  const { whatWorks, currency } = props.report
+  const { whatWorks } = props.report
   return (
     <Card
       title="What works"
       description={
         <>
           <span className="tabular">{whatWorks.posts}</span> measured {plural(whatWorks.posts, 'post', 'posts')} of the last{' '}
-          {props.report.whatWorksDays} days, ranked by value per post. The strategy reviews weigh pillars on the same numbers.
+          {props.report.whatWorksDays} days, ranked by clicks per reach, then reach per post. The strategy reviews weigh pillars on the same
+          numbers.
         </>
       }
     >
       {whatWorks.posts === 0 && <p className="text-sm text-ash">No post has been measured in that time yet.</p>}
       {whatWorks.posts > 0 && (
         <div className="grid gap-6 sm:grid-cols-2">
-          <GroupList title="By pillar" groups={whatWorks.pillar} currency={currency} empty="None of these posts has a pillar." />
-          <GroupList
-            title="By sponsor mention"
-            groups={whatWorks.sponsor}
-            currency={currency}
-            empty="None of these posts has a sponsor line."
-          />
+          <GroupList title="By pillar" groups={whatWorks.pillar} empty="None of these posts has a pillar." />
+          <GroupList title="By sponsor mention" groups={whatWorks.sponsor} empty="None of these posts has a sponsor line." />
         </div>
       )}
     </Card>
   )
 }
 
-function GroupList(props: { title: string; groups: Group[]; currency: string; empty: string }) {
+function GroupList(props: { title: string; groups: Group[]; empty: string }) {
   return (
     <div className="min-w-0">
       <h3 className="mb-2 text-xs font-medium text-graphite">{props.title}</h3>
@@ -205,11 +187,11 @@ function GroupList(props: { title: string; groups: Group[]; currency: string; em
             <li key={group.key} className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 py-2 text-sm">
               <span className="truncate">{group.label}</span>
               <span className="tabular text-right">
-                {formatMoney(group.valuePerPost, props.currency)}
-                <span className="text-xs text-ash"> per post</span>
+                {group.clicksPerReach === null ? 'No clicks per reach' : formatPercent(group.clicksPerReach, 2)}
+                {group.clicksPerReach !== null && <span className="text-xs text-ash"> clicks per reach</span>}
               </span>
               <span className="tabular col-span-2 text-xs text-ash">
-                {group.clicksPerReach === null ? 'Clicks not counted' : `${formatPercent(group.clicksPerReach, 2)} clicks per reach`} ·{' '}
+                {group.reachPerPost === null ? 'No comparable reach' : `${formatCount(Math.round(group.reachPerPost))} reach per post`} ·{' '}
                 <Mono>{group.posts}</Mono> {plural(group.posts, 'post', 'posts')}
               </span>
             </li>

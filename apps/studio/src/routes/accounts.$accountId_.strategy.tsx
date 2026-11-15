@@ -175,7 +175,8 @@ function useReviewNow(accountId: Id<'accounts'>, reviewJob: Doc<'jobs'> | null) 
 
 /**
  * The one goal every account works toward, and the goal note the last review
- * left: paid customers this span against the one before, and what comes next.
+ * left: the clicks and the karma or followers this span against the one
+ * before, and what comes next.
  */
 function Goal(props: { account: Doc<'accounts'>; goal: StrategyData['goal'] }) {
   const note = props.goal.note

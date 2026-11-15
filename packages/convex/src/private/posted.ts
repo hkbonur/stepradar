@@ -4,7 +4,6 @@ import { query } from '../_generated/server'
 import { accountRefOf } from '../core/accounts'
 import { accountReader } from '../core/connections'
 import { itemsWithoutDraft, postedItems, postedSince } from '../core/posted'
-import { workspaceOf } from '../core/workspace'
 import { capabilitiesOf } from '../providers/platforms'
 
 /**
@@ -19,17 +18,11 @@ export const forAccount = query({
   handler: async (ctx, args) => {
     const account = await ctx.db.get(args.accountId)
     if (!account) return null
-    const workspace = await workspaceOf(ctx, account)
     const since = Date.now() - COMMENT_WINDOW_MS
     const rows = await postedSince(ctx, account._id, since)
-    const conversions = await ctx.db
-      .query('conversions')
-      .withIndex('by_account_time', (q) => q.eq('accountId', account._id).gte('at', since))
-      .collect()
-    const posted = [
-      ...(await postedItems(ctx, account, rows, conversions, workspace.valuePerPaid)),
-      ...(await itemsWithoutDraft(ctx, account._id, since, rows)),
-    ].sort((a, b) => b.postedAt - a.postedAt)
+    const posted = [...(await postedItems(ctx, account, rows)), ...(await itemsWithoutDraft(ctx, account._id, since, rows))].sort(
+      (a, b) => b.postedAt - a.postedAt
+    )
     const items = []
     for (const item of posted) {
       const parent = item.externalId

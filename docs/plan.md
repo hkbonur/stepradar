@@ -76,10 +76,10 @@ Headless browsing as the operator (the runner's Playwright profile) is off the t
   internal/   researcher, writer and analyst actions, schedule fan-out
   crons.ts    listen, match, comments, metrics, sweep, review, plan
   providers/  llm · platforms/{reddit,hackernews,x,linkedin,discourse}
-              analytics (PostHog) · notifier (web push)
+              notifier (web push)
     │                          │
     ▼                          ▼
- Web push ──► phone, laptop    PostHog (conversions)
+ Web push ──► phone, laptop
 ```
 
 What changes per package:
@@ -178,7 +178,7 @@ The match compares the account's own new items with every draft waiting on that 
 | `metricSnapshots` | Keep. One row per read of a post's or a reply's numbers, as its platform counts them: score and comments on Reddit and Hacker News; impressions, likes, replies, reposts, profile visits and follows on X. The post or reply keeps its latest read. Clicks come from tracked links and signups and paid from conversions, so a snapshot holds neither. |
 | `accountSnapshots` | New. One row per read of an account's karma or followers: the report's reach line. |
 | `signals` | Keep. Sources: `hackernews`, `reddit`, `x`, `search`, `comments`, `problems`. Drop `google_trends` and `youtube_search`. |
-| `experiments`, `journal`, `memories`, `directives`, `messages`, `checklistItems`, `links`, `linkClicks`, `conversions` | Keep. Swap `personaId` for `accountId` and episode ids for post or reply ids. Checklist actions become "connect account" and "set key". A conversion's `via` loses `code`. |
+| `experiments`, `journal`, `memories`, `directives`, `messages`, `checklistItems`, `links`, `linkClicks` | Keep (`conversions` went in slice 23). Swap `personaId` for `accountId` and episode ids for post or reply ids. Checklist actions become "connect account" and "set key". A conversion's `via` loses `code`. |
 | `jobs` | Keep. Drop `runsOn` and `aliveAt`. |
 | `assets`, `generations`, `runners`, `discountCodes` | Drop. There are no discount codes (decision 4). |
 
@@ -192,7 +192,7 @@ No production data exists, so this needs no migration code. Locally: reset, push
 | after listen | `write_replies` | writer | reply drafts within the reply budget |
 | every 10 min | `match` (accounts with waiting drafts) | analyst | posted posts and replies |
 | every 10 min | `poll_comments` (items posted in the last 7 days) | researcher | comments, answer drafts, notifications |
-| every 6 h | `pull_metrics` | analyst | snapshots, account karma and followers, conversions, decisions |
+| every 6 h | `pull_metrics` | analyst | snapshots, account karma and followers, decisions |
 | hourly | `poll_signals` | researcher | signals |
 | daily 06:15 UTC | `morning_sweep` | researcher | brief, problem log, morning digest |
 | daily 07:30 UTC | write due posts | writer | drafts for tomorrow's posts |
@@ -227,7 +227,7 @@ These are new:
 
 These go: concept, video length, video CTA, description format.
 
-**Goal metric ladder:** paid, signups, clicks, then the platform's reach (CONTEXT.md, "Reach"): impressions on X, points on Reddit and on a Hacker News story. A Hacker News comment has no reach, because HN comment scores are not public, and LinkedIn's numbers are not read. Unsponsored drafts are judged on reach. That is the honest version of growing karma and followers: helpful drafts, measured.
+**Goal metric ladder:** clicks, then the platform's reach (slice 23 took out paid and signups) (CONTEXT.md, "Reach"): impressions on X, points on Reddit and on a Hacker News story. A Hacker News comment has no reach, because HN comment scores are not public, and LinkedIn's numbers are not read. Unsponsored drafts are judged on reach. That is the honest version of growing karma and followers: helpful drafts, measured.
 
 **Strategy review.** It keeps today's rules (pillar weights, publish hours, re-tests). It adds community weights: more drafts where the account earns more reach and clicks per item, fewer where it earns nothing. A community that removed a comment or banned the account drops to zero and becomes a checklist item.
 
@@ -244,6 +244,8 @@ Each step names its numbers. The LLM only phrases the morning digest.
 **Small samples.** A person posts maybe 5 to 20 items a day. Decisions come slowly. The experiments page says how many exposures each variant still needs.
 
 ## Attribution
+
+Slice 23 took PostHog out (ADR 0003, amended 2026-11-08): Stepradar now counts reach, comments and tracked-link clicks only, and the UTM parameters below stay for the sponsor's own analytics. The PostHog reader, the probable conversions and "What the product must emit" below are the record of what was built before.
 
 - **Reddit and Hacker News:** drafts link to the sponsor's site directly, with UTM parameters (`utm_source=reddit`, `utm_medium=community`, `utm_content=<draft slug>`). Redirect and shortener domains get filtered or distrusted there.
 - **X and LinkedIn:** use `/go/:slug`, which counts clicks exactly (decision 6).
@@ -478,6 +480,24 @@ The operator asked for an agent that judges each post before it goes out: "why s
 - [x] The operator's edit is judged again and never sent back; a judgment that fails leaves the draft as it was.
 - [x] The post page shows each answer and the fix; the post card says what readers have no reason to do.
 
+### Slice 23: PostHog out (operator, 2026-11-08)
+
+The operator chose to remove PostHog entirely rather than make it optional: one key fewer, and real mode without it failed every daily metrics pull before a post was closed or an experiment decided.
+
+- [x] No analytics provider, no `conversions` or `probableConversions` tables, no `pull_probable` job; the workspace keeps no value per paying customer or currency, and the setup no longer asks for them.
+- [x] The funnel is reach, comments and clicks; the goal metric ladder is clicks, then reach; "what works" and the pillar weights rank by clicks per reach, then reach per post; communities by reach per post.
+- [x] The goal (now "People who find <sponsor>"), the goal note, the growth line and the Monday digest say the clicks and the karma or followers gained, against the span before.
+- [x] The leak keeps its click step only. The reworked post, which was chosen by the users it brought, is gone with them.
+- [x] The tracked links and their UTM parameters stay, so the sponsor's own analytics can still attribute.
+
+### Slice 24: keys in the studio (operator, 2026-11-08)
+
+The operator asked to bring their own keys in the dashboard instead of setting them on the Convex deployment, and for the setup to ask for them.
+
+- [x] The Anthropic key and the Reddit app's keys are stored write-only in the database (ADR 0005); the real adapters read them there, and a missing one is refused by name as before.
+- [x] The setup asks for the Anthropic key, which can wait; the Providers page sets, replaces and removes each key and shows only its last four characters.
+- [x] `PROVIDERS_MODE`, the VAPID keys and `CONVEX_SITE_URL` stay on the deployment.
+
 ### Later
 
 - [ ] The X real reader, once the tier is chosen (decision 3 stands, operator, 2026-10-23).
@@ -521,6 +541,8 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slices 20 and 21: done (cd6f366 the rising push and the bio link; 7d19ff2 reworked posts, open problems and launches; 752e2dd the review). The review found that a reworked post handed the writer the product's name and the tracked link of the post it came from; that a launch could sit beside the day's idea, go out on an account whose dial is 0, or twice on one day; that a launch whose community stopped allowing the product would be written without it; that the bio link kept the website as it was when the link was made; and that a rising thread found in the quiet hours was pushed at their end, when it no longer rose. The bio link is now its own kind of tracked link; the local backend's links were given their kind in place, without a reset. Seen in the studio: the launch form (an X account planned, a Reddit and a forum account left out with why) and a bio link made on the account page. The rising push and reworked posts are checked by tests only.
 - Slice 22: done (16fa38d the judge; ce08d8d and 665cbe5 the review). The review found that the job runner failed the post of every failed job but the judge's; it now fails a post only when its write fails. It also found that a draft with no reading yet (written before the judge, or whose reading failed or was dropped by an edit) had its first reading from the operator's edit, which sent the operator's words back; a judge job now says whose words it reads, and only the writer's are sent back. Checked by tests only: in mock mode the judge's reasons come from rules on the words (a question gives a reason to comment, a number or several parts one to like, a post that teaches, informs or shows one to follow).
 - The studio's redesign (operator, 2026-10-23: "the UI is generally confusing… hard to see what belongs together"): done (ae1251f Today and the grouping vocabulary; e0796b7 one frame for every account page and the overview; 149c049 replies; 198b21a posted; ede3d9b the account's report; 0a9e946 strategy; 192ca9e memory; 9b15f28 voice; 00c6ea1 the post page; 000f290 the workspace report; 72940d0 experiments; ba4d084 signals; bd95aed agents; 0a95dd6 the checklist and the accounts; b16aedc providers; 9ffe234 setup and onboarding; 1b611ce the post editor on a phone; 752c360 the review: empty slots, one card band, one card table). Every page now sits on a canvas with what belongs together on one card: alerts first (what failed, what waits on the operator), the work in tabs or cards, the rest in collapsibles. An account's seven pages share one frame with tabs, and the Report moved into it. Tabs are links, kept in the address, and their panels stay mounted, so a half-edited draft survives a switch. Seen in the studio at 1440px: every page; at phone width (390px, in a frame): Today, the account overview, the post page and the reports. Not seen: the first run's setup (the local workspace exists), onboarding's later parts and Done, the real-mode alert, a failed post's alert and a weak judgment's alert, for want of local data.
+- Slice 23: done. PostHog, conversions, probable conversions, the value per paying customer and the reworked post are out; the funnel, the ladder, the weights, the goal note, the growth line and the digest read clicks and reach (ADR 0003 amended). `posts.integration.test.ts` "plans post slots by the cadence" failed before the slice and still does.
+- Slice 24: done. The operator's provider keys live in `providerKeys`, set from the setup's new key step and the Providers page's Your keys card; every action reads them once and hands them to the providers it builds (ADR 0005). The review of slices 23 and 24 found that a growth span dropped the change from the read before it, that the digest added karma, followers and likes into one number, that "what works" added reach across platforms and counted clicks against reach never read, and that the leak kept a one-step funnel; all fixed, the leak now one click flow (shared `clickLeak`). A key shorter than 12 characters is refused, and the setup's Add it later shows in mock mode only.
 
 #### Left for later
 
@@ -537,6 +559,8 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slices 19 to 21: on Reddit and Hacker News, where posts link to the sponsor directly, no clicks are counted, so the click step never leaks there and the bio link's visits are not counted. The leak reads an account against its own 28 days before, so a new account has none until it has a window behind it. A rising thread found in the quiet hours is never pushed; it waits on the replies page. A reworked post comes only from another platform's account, never on Hacker News, and its source keeps a sentence that names the product in other words. Planning a launch again for the same day adds the accounts made since and leaves out the ones that hold it.
 - Slice 22: replies are not judged. The judge reads the post's words, its place and its audience, not the community's rules or the account's numbers. A post the operator asks to rewrite after its first judgment is never sent back again, only judged.
 - The redesign: an account's settings card ends with its buttons in the form, not on an action band; the seven account tabs scroll sideways on a phone with no sign that more follow; the replies, strategy, memory, voice, experiments and providers pages were checked at phone width only through the shared one-column grids, not in a browser.
+- Slice 23: where nothing reads an account's numbers and its posts link directly (an unconnected Reddit account, LinkedIn), no experiment can be decided on it: signups were the rung that reached it. A community weight has nothing to break a tie on reach. The growth line's karma or followers gained needs two reads in a span, so a new account shows none in its first week.
+- Slice 24: the onboarding does not ask for the Reddit app's keys when a Reddit account is added: connecting it is refused by the missing key's name, which points to the Providers page. With no sign-in, anyone who reaches the backend can replace or remove a key. Switching to real mode is still one `convex env set PROVIDERS_MODE real`.
 
 ## Risks worth knowing
 

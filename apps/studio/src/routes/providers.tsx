@@ -3,7 +3,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'
 import { NotificationSettings } from '@/components/notification-settings'
-import { ProductFields, ValueFields, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { ProductFields, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { ProviderKeys } from '@/components/provider-keys'
 import { Alert, Button, Card, Collapsible, ErrorLine, Field, Input, Mono, PageHeader, Pill, Skeleton } from '@/components/ui'
 import { cn } from '@/lib/cn'
 import { errorMessage } from '@/lib/errors'
@@ -24,8 +25,8 @@ function ProvidersPage() {
       />
       {status.mode === 'mock' ? (
         <Alert tone="info" title="Running in mock mode" className="mb-6">
-          Signals, threads, drafts and numbers are generated, so the whole loop can be walked. Set <Mono>PROVIDERS_MODE=real</Mono> and the
-          keys below on the Convex deployment to switch.
+          Signals, threads, drafts and numbers are generated, so the whole loop can be walked. Set <Mono>PROVIDERS_MODE=real</Mono> on the
+          Convex deployment to switch, once your keys are set below.
         </Alert>
       ) : (
         <Alert tone="success" title="Running in real mode" className="mb-6">
@@ -39,7 +40,10 @@ function ProvidersPage() {
           flush
           footer={
             <Collapsible summary="Where keys live and sources">
-              <p>Keys live in the Convex deployment's environment. An adapter without its key fails loudly instead of pretending.</p>
+              <p>
+                Your keys live in your Stepradar backend, set under Your keys; the web push keys live in the Convex deployment's
+                environment. An adapter without its key fails loudly instead of pretending.
+              </p>
               <p className="mt-1.5">
                 The researcher searches every platform whose reader can, and Google's suggestions. Comments come from each account's posts
                 through its platform's reader, and problems from each account's problem log. What a reader cannot do is a step you take by
@@ -88,8 +92,12 @@ function ProvidersPage() {
         </Card>
 
         <div className="min-w-0 space-y-6">
-          <Card title="Your product" description="What every account promotes, and what one paying customer is worth.">
+          <Card title="Your product" description="What every account promotes.">
             <WorkspaceForm />
+          </Card>
+
+          <Card title="Your keys" description="Stored in your Stepradar backend and never shown again: only the last four characters.">
+            <ProviderKeys keys={status.providerKeys} />
           </Card>
 
           <Card title="Notifications">
@@ -143,7 +151,7 @@ const SAVED_FOR_MS = 2000
 /** The form is in exactly one of these; "Saved" shows for a moment, then the form is idle again. */
 type WorkspaceFormState = { status: 'idle' } | { status: 'saving' } | { status: 'saved' } | { status: 'error'; message: string }
 
-/** The product the accounts promote, what one paying customer is worth to it, and where the studio lives for links. */
+/** The product the accounts promote, and where the studio lives for links. */
 function WorkspaceForm() {
   const workspace = useQuery(api.private.workspace.get, {})
   if (workspace === undefined) return <Skeleton className="h-40" />
@@ -152,13 +160,11 @@ function WorkspaceForm() {
   // Keyed on what is saved, so a save from another tab or the setup refills the form.
   return (
     <ProductForm
-      key={[workspace.sponsorName, workspace.sponsorUrl, workspace.sponsorPitch, workspace.valuePerPaid, workspace.currency].join('\u0000')}
+      key={[workspace.sponsorName, workspace.sponsorUrl, workspace.sponsorPitch].join('\u0000')}
       saved={{
         sponsorName: workspace.sponsorName,
         sponsorUrl: workspace.sponsorUrl,
         sponsorPitch: workspace.sponsorPitch,
-        valuePerPaid: String(workspace.valuePerPaid),
-        currency: workspace.currency,
       }}
       appUrl={workspace.appUrl}
     />
@@ -195,7 +201,6 @@ function ProductForm(props: { saved: ProductDraft; appUrl: string }) {
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <ProductFields value={draft} onChange={patch} invalid={problems.map((problem) => problem.field)} />
-      <ValueFields value={draft} onChange={patch} invalid={problems.map((problem) => problem.field)} />
       <Field label="Studio address" hint="Where tracked links live.">
         <Input name="appUrl" type="url" value={appUrl} onChange={(event) => setAppUrl(event.target.value)} />
       </Field>

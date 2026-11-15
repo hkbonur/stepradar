@@ -185,43 +185,4 @@ describe('measuring', () => {
     await t.mutation(api.private.checklist.complete, { itemId: item._id })
     expect((await t.run((ctx) => ctx.db.get(communityId)))?.removedAt).toBeUndefined()
   })
-
-  it("counts a sponsored post's visits for the mock: its tracked link's clicks on X, its reach on Reddit, where no click is counted", async () => {
-    const t = setup()
-    const posted = async (platform: 'x' | 'reddit', handle: string) =>
-      t.run(async (ctx) => {
-        const account = await insertAccount(ctx, { platform, handle })
-        const post = await insertPost(ctx, account, { status: 'posted', plannedFor: '2026-10-13' })
-        const counts =
-          platform === 'x'
-            ? { platform, impressions: 900, likes: 0, replies: 0, reposts: 0, profileVisits: 0, follows: 0 }
-            : { platform, score: 60, replies: 4 }
-        await ctx.db.patch(post._id, {
-          posted: { kind: 'said', at: NOW - 24 * HOUR },
-          sponsorLink: 'https://formstep.io',
-          numbers: { counts, readAt: NOW - HOUR, mock: true },
-        })
-        if (platform === 'x')
-          await ctx.db.insert('links', {
-            kind: 'post',
-            slug: 'abc1234',
-            accountId: account._id,
-            postId: post._id,
-            target: 'https://formstep.io',
-            clicks: 30,
-            createdAt: NOW - 24 * HOUR,
-          })
-        // An unsponsored post carries no link, so it brings no visits.
-        const plain = await insertPost(ctx, account, { status: 'posted', plannedFor: '2026-10-12' })
-        await ctx.db.patch(plain._id, { posted: { kind: 'said', at: NOW - 48 * HOUR } })
-        return account
-      })
-    const visits = async (platform: 'x' | 'reddit', handle: string) => {
-      const account = await posted(platform, handle)
-      const found = await t.query(internal.internal.analyst.mockVisits, { accountId: account._id, since: NOW - 30 * 24 * HOUR })
-      return found.map((post) => post.visits)
-    }
-    expect(await visits('x', 'ada_x')).toEqual([30])
-    expect(await visits('reddit', 'ada_reddit')).toEqual([60])
-  })
 })

@@ -187,7 +187,7 @@ export function MockNote(props: { when: boolean; children?: React.ReactNode }) {
 
 /**
  * What the report can vouch for and what it cannot (docs/plan.md, v0.2),
- * wherever conversions are counted. One line stays in view, the caveat
+ * wherever reach and clicks are counted. One line stays in view, the caveat
  * included, so the numbers above it are never read as more exact than they
  * are; the rest opens on request, so the paragraph does not push the funnel
  * down the page.
@@ -195,14 +195,11 @@ export function MockNote(props: { when: boolean; children?: React.ReactNode }) {
 export function AttributionNote() {
   return (
     <details className="max-w-[65ch] text-xs text-ash">
-      <summary className="cursor-pointer hover:text-graphite">
-        Platform counts and exact clicks; signups and paid from PostHog, first touch, which undercounts.
-      </summary>
+      <summary className="cursor-pointer hover:text-graphite">Platform counts and exact clicks.</summary>
       <p className="mt-1">
         Reach and comments are each platform's own counts. Clicks are exact where a tracked link counts them, on X and LinkedIn; a Reddit or
-        Hacker News post links to the sponsor directly, so its clicks are not counted. Demos, signups, trials and paid come from PostHog,
-        first touch, and undercount visitors who declined cookies. Probable conversions carry no UTM parameters: the person said where they
-        heard of the sponsor, or first came from a platform's domain, so they are shown apart and name the platform only.
+        Hacker News post links to the sponsor directly, so its clicks are not counted. Every link carries UTM parameters, so the product's
+        own analytics can say who signed up.
       </p>
     </details>
   )

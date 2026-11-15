@@ -141,7 +141,7 @@ describe('startExperiment', () => {
       await expect(
         startExperiment(ctx, reddit, catalogExperiment('hook', ['statement', 'question'], { metric: 'clicks' }))
       ).rejects.toThrow(
-        "A post on Reddit links to the sponsor directly, so no click is counted. Stepradar cannot read a posted item's numbers on Reddit yet. A hook test on reach would never be decided. Test the hook on paid or signups."
+        "A post on Reddit links to the sponsor directly, so no click is counted. Stepradar cannot read a posted item's numbers on Reddit yet. A hook test on reach would never be decided."
       )
       // LinkedIn's numbers are not read, so a test on reach would never end.
       const linkedIn = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
@@ -177,11 +177,11 @@ describe('measurableMetrics', () => {
       })
       const linkedIn = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
       expect(await measurableMetrics(ctx, linkedIn, 'hook')).toEqual({
-        metrics: ['paid', 'signups', 'clicks'],
+        metrics: ['clicks'],
         why: "Stepradar cannot read a posted item's numbers on LinkedIn yet. A hook test on reach would never be decided.",
       })
       const x = await insertAccount(ctx, { platform: 'x', handle: 'ada_x' })
-      expect(await measurableMetrics(ctx, x, 'hook')).toEqual({ metrics: ['paid', 'signups', 'clicks', 'reach'], why: null })
+      expect(await measurableMetrics(ctx, x, 'hook')).toEqual({ metrics: ['clicks', 'reach'], why: null })
     })
   })
 })

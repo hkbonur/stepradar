@@ -86,7 +86,7 @@ describe('experimentVerdict', () => {
     expect(verdict).toEqual({ kind: 'inconclusive' })
   })
 
-  it('needs the winner to bring enough events on a rare rung: two paid customers against none is luck', () => {
+  it('needs the winner to bring enough events on a rare rung: two clicks against none is luck', () => {
     const paid = [stats('control', repeat(0, 15)), stats('challenger', [1, 1, ...repeat(0, 13)])]
     expect(experimentVerdict(paid, { minItems: 15, minConfidence: 0.5, minEvents: 5 })).toEqual({ kind: 'inconclusive' })
   })
@@ -141,21 +141,17 @@ describe('the experiment catalog', () => {
     expect(catalogControl('reply_style').key).toBe('tip')
   })
 
-  it('climbs the goal metric ladder from paid down to reach, and decides a reply experiment on reach, since a reply carries no link', () => {
-    expect(EXPERIMENT_METRICS).toEqual(['paid', 'signups', 'clicks', 'reach'])
-    const brought = { paid: 5, signups: 40, clicks: 200 }
+  it('climbs the goal metric ladder from clicks down to reach, and decides a reply experiment on reach, since a reply carries no link', () => {
+    expect(EXPERIMENT_METRICS).toEqual(['clicks', 'reach'])
     const all = EXPERIMENT_METRICS
-    expect(reviewMetric(['reach'], brought)).toBe('reach')
-    expect(reviewMetric(all, brought)).toBe('paid')
-    expect(reviewMetric(all, { ...brought, paid: 4 })).toBe('signups')
-    expect(reviewMetric(all, { paid: 0, signups: 9, clicks: 30 })).toBe('clicks')
-    expect(reviewMetric(all, { paid: 0, signups: 0, clicks: 29 })).toBe('reach')
+    expect(reviewMetric(['reach'], { clicks: 200 })).toBe('reach')
+    expect(reviewMetric(all, { clicks: 30 })).toBe('clicks')
+    expect(reviewMetric(all, { clicks: 29 })).toBe('reach')
     // Where the posts link to the sponsor directly no click is counted, so the ladder skips the rung.
     const direct = metricsFor('hook', 'reddit').metrics
-    expect(reviewMetric(direct, { paid: 0, signups: 12, clicks: null })).toBe('signups')
-    expect(reviewMetric(direct, { paid: 0, signups: 9, clicks: null })).toBe('reach')
-    // Where reach is not read either, too few conversions leave nothing to decide on.
-    expect(reviewMetric(['paid', 'signups', 'clicks'], { paid: 0, signups: 0, clicks: 3 })).toBeNull()
+    expect(reviewMetric(direct, { clicks: null })).toBe('reach')
+    // Where reach is not read either, too few clicks leave nothing to decide on.
+    expect(reviewMetric(['clicks'], { clicks: 3 })).toBeNull()
   })
 
   it('offers each dimension the metrics it can be decided on, on its platform, and says why when not every one', () => {
@@ -166,10 +162,10 @@ describe('the experiment catalog', () => {
     })
     expect(metricsFor('reply_length', 'reddit')).toEqual({ metrics: ['reach'], why: 'A reply carries no link.' })
     expect(metricsFor('call_to_action', 'hackernews')).toEqual({
-      metrics: ['paid', 'signups', 'reach'],
+      metrics: ['reach'],
       why: 'A post on Hacker News links to the sponsor directly, so no click is counted.',
     })
-    expect(metricsText(['paid', 'signups', 'reach'])).toBe('paid, signups or reach')
+    expect(metricsText(['clicks', 'reach'])).toBe('clicks or reach')
     expect(metricsText(['reach'])).toBe('reach')
   })
 })

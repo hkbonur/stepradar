@@ -288,7 +288,7 @@ interface TaskData {
   /** The most liked comments of the window, most liked first; `total` counts every comment in it. */
   comment_digest: { days: number; total: number; comments: TaskSignal[] }
   /** `reachLabel` names what the account's platform counts as reach: points, a score, impressions. */
-  analytics_summary: { days: number; funnel: Funnel; reachLabel: string; currency: string }
+  analytics_summary: { days: number; funnel: Funnel; reachLabel: string }
 }
 
 /** One member per task, so narrowing on `task` narrows `data` with it. */

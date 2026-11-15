@@ -2,9 +2,8 @@ import { EXPERIMENT_CATALOG, type ExperimentKind } from '@stepradar/shared'
 import { describe, expect, it } from 'vitest'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx } from '../_generated/server'
-import { TIMEZONE, insertPost, insertMeasuredPost, insertAccount, insertPostedReply } from '../../test/fixtures'
+import { insertMeasuredPost, insertAccount, insertPostedReply } from '../../test/fixtures'
 import { setup } from '../../test/setup'
-import { dayKey } from './dates'
 import { applyExperimentDecision, startExperiment, stopExperiment } from './experiments'
 import { goalNoteText, reviewStrategy } from './strategy'
 
@@ -103,7 +102,7 @@ async function measuredSince(ctx: MutationCtx, account: Doc<'accounts'>, count: 
 }
 
 describe('reviewStrategy', () => {
-  it('moves pillar weight to the pillar that made more per measured post, and says why', async () => {
+  it('moves pillar weight to the pillar whose readers clicked through more, and says why', async () => {
     const t = setup()
     await t.run(async (ctx) => {
       const inserted = await insertAccount(ctx)
@@ -111,38 +110,12 @@ describe('reviewStrategy', () => {
       const account = await reload(ctx, inserted._id)
       await holdExperiments(ctx, account)
       const now = Date.now()
-      const paid = async (post: Doc<'posts'>, count: number) => {
-        for (let index = 0; index < count; index += 1) {
-          await ctx.db.insert('conversions', {
-            accountId: account._id,
-            postId: post._id,
-            kind: 'paid',
-            distinctId: Math.random().toString(36),
-            at: now - DAY,
-            mock: true,
-          })
-        }
-      }
       for (const daysAgo of [5, 7]) {
-        await paid(
-          await insertMeasuredPost(ctx, account, {
-            postedAt: now - daysAgo * DAY,
-            impressions: 1000,
-            clicks: 30,
-            pillar: 'Automation fails',
-          }),
-          2
-        )
-        await paid(
-          await insertMeasuredPost(ctx, account, { postedAt: now - daysAgo * DAY, impressions: 1000, clicks: 10, pillar: 'n8n tutorials' }),
-          1
-        )
+        await insertMeasuredPost(ctx, account, { postedAt: now - daysAgo * DAY, impressions: 1000, clicks: 30, pillar: 'Automation fails' })
+        await insertMeasuredPost(ctx, account, { postedAt: now - daysAgo * DAY, impressions: 1000, clicks: 10, pillar: 'n8n tutorials' })
       }
       // Out of the 28 days: it would put "n8n tutorials" ahead if it counted.
-      await paid(
-        await insertMeasuredPost(ctx, account, { postedAt: now - 40 * DAY, impressions: 1000, clicks: 10, pillar: 'n8n tutorials' }),
-        10
-      )
+      await insertMeasuredPost(ctx, account, { postedAt: now - 40 * DAY, impressions: 1000, clicks: 900, pillar: 'n8n tutorials' })
 
       const outcome = await reviewStrategy(ctx, account, now)
 
@@ -157,15 +130,16 @@ describe('reviewStrategy', () => {
       expect(entry).toMatchObject({
         actor: 'analyst',
         text: '"Automation fails" gets 60% of the evergreen plan, up from 50%, and "n8n tutorials" 40%, down from 50%.',
-        reason: 'Over the last 28 days "Automation fails" made 58 EUR per measured post over 2 posts, and "n8n tutorials" 29 EUR over 2.',
+        reason:
+          'Over the last 28 days 3.00% of the people "Automation fails" reached clicked through over 2 posts, and 1.00% of those "n8n tutorials" reached over 2.',
         createdAt: now,
       })
       expect(entry?.evidence.postIds).toHaveLength(4)
       expect(entry?.evidence.numbers).toEqual([
-        { label: '"Automation fails" value per post (EUR)', value: 58 },
-        { label: '"n8n tutorials" value per post (EUR)', value: 29 },
-        { label: '"Automation fails" signups per post', value: 0 },
-        { label: '"n8n tutorials" signups per post', value: 0 },
+        { label: '"Automation fails" clicks per reach (%)', value: 3 },
+        { label: '"n8n tutorials" clicks per reach (%)', value: 1 },
+        { label: '"Automation fails" reach per post', value: 1000 },
+        { label: '"n8n tutorials" reach per post', value: 1000 },
         { label: '"Automation fails" weight (%)', value: 60 },
         { label: '"n8n tutorials" weight (%)', value: 40 },
       ])
@@ -176,7 +150,7 @@ describe('reviewStrategy', () => {
         key: 'pillars',
         status: 'active',
         text:
-          'Over the last 28 days "Automation fails" made 58 EUR per measured post over 2 posts, and "n8n tutorials" 29 EUR over 2. ' +
+          'Over the last 28 days 3.00% of the people "Automation fails" reached clicked through over 2 posts, and 1.00% of those "n8n tutorials" reached over 2. ' +
           'So "Automation fails" gets 60% of the evergreen plan and "n8n tutorials" 40%.',
         createdAt: now,
       })
@@ -244,7 +218,7 @@ describe('reviewStrategy', () => {
       await ctx.db.patch(account._id, { cadence: { ...account.cadence, repliesPerDay: 0 } })
       const quiet = await reviewStrategy(ctx, await reload(ctx, account._id), Date.now())
       if (!quiet.startedExperimentId) throw new Error('the review started no experiment')
-      // Nothing clicked or converted yet: the post experiment aims at reach.
+      // Nothing clicked yet: the post experiment aims at reach.
       expect(await ctx.db.get(quiet.startedExperimentId)).toMatchObject({
         kind: 'post_kind',
         name: 'Post kind: Question vs How-to',
@@ -252,7 +226,7 @@ describe('reviewStrategy', () => {
       })
       const entry = (await journalOf(ctx, account._id)).find((candidate) => candidate.kind === 'experiment_started')
       expect(entry?.reason).toBe(
-        'Post kind was never tested. It aims at reach per post: the posts brought too few clicks, signups or paid customers in the last 28 days to test on.'
+        "Post kind was never tested. It aims at reach per post: a post's kind decides whether it may carry the sponsor's link at all."
       )
     })
   })
@@ -343,45 +317,36 @@ describe('community weights', () => {
       rulesReadAt: Date.now(),
     })
 
-  it('sends more posts to the subreddit whose posts bring more signups, and leaves out one that removed a post', async () => {
+  it('sends more posts to the subreddit whose posts reach more, and leaves out one that removed a post', async () => {
     const t = setup()
     await t.run(async (ctx) => {
       const account = await insertAccount(ctx, { platform: 'reddit', handle: 'nora' })
-      // A post test on signups holds the experiment slot: it needs no reader of numbers.
-      await startExperiment(ctx, account, {
+      // Nothing reads an unconnected Reddit account's numbers, so no test starts on it: one written in place holds the slot.
+      await ctx.db.insert('experiments', {
+        accountId: account._id,
         name: 'Hook: Question vs Plain statement',
-        hypothesis: 'A question opens more signups.',
+        hypothesis: 'A question reaches more.',
         kind: 'hook',
-        metric: 'signups',
+        metric: 'reach',
         variants: variantsOf('hook', ['statement', 'question']),
+        status: 'running',
         minItems: 15,
         minConfidence: 0.9,
         createdBy: 'operator',
-        reason: 'Holding the experiment slot.',
+        createdAt: Date.now(),
       })
       const now = Date.now()
       const n8nId = await met(ctx, account, 'n8n', 1)
       const zapierId = await met(ctx, account, 'zapier', 1)
       const removedId = await met(ctx, account, 'make', 1)
       await ctx.db.patch(removedId, { removedAt: now - DAY })
-      // A Reddit post links to the sponsor directly: what it brought is the signups its link's UTM parameters name it in.
-      const inCommunity = async (community: string, signups: number) => {
-        const post = await insertMeasuredPost(ctx, account, { postedAt: now - 5 * DAY, impressions: 1000, clicks: 0 })
+      const inCommunity = async (community: string, impressions: number) => {
+        const post = await insertMeasuredPost(ctx, account, { postedAt: now - 5 * DAY, impressions, clicks: 0 })
         await ctx.db.patch(post._id, { community })
-        for (let index = 0; index < signups; index += 1) {
-          await ctx.db.insert('conversions', {
-            accountId: account._id,
-            postId: post._id,
-            kind: 'signup',
-            distinctId: `${post._id}-${index}`,
-            at: now - 4 * DAY,
-            mock: false,
-          })
-        }
       }
-      for (const signups of [4, 2]) await inCommunity('n8n', signups)
-      for (const signups of [1, 0]) await inCommunity('zapier', signups)
-      await inCommunity('make', 30)
+      for (const impressions of [4000, 2000]) await inCommunity('n8n', impressions)
+      for (const impressions of [1000, 0]) await inCommunity('zapier', impressions)
+      await inCommunity('make', 30_000)
 
       const outcome = await reviewStrategy(ctx, account, now)
       expect(outcome.changes).toBe(1)
@@ -389,9 +354,7 @@ describe('community weights', () => {
       expect(weights).toEqual([0.6, 0.4, 1])
       const entry = (await journalOf(ctx, account._id)).find((candidate) => candidate.kind === 'community_weights')
       expect(entry?.text).toBe('r/n8n gets 60% of the posts, and r/zapier 40%.')
-      expect(entry?.reason).toBe(
-        'Over the last 28 days r/n8n brought 3.00 signups per post over 2 and r/zapier 0.50 over 2, reach per post breaking a tie.'
-      )
+      expect(entry?.reason).toBe('Over the last 28 days r/n8n reached 3,000 per post over 2 and r/zapier 500 over 2.')
       expect((await messagesOf(ctx, account._id)).at(-1)).toContain('sent more posts to r/n8n and fewer to r/zapier')
     })
   })
@@ -409,23 +372,15 @@ describe('community weights', () => {
 })
 
 describe('goal notes', () => {
-  it('leaves one every review, naming paid customers against the span before and what runs next, and retires the one before', async () => {
+  it('leaves one every review, naming the clicks against the span before and what runs next, and retires the one before', async () => {
     const t = setup()
     await t.run(async (ctx) => {
       const account = await insertAccount(ctx)
       const experimentId = await holdExperiments(ctx, account)
       const now = Date.now()
-      const post = await insertPost(ctx, account, { status: 'measured', plannedFor: dayKey(now - 3 * DAY, TIMEZONE) })
-      for (const [index, daysAgo] of [3, 10, 40].entries()) {
-        await ctx.db.insert('conversions', {
-          accountId: account._id,
-          postId: post._id,
-          kind: 'paid',
-          distinctId: `buyer-${index}`,
-          at: now - daysAgo * DAY,
-          mock: true,
-        })
-      }
+      await insertMeasuredPost(ctx, account, { postedAt: now - 3 * DAY, impressions: 1000, clicks: 1 })
+      await insertMeasuredPost(ctx, account, { postedAt: now - 10 * DAY, impressions: 1000, clicks: 1 })
+      await insertMeasuredPost(ctx, account, { postedAt: now - 40 * DAY, impressions: 1000, clicks: 1 })
 
       const first = await reviewStrategy(ctx, account, now - DAY)
       const second = await reviewStrategy(ctx, await reload(ctx, account._id), now)
@@ -438,29 +393,35 @@ describe('goal notes', () => {
       expect(notes[0]?.supersededBy).toBe(second.goalNoteId)
       expect(notes[1]).toMatchObject({
         actor: 'analyst',
-        text: '2 paid customers in the last 28 days, worth 58 EUR, up from 1 (29 EUR) in the 28 days before. Next: testing "Reply target: Where a reply stands out vs Most reach".',
-        evidence: { experimentId, postIds: [post._id], signalIds: [] },
+        text: '2 clicks on links to the product in the last 28 days, up from 1 in the 28 days before. Next: testing "Reply target: Where a reply stands out vs Most reach".',
+        evidence: { experimentId, postIds: [], signalIds: [] },
         createdAt: now,
       })
     })
   })
 
-  it('says the trend in every direction and what comes next', () => {
-    const standing = { windowDays: 28, valuePerPaid: 29, currency: 'EUR', testing: null }
-    expect(goalNoteText({ ...standing, paid: 0, previousPaid: 0 })).toBe(
-      'No paid customers yet in the last 28 days, nor in the 28 days before. Next: nothing new to test this week.'
+  it('says the trend in every direction, leaves out what the platform does not count, and what comes next', () => {
+    const standing = { windowDays: 28, reachLabel: 'Followers', testing: null }
+    const line = (clicks: number | null, before: number | null, gained: number | null = null, gainedBefore: number | null = null) => ({
+      clicks,
+      gained,
+      before: { clicks: before, gained: gainedBefore },
+      mock: false,
+    })
+    expect(goalNoteText({ ...standing, line: line(null, null) })).toBe(
+      'Nothing read yet in the last 28 days. Next: nothing new to test this week.'
     )
-    expect(goalNoteText({ ...standing, paid: 0, previousPaid: 2 })).toBe(
-      'No paid customers in the last 28 days, down from 2 (58 EUR) in the 28 days before. Next: nothing new to test this week.'
+    expect(goalNoteText({ ...standing, line: line(0, 2) })).toBe(
+      '0 clicks on links to the product in the last 28 days, down from 2 in the 28 days before. Next: nothing new to test this week.'
     )
-    expect(goalNoteText({ ...standing, paid: 1, previousPaid: 1 })).toBe(
-      '1 paid customer in the last 28 days, worth 29 EUR, the same as in the 28 days before. Next: nothing new to test this week.'
+    expect(goalNoteText({ ...standing, line: line(1, 1) })).toBe(
+      '1 click on links to the product in the last 28 days, the same as in the 28 days before. Next: nothing new to test this week.'
     )
-    expect(goalNoteText({ ...standing, paid: 3, previousPaid: 0 })).toBe(
-      '3 paid customers in the last 28 days, worth 87 EUR, up from none in the 28 days before. Next: nothing new to test this week.'
+    expect(goalNoteText({ ...standing, line: line(null, null, 40, null), testing: 'Reply style: Question back vs Tip' })).toBe(
+      'Followers +40 in the last 28 days. Next: testing "Reply style: Question back vs Tip".'
     )
-    expect(goalNoteText({ ...standing, paid: 1, previousPaid: 4, testing: 'Reply style: Question back vs Tip' })).toBe(
-      '1 paid customer in the last 28 days, worth 29 EUR, down from 4 (116 EUR) in the 28 days before. Next: testing "Reply style: Question back vs Tip".'
+    expect(goalNoteText({ ...standing, line: line(3, 0, -2, 5) })).toBe(
+      '3 clicks on links to the product in the last 28 days, up from 0 in the 28 days before. Followers −2 in the last 28 days, against +5 in the 28 days before. Next: nothing new to test this week.'
     )
   })
 })

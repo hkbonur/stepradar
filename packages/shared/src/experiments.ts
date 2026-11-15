@@ -288,8 +288,6 @@ export interface ExperimentDecision {
 
 /** What each rung of the ladder is called per item, for learnings, the journal and the studio. */
 export const EXPERIMENT_METRIC_LABELS: Record<ExperimentMetric, string> = {
-  paid: 'paid customers per post',
-  signups: 'signups per post',
   clicks: 'clicks per post',
   reach: 'reach per item',
 }
@@ -298,11 +296,11 @@ export const EXPERIMENT_METRIC_LABELS: Record<ExperimentMetric, string> = {
 export const REVIEW_MIN_ITEMS = 15
 
 /**
- * How many of each rung the account's posts brought in the review's window
- * before that rung can be an experiment's metric: enough that a variant can
- * win on it within a few weeks.
+ * How many clicks the account's posts brought in the review's window before
+ * clicks can be an experiment's metric: enough that a variant can win on
+ * them within a few weeks.
  */
-const LADDER_FLOORS = { paid: 5, signups: 10, clicks: 30 } as const satisfies Partial<Record<ExperimentMetric, number>>
+const CLICKS_FLOOR = 30
 
 /** The metrics a dimension can be decided on, and why not every rung of the ladder when it cannot. */
 export type DimensionMetrics = { metrics: typeof EXPERIMENT_METRICS; why: null } | { metrics: readonly ExperimentMetric[]; why: string }
@@ -327,7 +325,7 @@ export function metricsFor(kind: ExperimentKind, platform: Platform): DimensionM
   return { metrics: EXPERIMENT_METRICS, why: null }
 }
 
-/** Metrics as a sentence names them: "paid, signups or reach". */
+/** Metrics as a sentence names them: "clicks or reach". */
 export function metricsText(metrics: readonly ExperimentMetric[]): string {
   return new Intl.ListFormat('en-GB', { type: 'disjunction' }).format(metrics.map((metric) => METRIC_LABELS[metric].toLowerCase()))
 }
@@ -335,18 +333,12 @@ export function metricsText(metrics: readonly ExperimentMetric[]): string {
 /**
  * The metric the strategy review gives a new experiment (CONTEXT.md, "Goal
  * metric"): among the ones its dimension can be decided on for the account
- * (core `measurableMetrics`), the rung closest to paying customers that the
- * account's posts brought enough of, down to reach; none when reach cannot
- * be read either, so the dimension cannot be tested.
+ * (core `measurableMetrics`), clicks once the account's posts brought enough
+ * of them, else reach; none when reach cannot be read either, so the
+ * dimension cannot be tested.
  */
-export function reviewMetric(
-  allowed: readonly ExperimentMetric[],
-  brought: Readonly<{ paid: number; signups: number; clicks: number | null }>
-): ExperimentMetric | null {
-  for (const metric of ['paid', 'signups', 'clicks'] as const) {
-    const count = brought[metric]
-    if (allowed.includes(metric) && count !== null && count >= LADDER_FLOORS[metric]) return metric
-  }
+export function reviewMetric(allowed: readonly ExperimentMetric[], brought: Readonly<{ clicks: number | null }>): ExperimentMetric | null {
+  if (allowed.includes('clicks') && brought.clicks !== null && brought.clicks >= CLICKS_FLOOR) return 'clicks'
   return allowed.includes('reach') ? 'reach' : null
 }
 
@@ -454,9 +446,9 @@ function twoSidedConfidence(t: number, df: number): number {
 
 /**
  * The fewest events the winner must have brought on a rung of rare events
- * before a verdict on it counts: two paid customers against none is luck.
+ * before a verdict on it counts: two clicks against none is luck.
  */
-export const METRIC_MIN_EVENTS: Record<ExperimentMetric, number> = { paid: 5, signups: 5, clicks: 5, reach: 0 }
+export const METRIC_MIN_EVENTS: Record<ExperimentMetric, number> = { clicks: 5, reach: 0 }
 
 /**
  * Where an experiment stands: still waiting for items, decided, or done
@@ -733,9 +725,9 @@ export interface NamedWeight {
 /** What a pillar or a community earned over the review's window. */
 export interface WeightScore {
   name: string
-  /** What it is ranked on: value per post for a pillar, clicks per item for a community. */
+  /** What it is ranked on: clicks per reach for a pillar, reach per post for a community. */
   score: number
-  /** What breaks a tie on the score: clicks per reach for a pillar, reach per item for a community. */
+  /** What breaks a tie on the score: reach per post for a pillar; nothing (0) for a community, whose score is its reach. */
   tiebreak: number
   /** The measured items the score is over. */
   items: number
@@ -743,9 +735,9 @@ export interface WeightScore {
 
 export interface PillarScore {
   pillar: string
-  /** Value per post. */
+  /** Clicks per reach. */
   score: number
-  /** Clicks per reach, for pillars that tie on value. */
+  /** Reach per post, for pillars that tie on clicks per reach. */
   tiebreak: number
   posts: number
 }

@@ -115,7 +115,8 @@ export const propose = action({
     const identity = identityOf(args)
     const problems = namedAccountProblems(identity, context.roster)
     if (problems.length > 0) throw refusal(problems.join(' '))
-    return llmProvider().proposeAccount({
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    return llmProvider(keys).proposeAccount({
       platform: identity.platform,
       placeName: placeLabel(identity),
       name: args.name.trim(),

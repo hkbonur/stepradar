@@ -100,9 +100,6 @@ export const pullMetrics = internalMutation({
     for (const account of accounts) {
       await enqueueJob(ctx, { kind: 'pull_metrics', accountId: account._id })
     }
-    // The probable conversions are the workspace's, read once; the job is listed under the first account.
-    const [first] = accounts
-    if (first) await enqueueJob(ctx, { kind: 'pull_probable', accountId: first._id })
   },
 })
 

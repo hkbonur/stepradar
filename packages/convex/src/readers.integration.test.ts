@@ -31,7 +31,7 @@ describe('platform readers', () => {
       ARCHIVE_NEEDS_X
     )
 
-    // The metrics pull reads no numbers, and still reads the conversions and closes what is due.
+    // The metrics pull reads no numbers, and still closes what is due.
     expect(await t.action(internal.internal.analyst.pullMetrics, { accountId: account._id })).toMatchObject({ counted: 0 })
   })
 
@@ -44,7 +44,7 @@ describe('platform readers', () => {
   })
 
   it("reads on Reddit, Hacker News and Discourse forums in real mode, Reddit's account only once connected, and nothing on X or LinkedIn", () => {
-    expect(capabilitiesOf(realReader({ platform: 'hackernews' }, null))).toEqual([
+    expect(capabilitiesOf(realReader({ platform: 'hackernews' }, null, {}))).toEqual([
       'search',
       'activity',
       'comments',
@@ -52,8 +52,8 @@ describe('platform readers', () => {
       'account',
       'rules',
     ])
-    expect(capabilitiesOf(realReader({ platform: 'reddit' }, null))).toEqual(['search', 'rules'])
-    expect(capabilitiesOf(realReader({ platform: 'reddit' }, { refreshToken: 'grant' }))).toEqual([
+    expect(capabilitiesOf(realReader({ platform: 'reddit' }, null, {}))).toEqual(['search', 'rules'])
+    expect(capabilitiesOf(realReader({ platform: 'reddit' }, { refreshToken: 'grant' }, {}))).toEqual([
       'search',
       'mentions',
       'activity',
@@ -62,10 +62,10 @@ describe('platform readers', () => {
       'account',
       'rules',
     ])
-    expect(capabilitiesOf(realReader({ platform: 'x' }, null))).toEqual([])
-    expect(capabilitiesOf(realReader({ platform: 'linkedin' }, null))).toEqual([])
+    expect(capabilitiesOf(realReader({ platform: 'x' }, null, {}))).toEqual([])
+    expect(capabilitiesOf(realReader({ platform: 'linkedin' }, null, {}))).toEqual([])
     // A Discourse forum is read as any visitor reads it, mentions aside; a forum on other software reads nothing.
-    expect(capabilitiesOf(realReader({ platform: 'forum', forum: N8N_FORUM }, null))).toEqual([
+    expect(capabilitiesOf(realReader({ platform: 'forum', forum: N8N_FORUM }, null, {}))).toEqual([
       'search',
       'activity',
       'comments',
@@ -75,7 +75,7 @@ describe('platform readers', () => {
       'community',
     ])
     const zapier = { origin: 'https://community.zapier.com', name: 'Zapier Community', software: 'other' as const }
-    expect(capabilitiesOf(realReader({ platform: 'forum', forum: zapier }, null))).toEqual([])
+    expect(capabilitiesOf(realReader({ platform: 'forum', forum: zapier }, null, {}))).toEqual([])
   })
 
   it('listens on Hacker News through its search, and keeps where each thread was said', async () => {

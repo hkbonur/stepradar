@@ -2,12 +2,13 @@ import { needsConnection, type ConnectedPlatform, placeLabel, placeOf } from '@s
 import { v } from 'convex/values'
 import { internal } from '../_generated/api'
 import { action } from '../_generated/server'
+import type { ProviderKeys } from '../core/keys'
 import { refusal } from '../lib/errors'
 import { providersMode } from '../lib/env'
 import { authorizeUrl } from '../providers/platforms/reddit/oauth'
 
 /** Each connected platform's consent page for a state; a platform added to shared `CONNECTED_PLATFORMS` needs one. */
-const CONSENT_PAGES: Record<ConnectedPlatform, (state: string) => string> = { reddit: authorizeUrl }
+const CONSENT_PAGES: Record<ConnectedPlatform, (keys: ProviderKeys, state: string) => string> = { reddit: authorizeUrl }
 
 /**
  * Connect an account to a platform that reads it only once the operator lets
@@ -27,7 +28,8 @@ export const connect = action({
       return { kind: 'connected' }
     }
     const state = crypto.randomUUID()
-    const url = CONSENT_PAGES[account.platform](state)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const url = CONSENT_PAGES[account.platform](keys, state)
     await ctx.runMutation(internal.internal.connections.start, { accountId: account._id, state })
     return { kind: 'authorize', url }
   },

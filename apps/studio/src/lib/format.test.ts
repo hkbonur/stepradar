@@ -1,16 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  addDays,
-  formatCount,
-  formatDateTime,
-  formatElapsed,
-  formatHour,
-  formatMoney,
-  formatNumber,
-  languageName,
-  plural,
-  weekStart,
-} from './format'
+import { addDays, formatCount, formatDateTime, formatElapsed, formatHour, formatNumber, languageName, plural, weekStart } from './format'
 
 describe('format', () => {
   it('shortens counts the way a report reads them', () => {
@@ -27,12 +16,6 @@ describe('format', () => {
   it('shows evidence numbers with at most three decimals', () => {
     expect(formatNumber(0.02134).replace(/\D/g, '')).toBe('0021')
     expect(formatNumber(4200).replace(/\D/g, '')).toBe('4200')
-  })
-  it('rounds money to whole units in the given currency', () => {
-    const usd = formatMoney(1234.6, 'USD')
-    expect(usd.replace(/\D/g, '')).toBe('1235')
-    expect(usd).toMatch(/\$|USD/)
-    expect(formatMoney(0, 'EUR').replace(/\D/g, '')).toBe('0')
   })
   it('writes a publish hour with two digits and no minutes', () => {
     expect(formatHour(9)).toBe('09:00')

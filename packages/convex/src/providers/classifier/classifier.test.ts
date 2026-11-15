@@ -58,36 +58,36 @@ function stubAnthropic(posts: unknown[]) {
   return fetch
 }
 
+/** The operator's Anthropic key, as the Providers page stores it (core/keys.ts). */
+const KEYS = { ANTHROPIC_API_KEY: 'test-key' }
+
 const READ = { relevant: true, intent: 'question', replyWorthy: true, score: 0.8, confidence: 0.6, reason: 'about retries' }
 
 describe('the Claude classifier', () => {
   afterEach(() => {
-    vi.unstubAllEnvs()
     vi.unstubAllGlobals()
   })
 
   it("asks Haiku at low effort and returns a read per post, in the posts' order", async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
     const fetch = stubAnthropic([
       { id: '2', ...READ, reason: 'thanks only', replyWorthy: false },
       { id: '0', ...READ },
       { id: '1', ...READ, relevant: false, replyWorthy: false, intent: 'other', score: 0, reason: 'food' },
     ])
-    const fits = await anthropicClassifier.classify(BRIEF)
+    const fits = await anthropicClassifier(KEYS).classify(BRIEF)
     expect(fits.map((fit) => fit.reason)).toEqual(['about retries', 'food', 'thanks only'])
     const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))
     expect(body).toMatchObject({ model: 'claude-haiku-5-5', output_config: { effort: 'low' } })
   })
 
   it('refuses a read that leaves a post out or scores it outside 0 to 1', async () => {
-    vi.stubEnv('ANTHROPIC_API_KEY', 'test-key')
     stubAnthropic([{ id: '0', ...READ }])
-    await expect(anthropicClassifier.classify(BRIEF)).rejects.toThrow('The classifier left out post 1')
+    await expect(anthropicClassifier(KEYS).classify(BRIEF)).rejects.toThrow('The classifier left out post 1')
     stubAnthropic([
       { id: '0', ...READ, score: 1.4 },
       { id: '1', ...READ },
       { id: '2', ...READ },
     ])
-    await expect(anthropicClassifier.classify(BRIEF)).rejects.toThrow('The classifier scored post 0 outside 0 to 1')
+    await expect(anthropicClassifier(KEYS).classify(BRIEF)).rejects.toThrow('The classifier scored post 0 outside 0 to 1')
   })
 })

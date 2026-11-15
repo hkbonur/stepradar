@@ -1,8 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ConnectionRevoked } from '../types'
 import { redditReader } from './index'
 
 const NOW = Date.UTC(2026, 9, 22, 12)
+/** The operator's Reddit app, as the Providers page stores it (core/keys.ts). */
+const KEYS = {
+  REDDIT_CLIENT_ID: 'client-id',
+  REDDIT_CLIENT_SECRET: 'client-secret',
+  REDDIT_USER_AGENT: 'web:stepradar:test (by /u/nora_builds)',
+}
 const OVERVIEW = '/user/Nora_Builds/overview?limit=100&raw_json=1'
 const INBOX = '/message/inbox?limit=100&raw_json=1'
 
@@ -28,20 +34,14 @@ function stubReddit(api: Record<string, unknown>, refresh: Response = Response.j
 }
 
 function reader() {
-  const connected = redditReader({ refreshToken: 'grant' })
+  const connected = redditReader({ refreshToken: 'grant' }, KEYS)
   const { activity, comments } = connected
   if (!activity || !comments) throw new Error('a connected Reddit reader reads the account')
   return { activity, comments }
 }
 
 describe('the connected Reddit reader', () => {
-  beforeEach(() => {
-    vi.stubEnv('REDDIT_CLIENT_ID', 'client-id')
-    vi.stubEnv('REDDIT_CLIENT_SECRET', 'client-secret')
-    vi.stubEnv('REDDIT_USER_AGENT', 'web:stepradar:test (by /u/nora_builds)')
-  })
   afterEach(() => {
-    vi.unstubAllEnvs()
     vi.unstubAllGlobals()
   })
 
@@ -246,7 +246,7 @@ describe('the connected Reddit reader', () => {
       },
       '/user/Nora_Builds/about?raw_json=1': { data: { link_karma: 120, comment_karma: 480 } },
     })
-    const { counts, account } = redditReader({ refreshToken: 'grant' })
+    const { counts, account } = redditReader({ refreshToken: 'grant' }, KEYS)
     if (!counts || !account) throw new Error('a connected Reddit reader reads numbers')
     const asked = ['t3_abc', 't1_def', 't1_gone', 't3_mod', 't1_mod', 't3_own'].map((externalId) => ({
       externalId,
@@ -271,10 +271,10 @@ describe('the connected Reddit reader', () => {
     )
   })
 
-  it("names the deployment's keys when Reddit refuses the app, and leaves the grant alone", async () => {
+  it("names the operator's app keys when Reddit refuses the app, and leaves the grant alone", async () => {
     stubReddit({}, new Response('Unauthorized', { status: 401 }))
     const read = reader().activity({ handle: 'Nora_Builds', since: 0, niche: 'n8n', pillars: ['n8n'], now: NOW })
-    await expect(read).rejects.toThrow('Reddit refused the OAuth app: check REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET')
+    await expect(read).rejects.toThrow('Reddit refused the OAuth app: check the Reddit app ID and secret on the Providers page.')
     await expect(read).rejects.not.toBeInstanceOf(ConnectionRevoked)
   })
 
@@ -311,7 +311,7 @@ describe('the connected Reddit reader', () => {
         })
       })
     )
-    const search = redditReader(null).search
+    const search = redditReader(null, KEYS).search
     if (!search) throw new Error('the Reddit reader searches as the app')
     const found = await search({
       terms: ['webhooks'],
@@ -346,7 +346,7 @@ describe('the connected Reddit reader', () => {
         ],
       },
     })
-    const rules = redditReader({ refreshToken: 'grant' }).rules
+    const rules = redditReader({ refreshToken: 'grant' }, KEYS).rules
     if (!rules) throw new Error('a connected Reddit reader reads rules')
     expect(await rules('n8n')).toBe('Be kind: No insults.\nNo self-promotion: Except in the weekly thread.')
   })
@@ -384,7 +384,7 @@ describe('the connected Reddit reader', () => {
         },
       },
     })
-    const mentions = redditReader({ refreshToken: 'grant' }).mentions
+    const mentions = redditReader({ refreshToken: 'grant' }, KEYS).mentions
     if (!mentions) throw new Error('a connected Reddit reader hears mentions')
     expect(await mentions({ handle: 'Nora_Builds', since: NOW - 3_600_000 })).toEqual([
       {

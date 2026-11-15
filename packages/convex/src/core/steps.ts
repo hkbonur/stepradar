@@ -9,7 +9,6 @@ import {
   postedItemOf,
   reachOf,
   staleAt,
-  type FunnelStep,
   type WeekPosting,
 } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -50,7 +49,7 @@ export type NextStep =
   | { kind: 'decision'; accountId: Id<'accounts'>; text: string; url: string }
   | { kind: 'standout'; accountId: Id<'accounts'>; text: string; url: string }
   | { kind: 'consistency'; accountId: Id<'accounts'>; text: string; url: string; due: number; posted: number }
-  | { kind: 'leak'; accountId: Id<'accounts'>; text: string; url: string; step: FunnelStep }
+  | { kind: 'leak'; accountId: Id<'accounts'>; text: string; url: string }
 
 /** The draft that can be a new account's first: a reply, on the account's replies page, or a post, on its own page. */
 type FirstDraft = { kind: 'reply' } | { kind: 'post'; postId: Id<'posts'> }
@@ -142,7 +141,7 @@ export function nextSteps(input: NextStepsInput, now: number): NextStep[] {
     })
   }
   for (const { account, leak } of input.leaks) {
-    steps.push({ kind: 'leak', accountId: account._id, text: leakText(account, leak), url: `/reports/${account._id}`, step: leak.step })
+    steps.push({ kind: 'leak', accountId: account._id, text: leakText(account, leak), url: `/reports/${account._id}` })
   }
   const [closest] = input.nearDecision
   if (closest) {

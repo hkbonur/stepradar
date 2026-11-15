@@ -1,3 +1,4 @@
+import type { ProviderKeys } from '../core/keys'
 import { v } from 'convex/values'
 import { placeLabel, placeOf } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
@@ -25,10 +26,10 @@ export interface UnreadCommunity {
  */
 export async function readCommunityRules(
   ctx: ActionCtx,
-  account: Doc<'accounts'>,
-  reader: PlatformReader,
+  source: { account: Doc<'accounts'>; reader: PlatformReader; keys: ProviderKeys },
   names: string[]
 ): Promise<{ unread: UnreadCommunity[] }> {
+  const { account, reader, keys } = source
   const rules = reader.rules
   if (!rules || names.length === 0) return { unread: [] }
   const toRead: string[] = await ctx.runQuery(internal.internal.communities.communitiesToRead, {
@@ -41,7 +42,7 @@ export async function readCommunityRules(
     try {
       const rulesText = await rules(name)
       const place = { platform: account.platform, placeName: placeLabel(placeOf(account)) }
-      const read = await classifierProvider().communityRules({ ...place, community: name, rules: rulesText })
+      const read = await classifierProvider(keys).communityRules({ ...place, community: name, rules: rulesText })
       const stored = await ctx.runMutation(internal.internal.communities.storeCommunity, {
         accountId: account._id,
         name,

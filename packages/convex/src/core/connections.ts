@@ -1,3 +1,4 @@
+import { storedKeys } from './keys'
 import { handleOf, needsConnection, placeOf, placeLabel } from '@stepradar/shared'
 import type { Infer } from 'convex/values'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -39,7 +40,7 @@ export async function readerConnectionFor(ctx: Reader, accountId: Id<'accounts'>
 
 /** The account's platform reader, as its connection lets it read: what a mutation asks before it queues a reader's step. */
 export async function accountReader(ctx: Reader, account: Doc<'accounts'>): Promise<PlatformReader> {
-  return platformReader(placeOf(account), await readerConnectionFor(ctx, account._id))
+  return platformReader(placeOf(account), await readerConnectionFor(ctx, account._id), await storedKeys(ctx))
 }
 
 /** The connection as the studio shows it: never the token. */

@@ -1,11 +1,9 @@
 import { api } from '@stepradar/convex/_generated/api'
 import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
 import {
-  CONVERSION_KIND_LABELS,
   JOB_KIND_LABELS,
   METRIC_LABELS,
   SIGNAL_SOURCE_LABELS,
-  VALUE_LABEL,
   canApply,
   placeOf,
   postedItemOf,
@@ -41,7 +39,7 @@ import {
   Skeleton,
 } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
-import { formatCount, formatDay, formatKnown, formatMoney, relativeTime } from '@/lib/format'
+import { formatCount, formatDay, relativeTime } from '@/lib/format'
 import { ideaLine } from '@/lib/ideas'
 
 export const Route = createFileRoute('/posts/$postId')({ component: PostPage })
@@ -75,7 +73,9 @@ function PostPage() {
   const open = textEditable(post.status)
   // The day picked, once it differs from the planned one: until then there is nothing to move.
   const newDay = day === post.plannedFor ? null : day
-  const showValue = wentOut(post.status) || (data.value.clicks ?? 0) > 0
+  // Where the post links to the sponsor directly no click is counted, so there is nothing to show.
+  const clicks = data.clicks
+  const showClicks = clicks !== null && (wentOut(post.status) || clicks > 0)
   const failedJobs = data.jobs.filter((job) => job.status === 'failed').length
 
   return (
@@ -160,22 +160,9 @@ function PostPage() {
 
           {post.judgment !== undefined && <JudgeReading judgment={post.judgment} />}
 
-          {showValue && (
-            <Card title={VALUE_LABEL} footer={<AttributionNote />}>
-              <dl className="tabular grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-                <dt className="text-ash">{METRIC_LABELS.clicks}</dt>
-                <dd>{formatKnown(data.value.clicks)}</dd>
-                <dt className="text-ash">{CONVERSION_KIND_LABELS.demo_started}</dt>
-                <dd>{data.value.demos}</dd>
-                <dt className="text-ash">{CONVERSION_KIND_LABELS.signup}</dt>
-                <dd>{data.value.signups}</dd>
-                <dt className="text-ash">{CONVERSION_KIND_LABELS.trial_started}</dt>
-                <dd>{data.value.trials}</dd>
-                <dt className="text-ash">{CONVERSION_KIND_LABELS.paid}</dt>
-                <dd>{data.value.paid}</dd>
-                <dt className="text-ash">{VALUE_LABEL}</dt>
-                <dd className="font-medium">{formatMoney(data.value.value, data.currency)}</dd>
-              </dl>
+          {showClicks && (
+            <Card title={METRIC_LABELS.clicks} footer={<AttributionNote />}>
+              <p className="tabular text-metric">{formatCount(clicks)}</p>
             </Card>
           )}
 
@@ -240,7 +227,7 @@ function PostPage() {
               </Collapsible>
             </Card>
           )}
-          <MockNote when={data.value.mock} />
+          <MockNote when={post.numbers?.mock === true} />
         </div>
       </div>
     </>
@@ -384,14 +371,6 @@ function DrawnFrom(props: { basis: NonNullable<Doc<'posts'>['basis']> }) {
           title="Round-up"
           lead={`What people asked lately about ${basis.pillar}, answered in one post. It names no one who asked.`}
           items={basis.questions.map((question) => ({ key: question.signalId, title: question.title, url: question.url }))}
-        />
-      )
-    case 'rework':
-      return (
-        <DrawnSection
-          title="Reworked from another account"
-          lead={`One of your posts on ${basis.post.placeName} that brought users, made anew for this platform.`}
-          items={[{ key: basis.post.postId, title: basis.post.title, url: basis.post.url }]}
         />
       )
     case 'launch':

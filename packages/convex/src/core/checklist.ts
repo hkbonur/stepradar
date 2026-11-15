@@ -45,7 +45,7 @@ export async function openFirstItems(
   await ctx.db.insert('checklistItems', {
     accountId: account._id,
     title: `Put the bio and its link on ${handleOf(account)}'s profile`,
-    why: `People who read a reply or a post open the profile next. Its bio: "${account.bio}" Its link, so the signups the profile brings count for the account: ${bioLink}`,
+    why: `People who read a reply or a post open the profile next. Its bio: "${account.bio}" Its link, so the visits the profile brings count for the account: ${bioLink}`,
     status: 'open',
     ...(profile === null ? {} : { action: { kind: 'visit' as const, url: profile } }),
     createdAt: now,

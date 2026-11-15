@@ -53,8 +53,6 @@ export async function insertAccount(
     sponsorUrl: 'https://formstep.io',
     sponsorPitch: 'Forms that workflows and AI agents send to one customer; the answers come back into the flow.',
     appUrl: 'http://localhost:3300',
-    valuePerPaid: 29,
-    currency: 'EUR',
   })
   const accountId = await ctx.db.insert('accounts', {
     workspaceId,

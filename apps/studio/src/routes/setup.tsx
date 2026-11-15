@@ -1,11 +1,13 @@
 import { api } from '@stepradar/convex/_generated/api'
-import type { SponsorProblem } from '@stepradar/shared'
+import { PROVIDER_KEY_HINTS, PROVIDER_KEY_LABELS, providerKeyProblem } from '@stepradar/shared'
 import { Navigate, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
+import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
-import { ProductFields, ValueFields, emptyProduct, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { ProductFields, emptyProduct, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { keyStatusText } from '@/components/provider-keys'
 import { SetupSteps } from '@/components/setup-steps'
-import { Button, ErrorLine, Skeleton } from '@/components/ui'
+import { Button, ErrorLine, Field, Input, Mono, Skeleton } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 import { platformsInWords } from '@/lib/platforms'
 
@@ -15,29 +17,30 @@ export const Route = createFileRoute('/setup')({ component: SetupPage })
  * The first run (DESIGN.md, Setup): before any workspace exists the studio
  * opens here, without the sidebar, since every other page needs the product.
  * A welcome that says what Stepradar does, then the product the accounts
- * promote, then what one paying customer is worth; saving it makes the
- * workspace and hands over to the account onboarding, the setup's last step.
+ * promote, then the Anthropic key the agents write with (ADR 0005); saving
+ * stores the key, makes the workspace and hands over to the account
+ * onboarding, the setup's last step. The key can wait: the Providers page
+ * takes it later.
  */
-type Step = 'welcome' | 'product' | 'value'
+type Step = 'welcome' | 'product' | 'key'
 
-/** The fields each step asks for, so a step only names its own problems. */
-const STEP_FIELDS: Record<Exclude<Step, 'welcome'>, SponsorProblem['field'][]> = {
-  product: ['sponsorName', 'sponsorUrl', 'sponsorPitch'],
-  value: ['valuePerPaid', 'currency'],
-}
+/** The step that may show its problems: none until the operator tried to go on, so a blank form never opens red. */
+type Tried = 'product' | 'key' | null
 
 function SetupPage() {
   const workspace = useQuery(api.private.workspace.get, {})
+  const providers = useQuery(api.private.providers.status, {})
   const create = useMutation(api.private.workspace.create)
+  const storeKey = useMutation(api.private.keys.set)
   const navigate = useNavigate()
   const [step, setStep] = React.useState<Step>('welcome')
   const [draft, setDraft] = React.useState<ProductDraft>(emptyProduct)
-  // A blank form is not a wrong one: a step names its problems once the operator tried to go on.
-  const [tried, setTried] = React.useState<Step | null>(null)
+  const [key, setKey] = React.useState('')
+  const [tried, setTried] = React.useState<Tried>(null)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  if (workspace === undefined) return <Skeleton className="h-96" />
+  if (workspace === undefined || providers === undefined) return <Skeleton className="h-96" />
   // Set up already, from another tab or a seed; while this tab saves, the save itself moves on.
   if (workspace !== null && !saving) return <Navigate to="/" replace />
 
@@ -45,21 +48,25 @@ function SetupPage() {
     setDraft((current) => ({ ...current, ...change }))
     setError(null)
   }
-  const problemsOf = (of: Exclude<Step, 'welcome'>) => productProblems(draft).filter((problem) => STEP_FIELDS[of].includes(problem.field))
-  const shown = (of: Exclude<Step, 'welcome'>) => (tried === of ? problemsOf(of) : [])
+  const stored = providers.providerKeys.find((status) => status.name === 'ANTHROPIC_API_KEY')
+  if (stored === undefined) throw new Error('the Providers status lists no Anthropic key')
+  const keyProblem = providerKeyProblem('ANTHROPIC_API_KEY', key)
+  // A key already stored, from an earlier try or the Providers page, needs no other.
+  const keyNeeded = !stored.set || key.trim() !== ''
 
-  const next = (of: Exclude<Step, 'welcome'>, then: () => void) => (event: React.FormEvent) => {
+  const toKey = (event: React.FormEvent) => {
     event.preventDefault()
-    setTried(of)
-    if (problemsOf(of).length > 0) return
-    then()
+    setTried('product')
+    if (productProblems(draft).length > 0) return
+    setStep('key')
   }
 
-  const save = async () => {
+  const save = async (withKey: boolean) => {
     if (saving) return
     setSaving(true)
     setError(null)
     try {
+      if (withKey) await storeKey({ name: 'ANTHROPIC_API_KEY', value: key })
       await create({ ...productFields(draft), appUrl: window.location.origin })
       await navigate({ to: '/onboarding', search: { first: true }, replace: true })
     } catch (caught) {
@@ -68,36 +75,70 @@ function SetupPage() {
     }
   }
 
-  if (step === 'welcome') return <Welcome onStart={() => setStep('product')} />
+  const submitKey = (event: React.FormEvent) => {
+    event.preventDefault()
+    setTried('key')
+    if (keyNeeded && keyProblem !== null) return
+    void save(keyNeeded)
+  }
 
+  if (step === 'welcome') return <Welcome mode={providers.mode} onStart={() => setStep('product')} />
+
+  const productShown = tried === 'product' ? productProblems(draft) : []
   return (
     <div className="space-y-8">
       <SetupSteps current={step} />
       {step === 'product' && (
-        <form className="card space-y-5" onSubmit={next('product', () => setStep('value'))} noValidate>
+        <form className="card space-y-5" onSubmit={toKey} noValidate>
           <StepHeading lead="The accounts build an audience around what it solves and mention it now and then, in their own words.">
             What do your accounts promote?
           </StepHeading>
-          <ProductFields value={draft} onChange={patch} invalid={shown('product').map((problem) => problem.field)} />
-          <Problems problems={shown('product')} />
+          <ProductFields value={draft} onChange={patch} invalid={productShown.map((problem) => problem.field)} />
+          <Problems messages={productShown.map((problem) => problem.message)} />
           <Button type="submit" variant="primary">
             Next
           </Button>
         </form>
       )}
-      {step === 'value' && (
-        <form className="card space-y-5" onSubmit={next('value', () => void save())} noValidate>
-          <StepHeading lead="The reports multiply each paying customer an account brings by it. Change it any time on the Providers page.">
-            What is one paying customer worth to {draft.sponsorName.trim()}?
+      {step === 'key' && (
+        <form className="card space-y-5" onSubmit={submitKey} noValidate>
+          <StepHeading lead="The writer, the judge and the classifier run on Claude with your key. It stays in your Stepradar backend and is never shown again; the Providers page replaces or removes it.">
+            Which Anthropic key do your accounts write with?
           </StepHeading>
-          <ValueFields value={draft} onChange={patch} invalid={shown('value').map((problem) => problem.field)} />
-          <Problems problems={shown('value')} />
+          <Field label={PROVIDER_KEY_LABELS.ANTHROPIC_API_KEY} hint={PROVIDER_KEY_HINTS.ANTHROPIC_API_KEY}>
+            <Input
+              name="ANTHROPIC_API_KEY"
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              value={key}
+              onChange={(event) => {
+                setKey(event.target.value)
+                setError(null)
+              }}
+              placeholder={stored.set ? 'Paste a new key to replace it' : 'sk-ant-…'}
+              aria-invalid={(tried === 'key' && keyNeeded && keyProblem !== null) || undefined}
+            />
+          </Field>
+          {stored.set && <p className="text-xs text-field-green-deep">{keyStatusText(stored)}</p>}
+          <Problems messages={tried === 'key' && keyNeeded && keyProblem !== null ? [keyProblem] : []} />
+          {providers.mode === 'mock' && (
+            <p className="max-w-[60ch] text-xs text-ash">
+              Stepradar runs in mock mode now: nothing calls Claude until <Mono>PROVIDERS_MODE=real</Mono> is set on the Convex deployment.
+            </p>
+          )}
           <div aria-live="polite">{error && <ErrorLine>{error}</ErrorLine>}</div>
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary" busy={saving}>
               Save and build your accounts
             </Button>
-            <Button variant="ghost" onClick={() => setStep('product')}>
+            {/* In real mode the writer needs the key to propose an account, the setup's next step. */}
+            {!stored.set && providers.mode === 'mock' && (
+              <Button variant="ghost" disabled={saving} onClick={() => void save(false)}>
+                Add it later
+              </Button>
+            )}
+            <Button variant="ghost" disabled={saving} onClick={() => setStep('product')}>
               Back
             </Button>
           </div>
@@ -107,15 +148,14 @@ function SetupPage() {
   )
 }
 
-function Welcome(props: { onStart: () => void }) {
-  const providers = useQuery(api.private.providers.status, {})
+function Welcome(props: { mode: FunctionReturnType<typeof api.private.providers.status>['mode']; onStart: () => void }) {
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-metric">Welcome to Stepradar</h1>
         <p className="mt-2 max-w-[60ch] text-base text-graphite">
           Stepradar is your engagement desk on {platformsInWords('conjunction')}. For each of your accounts it finds what people ask in its
-          niche, drafts posts and replies, and reads what they bring your product. You post by hand; Stepradar never posts.
+          niche, drafts posts and replies, and reads what they reach. You post by hand; Stepradar never posts.
         </p>
       </div>
       <div>
@@ -123,7 +163,7 @@ function Welcome(props: { onStart: () => void }) {
         <ol className="divide-y divide-mist border-y border-mist">
           {[
             ['Your product', 'What the accounts promote, in your words.'],
-            ['What a customer is worth', 'So the reports can put a value on what each account brings.'],
+            ['Your Anthropic key', 'The agents write with Claude on it; it can wait until you switch to real mode.'],
             [
               'Your accounts',
               `One to five of your own accounts on ${platformsInWords('conjunction')}, each with a niche and an audience you pick.`,
@@ -145,11 +185,8 @@ function Welcome(props: { onStart: () => void }) {
         </Button>
         <p className="max-w-[60ch] text-xs text-ash">
           Nothing goes out unless you post it.
-          {providers?.mode === 'mock' &&
-            ' Providers run in mock mode: posts, signals and numbers are made up until PROVIDERS_MODE=real and the keys are set on the Convex deployment. The Providers page lists them.'}
-          {providers?.mode === 'real' &&
-            !providers.keys.ANTHROPIC_API_KEY &&
-            ' ANTHROPIC_API_KEY is not set on the Convex deployment, so the writer cannot propose your accounts until it is.'}
+          {props.mode === 'mock' &&
+            ' Providers run in mock mode: posts, signals and numbers are made up until PROVIDERS_MODE=real is set on the Convex deployment.'}
         </p>
       </div>
     </div>
@@ -171,11 +208,11 @@ function StepHeading(props: { children: React.ReactNode; lead: string }) {
 }
 
 /** The step's problems in the backend's words; a polite live list that stays mounted. */
-function Problems(props: { problems: SponsorProblem[] }) {
+function Problems(props: { messages: string[] }) {
   return (
     <ul aria-live="polite" className="space-y-1 text-xs text-signal-red-deep">
-      {props.problems.map((problem) => (
-        <li key={problem.message}>{problem.message}</li>
+      {props.messages.map((message) => (
+        <li key={message}>{message}</li>
       ))}
     </ul>
   )

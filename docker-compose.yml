@@ -3,7 +3,7 @@
 # Playwright backend on 3210/3211.
 services:
   convex-backend:
-    image: ghcr.io/get-convex/convex-backend:latest
+    image: ghcr.io/convex/convex-backend:latest
     container_name: stepradar-convex
     ports:
       - "3220:3210"

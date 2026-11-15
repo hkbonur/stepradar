@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import { addDays, dayKey, instantAt, weekStart } from './core/dates'
 import { mockLlm } from './providers/llm/mock'
-import { TIMEZONE, insertAccount, insertMeasuredPost, insertPost, insertSignal } from '../test/fixtures'
+import { TIMEZONE, insertAccount, insertPost, insertSignal } from '../test/fixtures'
 import { setup } from '../test/setup'
 
 afterEach(() => {
@@ -30,48 +30,6 @@ describe('content', () => {
     await t.mutation(internal.internal.writer.planWeek, { accountId: account._id, weekStart: nextWeek })
     const posts = await t.run((ctx) => ctx.db.query('posts').collect())
     expect(posts.filter((post) => post.signalIds.includes(problem._id))).toHaveLength(1)
-  })
-
-  it('reworks for another platform the posts of another account that brought users, the most first, each once', async () => {
-    const t = setup()
-    const { linkedin, best, plain } = await t.run(async (ctx) => {
-      const x = await insertAccount(ctx)
-      const linkedin = await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' })
-      await ctx.db.patch(linkedin._id, { workspaceId: x.workspaceId })
-      const postedAt = Date.now() - 5 * DAY
-      const plain = await insertMeasuredPost(ctx, x, { postedAt, impressions: 9_000, clicks: 40 })
-      const best = await insertMeasuredPost(ctx, x, { postedAt, impressions: 1_000, clicks: 5 })
-      // It named the product and carried its own tracked link: the reworked post takes neither.
-      await ctx.db.patch(best._id, {
-        title: 'Retry the step, not the workflow',
-        parts: ['Retry the step, not the workflow. I keep each run in Formstep.', 'http://localhost:3300/go/abc1234'],
-      })
-      const conversion = (postId: typeof plain._id, kind: 'signup' | 'paid') =>
-        ctx.db.insert('conversions', { accountId: x._id, postId, kind, distinctId: `${postId}-${kind}`, at: postedAt + DAY, mock: true })
-      await conversion(plain._id, 'signup')
-      await conversion(best._id, 'signup')
-      await conversion(best._id, 'paid')
-      return { linkedin: await ctx.db.get(linkedin._id), best, plain }
-    })
-    if (!linkedin) throw new Error('no account')
-    const plan = (weeks: number) =>
-      t.mutation(internal.internal.writer.planWeek, {
-        accountId: linkedin._id,
-        weekStart: addDays(weekStart(dayKey(Date.now(), TIMEZONE)), 7 * weeks),
-      })
-    await plan(1)
-    await plan(2)
-    const reworked = (await t.run((ctx) => ctx.db.query('posts').collect()))
-      .filter((post) => post.basis?.kind === 'rework')
-      .sort((a, b) => a.plannedFor.localeCompare(b.plannedFor))
-    // The post that brought a paying customer first; the week after, not it again but the next that brought a user.
-    expect(
-      reworked.map((post) => (post.basis?.kind === 'rework' ? [post.accountId, post.basis.post.postId, post.basis.post.placeName] : null))
-    ).toEqual([
-      [linkedin._id, best._id, 'X'],
-      [linkedin._id, plain._id, 'X'],
-    ])
-    expect(reworked[0]?.basis).toMatchObject({ post: { text: 'Retry the step, not the workflow.' } })
   })
 
   it("sends a draft carrying another post's tracked link back to the writer to leave it out", async () => {

@@ -7,7 +7,6 @@ import {
   planWeek,
   type KindSwap,
   type PlannerCommunity,
-  type PlannerRework,
   type PlannerRoundup,
   type PlannerSignal,
   type PlannerStandout,
@@ -90,7 +89,6 @@ describe('planPostSlots', () => {
       kindSwaps: [],
       standouts: [],
       roundup: null,
-      rework: null,
       weekStart: '2026-10-19',
       account: {
         platform: 'x',
@@ -140,7 +138,6 @@ describe('planPostSlots', () => {
         kindSwaps: [],
         standouts: [],
         roundup: null,
-        rework: null,
         weekStart: '2026-10-19',
         account: { ...plainAccount, publishHour: format.publishHour, cadence },
         posts: [],
@@ -214,17 +211,15 @@ describe('the sponsor over a week', () => {
       kindSwaps?: KindSwap[]
       standouts?: PlannerStandout[]
       roundup?: PlannerRoundup
-      rework?: PlannerRework
       signals?: PlannerSignal[]
     },
-    posts: { plannedFor: string; kind: 'text'; basis?: PlannerRoundup | PlannerRework }[] = []
+    posts: { plannedFor: string; kind: 'text'; basis?: PlannerRoundup }[] = []
   ) =>
     planPostSlots({
       experiment: overrides.experiment ?? null,
       kindSwaps: overrides.kindSwaps ?? [],
       standouts: overrides.standouts ?? [],
       roundup: overrides.roundup ?? null,
-      rework: overrides.rework ?? null,
       weekStart: '2026-10-19',
       account: { ...base, ...overrides, cadence: { postsPerDay: 1, kinds: ['text'], intents: overrides.intents, repliesPerDay: 5 } },
       posts,
@@ -380,25 +375,6 @@ describe('the sponsor over a week', () => {
     expect(held.some((post) => post.basis !== undefined)).toBe(false)
   })
 
-  it("puts the week's reworked post in the first full post that answers after the round-up, once a week", () => {
-    const rework: PlannerRework = {
-      kind: 'rework',
-      post: { postId: 'p1' as Id<'posts'>, placeName: 'X', title: 'Retry the step, not the workflow', text: 'Retry the step.', url: null },
-    }
-    const roundup: PlannerRoundup = { kind: 'roundup', pillar: 'a', questions: ['q1', 'q2', 'q3', 'q4'].map((id) => thread(id, `${id}?`)) }
-    const posts = week({ platform: 'linkedin', intents: ['teach'], roundup, rework })
-    const drawn = posts.flatMap((post) => (post.basis === undefined ? [] : [post.basis.kind]))
-    expect(drawn).toEqual(['roundup', 'rework'])
-    expect(posts.find((post) => post.basis?.kind === 'rework')).toMatchObject({
-      concept: 'From X: Retry the step, not the workflow',
-      pillar: 'a',
-    })
-    // A week that holds one takes no other, and Hacker News has no place for one.
-    const held = week({ platform: 'linkedin', intents: ['teach'], rework }, [{ plannedFor: '2026-10-19', kind: 'text', basis: rework }])
-    expect(held.some((post) => post.basis !== undefined)).toBe(false)
-    expect(week({ platform: 'hackernews', intents: ['teach'], rework }).some((post) => post.basis !== undefined)).toBe(false)
-  })
-
   it("moves each day's posts by one posting time variant, the days in turn, and leaves out a day where a variant would move a post into the past", () => {
     const experiment: PostExperimentPlan = {
       experimentId: 'e1' as Id<'experiments'>,
@@ -411,7 +387,6 @@ describe('the sponsor over a week', () => {
       kindSwaps: [],
       standouts: [],
       roundup: null,
-      rework: null,
       weekStart: '2026-10-19',
       account: {
         ...base,
@@ -451,7 +426,6 @@ describe('the sponsor over a week', () => {
         kindSwaps: [],
         standouts: [],
         roundup: null,
-        rework: null,
         weekStart: '2026-10-19',
         account: { ...base, platform: 'reddit', cadence: { postsPerDay: 1, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 } },
         posts,

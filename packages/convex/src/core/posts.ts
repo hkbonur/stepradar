@@ -68,7 +68,6 @@ export function basisSignalIds(basis: PostBasis | undefined): Id<'signals'>[] {
       return [basis.thread.signalId]
     case 'roundup':
       return basis.questions.map((question) => question.signalId)
-    case 'rework':
     case 'launch':
       return []
   }

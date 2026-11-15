@@ -64,7 +64,7 @@ describe('growth', () => {
       return account
     })
     const report = await t.query(api.private.report.forAccount, { accountId: account._id })
-    expect(report?.leak).toMatchObject({ step: 'click', rate: 0.002, before: 0.01 })
+    expect(report?.leak).toMatchObject({ rate: 0.002, before: 0.01 })
     expect(report?.leak?.text).toBe(
       "0.20% of the people @ada_automates's linked posts reached in 28 days clicked through against 1.00% in the 28 days before. The strategy review tests how its posts open and end on that next. Mock numbers."
     )
@@ -76,28 +76,13 @@ describe('growth', () => {
     expect(started?.metric).not.toBe('reach')
   })
 
-  it('reads only the paid step where posts link straight to the sponsor, and says the leak is the product', async () => {
+  it('reads no leak where posts link straight to the sponsor, since no click is counted', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(THURSDAY)
     const t = setup()
-    const reddit = await t.run(async (ctx) => {
-      const reddit = await insertAccount(ctx, { platform: 'reddit', handle: 'ada' })
-      const conversion = (kind: 'signup' | 'paid', at: number, index: number) =>
-        ctx.db.insert('conversions', { accountId: reddit._id, kind, distinctId: `${kind}-${at}-${index}`, at, mock: false })
-      // Six of twenty signups paid four weeks ago; one of twenty did since.
-      for (let index = 0; index < 20; index += 1) {
-        await conversion('signup', THURSDAY - 40 * DAY, index)
-        await conversion('signup', THURSDAY - 5 * DAY, index)
-      }
-      for (let index = 0; index < 6; index += 1) await conversion('paid', THURSDAY - 40 * DAY, index)
-      await conversion('paid', THURSDAY - 5 * DAY, 0)
-      return reddit
-    })
+    const reddit = await t.run((ctx) => insertAccount(ctx, { platform: 'reddit', handle: 'ada' }))
     const report = await t.query(api.private.report.forAccount, { accountId: reddit._id })
-    expect(report?.leak).toMatchObject({ step: 'paid', rate: 0.05, before: 0.3, mock: false })
-    expect(report?.leak?.text).toBe(
-      '5.00% of the signups from u/ada in 28 days paid against 30.00% in the 28 days before: the leak is in the product after signing up, not in the posts.'
-    )
+    expect(report?.leak).toBeNull()
   })
 
   it('shows what the last week brought against the week before', async () => {
@@ -106,14 +91,18 @@ describe('growth', () => {
     const t = setup()
     await t.run(async (ctx) => {
       const account = await insertAccount(ctx)
-      const conversion = (kind: 'signup' | 'paid', at: number) =>
-        ctx.db.insert('conversions', { accountId: account._id, kind, distinctId: `${kind}-${at}`, at, mock: true })
-      await conversion('signup', THURSDAY - DAY)
-      await conversion('paid', THURSDAY - 2 * DAY)
-      await conversion('signup', THURSDAY - 8 * DAY)
-      await conversion('signup', THURSDAY - 9 * DAY)
+      const followers = (at: number, count: number) =>
+        ctx.db.insert('accountSnapshots', { accountId: account._id, takenAt: at, reach: { platform: 'x', followers: count }, mock: true })
+      await followers(THURSDAY - 13 * DAY, 100)
+      await followers(THURSDAY - 8 * DAY, 104)
+      await followers(THURSDAY - 6 * DAY, 105)
+      await followers(THURSDAY - DAY, 115)
+      // Two clicks this week, on a post of last week's whose clicks came the hour it went out, and three the week before.
+      await linkedPost(ctx, account, THURSDAY - 3 * DAY, 500, 2)
+      await linkedPost(ctx, account, THURSDAY - 10 * DAY, 500, 3)
     })
     const overview = await t.query(api.private.home.overview, {})
-    expect(overview.growth.accounts).toMatchObject([{ signups: 1, paid: 1, before: { signups: 2, paid: 0 }, testing: null }])
+    // This week counts from the last read before it: 104 to 115.
+    expect(overview.growth.accounts).toMatchObject([{ gained: 11, clicks: 2, before: { gained: 4, clicks: 3 }, mock: true, testing: null }])
   })
 })

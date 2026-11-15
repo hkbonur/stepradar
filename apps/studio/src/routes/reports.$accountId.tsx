@@ -1,7 +1,6 @@
 import { api } from '@stepradar/convex/_generated/api'
 import type { Id } from '@stepradar/convex/_generated/dataModel'
 import {
-  CONVERSION_KIND_LABELS,
   EXPERIMENT_KIND_LABELS,
   EXPERIMENT_METRIC_LABELS,
   isReplyExperimentKind,
@@ -10,7 +9,6 @@ import {
   METRIC_LABELS,
   SPONSOR_SEGMENT_LABELS,
   ACCOUNT_REACH_LABELS,
-  VALUE_LABEL,
   countsSource,
   placeOf,
 } from '@stepradar/shared'
@@ -19,10 +17,9 @@ import { useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import { Funnel, MetricStrip, ReachLine, Trend, reportStrip } from '@/components/charts'
 import { ItemNumbers, notReadText } from '@/components/item-numbers'
-import { ProbableLine } from '@/components/probable'
 import { AccountFrame } from '@/components/account-frame'
 import { Alert, AttributionNote, Card, CardList, Empty, LinkButton, MockNote, Pill, Skeleton } from '@/components/ui'
-import { formatCount, formatDate, formatDay, formatKnown, formatMoney, plural } from '@/lib/format'
+import { formatCount, formatDate, formatDay, formatKnown, plural } from '@/lib/format'
 
 export const Route = createFileRoute('/reports/$accountId')({ component: ReportPage })
 
@@ -59,7 +56,7 @@ function ReportPage() {
 function ReportBody(props: { report: Report }) {
   const { report } = props
   const { account, trend } = report
-  const funnel = { ...report.funnel, everyClickCounted: report.funnel.clicks !== null }
+  const { funnel } = report
   const platform = account.platform
   const place = placeOf(account)
   const nothing = funnel.items === 0 && (funnel.clicks ?? 0) === 0 && report.reachLine === null
@@ -86,11 +83,10 @@ function ReportBody(props: { report: Report }) {
           <div className="space-y-1.5">
             <AttributionNote />
             <MockNote when={funnel.mock || report.reachLine?.mock === true} />
-            <ProbableLine probable={report.probable} currency={report.currency} />
           </div>
         }
       >
-        <MetricStrip items={reportStrip(funnel, reach, sourceOf(funnel.replies), report.currency)} />
+        <MetricStrip items={reportStrip(funnel, reach, sourceOf(funnel.replies))} />
       </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -114,7 +110,7 @@ function ReportBody(props: { report: Report }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-        <Card title={`From ${reachLabel.toLowerCase()} to a paid plan`}>
+        <Card title={`From ${reachLabel.toLowerCase()} to clicks`}>
           <Funnel data={{ ...funnel, reach }} />
         </Card>
         <Card title="Per day">
@@ -162,9 +158,7 @@ function ReportBody(props: { report: Report }) {
         {report.posted.length === 0 && (
           <p className="card-x py-4 text-sm text-ash">Nothing went out in the last {report.windowDays} days.</p>
         )}
-        {report.posted.length > 0 && (
-          <PostedTable items={report.posted} currency={report.currency} missing={notReadText(place, report.reads.counts)} />
-        )}
+        {report.posted.length > 0 && <PostedTable items={report.posted} missing={notReadText(place, report.reads.counts)} />}
       </Card>
     </div>
   )
@@ -202,7 +196,7 @@ function ReachLineCard(props: { report: Report }) {
 }
 
 /** Every post and reply that went out in the window, newest first, with its numbers and, for a post, what it did for the sponsor. */
-function PostedTable(props: { items: PostedItem[]; currency: string; missing: string }) {
+function PostedTable(props: { items: PostedItem[]; missing: string }) {
   return (
     <div className="overflow-x-auto">
       <table className="card-table w-full text-sm">
@@ -212,9 +206,6 @@ function PostedTable(props: { items: PostedItem[]; currency: string; missing: st
             <th className="py-2 font-medium">What went out</th>
             <th className="py-2 pl-3 font-medium">On the platform</th>
             <th className="py-2 pl-3 text-right font-medium">{METRIC_LABELS.clicks}</th>
-            <th className="py-2 pl-3 text-right font-medium">{CONVERSION_KIND_LABELS.signup}</th>
-            <th className="py-2 pl-3 text-right font-medium">{CONVERSION_KIND_LABELS.paid}</th>
-            <th className="py-2 pl-3 text-right font-medium">{VALUE_LABEL}</th>
           </tr>
         </thead>
         <tbody className="tabular">
@@ -230,17 +221,10 @@ function PostedTable(props: { items: PostedItem[]; currency: string; missing: st
                 </span>
               </td>
               {item.kind === 'post' ? (
-                <>
-                  <td className="py-2.5 pl-3 text-right">{formatKnown(item.clicks)}</td>
-                  <td className="py-2.5 pl-3 text-right">{item.signups}</td>
-                  <td className="py-2.5 pl-3 text-right">{item.paid}</td>
-                  <td className="py-2.5 pl-3 text-right">{formatMoney(item.value, props.currency)}</td>
-                </>
+                <td className="py-2.5 pl-3 text-right">{formatKnown(item.clicks)}</td>
               ) : (
-                // A reply carries no tracked link, so it has no clicks or conversions of its own.
-                <td colSpan={4} className="py-2.5 pl-3 text-right text-xs text-ash">
-                  {item.kind === 'reply' ? 'reply' : 'without a draft'}
-                </td>
+                // A reply carries no tracked link, so it has no clicks of its own.
+                <td className="py-2.5 pl-3 text-right text-xs text-ash">{item.kind === 'reply' ? 'reply' : 'without a draft'}</td>
               )}
             </tr>
           ))}

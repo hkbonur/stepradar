@@ -1,8 +1,7 @@
 import { v } from 'convex/values'
 import { mutation, query } from '../_generated/server'
 import { editPost, killPost, markPostPosted, reschedulePost, retryPost, rewritePost, postBeingWritten, skipPost } from '../core/posts'
-import { countConversions, shownClicks } from '../core/posted'
-import { workspaceOf } from '../core/workspace'
+import { shownClicks } from '../core/posted'
 import { postPartsValidator } from '../lib/validators'
 
 export const get = query({
@@ -12,7 +11,6 @@ export const get = query({
     if (!post) return null
     const account = await ctx.db.get(post.accountId)
     if (!account) return null
-    const workspace = await workspaceOf(ctx, account)
     const jobs = (
       await ctx.db
         .query('jobs')
@@ -24,31 +22,16 @@ export const get = query({
       const signal = await ctx.db.get(signalId)
       if (signal) signals.push(signal)
     }
-    // What this post did for the sponsor: its clicks and the conversions tied to it, which came after it went out.
-    const postedAt = post.posted?.at
-    const conversions =
-      postedAt === undefined
-        ? []
-        : (
-            await ctx.db
-              .query('conversions')
-              .withIndex('by_account_time', (q) => q.eq('accountId', account._id).gte('at', postedAt))
-              .collect()
-          ).filter((conversion) => conversion.postId === post._id)
-    const value = {
-      clicks: await shownClicks(ctx, account.platform, post._id),
-      ...countConversions(conversions, workspace.valuePerPaid),
-      mock: conversions.some((conversion) => conversion.mock) || post.numbers?.mock === true,
-    }
+    // What this post did for the sponsor: the clicks on its tracked links.
+    const clicks = await shownClicks(ctx, account.platform, post._id)
     return {
       post,
       account,
-      currency: workspace.currency,
       jobs,
       // An idea the writer is on now (core `postBeingWritten`, as the calendar and the account page read it).
       writing: post.status === 'idea' && (await postBeingWritten(ctx, post._id)),
       signals,
-      value,
+      clicks,
     }
   },
 })

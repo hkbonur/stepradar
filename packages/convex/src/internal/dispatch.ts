@@ -24,7 +24,6 @@ const RUNNERS: Record<JobKind, (ctx: ActionCtx, job: Doc<'jobs'>) => Promise<unk
   judge_post: (ctx, job) => ctx.runAction(internal.internal.judge.judgePost, { postId: postIdOf(job), wordsBy: wordsByOf(job) }),
   poll_comments: (ctx, job) => ctx.runAction(internal.internal.comments.poll, { accountId: job.accountId }),
   pull_metrics: (ctx, job) => ctx.runAction(internal.internal.analyst.pullMetrics, { accountId: job.accountId }),
-  pull_probable: (ctx) => ctx.runAction(internal.internal.analyst.pullProbable, {}),
   import_history: (ctx, job) => ctx.runAction(internal.internal.researcher.importHistory, { accountId: job.accountId }),
   learn_voice: (ctx, job) => ctx.runAction(internal.internal.analyst.learnVoice, { accountId: job.accountId }),
   listen: (ctx, job) => ctx.runAction(internal.internal.replies.listen, { accountId: job.accountId }),

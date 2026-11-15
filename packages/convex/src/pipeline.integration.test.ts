@@ -160,7 +160,7 @@ describe('post pipeline', () => {
     const ada = await seededAda(t)
     const report = await t.query(api.private.report.forAccount, { accountId: ada._id })
     expect(report?.funnel.reach).toBeGreaterThan(1000)
-    expect(report?.funnel.signups).toBeGreaterThan(0)
+    expect(report?.funnel.clicks).toBeGreaterThan(0)
     // Eight measured posts and yesterday's, still in its window, and the replies posted this week.
     expect(report?.posted.filter((item) => item.kind === 'post').length).toBe(9)
     expect(report?.posted.some((item) => item.kind === 'reply')).toBe(true)

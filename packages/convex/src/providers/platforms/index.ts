@@ -1,4 +1,13 @@
-import { forumHost, needsConnection, type ConnectedPlatform, type Forum, type Platform, type PlatformPlace } from '@stepradar/shared'
+import {
+  forumHost,
+  needsConnection,
+  type ConnectedPlatform,
+  type Forum,
+  type Platform,
+  type PlatformPlace,
+  type ProviderKey,
+} from '@stepradar/shared'
+import type { ProviderKeys } from '../../core/keys'
 import { providersMode } from '../../lib/env'
 import { discourseForumAt, discourseReader } from './discourse'
 import { hackerNewsReader } from './hackernews'
@@ -14,17 +23,17 @@ import { READER_CAPABILITIES, type PlatformReader, type ReaderCapability, type R
  * (docs/plan.md, decision 3), and LinkedIn has no read API without partner
  * access, so neither reads anything: each of their steps is manual. A forum
  * on Discourse is read through its public JSON; one on other software reads
- * nothing, like LinkedIn.
+ * nothing, like LinkedIn. The keys are the operator's stored ones (core/keys.ts).
  */
-export function platformReader(place: PlatformPlace, connection: ReaderConnection | null): PlatformReader {
-  return providersMode() === 'mock' ? mockReader(place, connection) : realReader(place, connection)
+export function platformReader(place: PlatformPlace, connection: ReaderConnection | null, keys: ProviderKeys): PlatformReader {
+  return providersMode() === 'mock' ? mockReader(place, connection) : realReader(place, connection, keys)
 }
 
 /** The place's real reader whatever the mode, for the Providers page. */
-export function realReader(place: PlatformPlace, connection: ReaderConnection | null): PlatformReader {
+export function realReader(place: PlatformPlace, connection: ReaderConnection | null, keys: ProviderKeys): PlatformReader {
   switch (place.platform) {
     case 'reddit':
-      return redditReader(connection)
+      return redditReader(connection, keys)
     case 'hackernews':
       return hackerNewsReader
     case 'x':
@@ -46,13 +55,13 @@ export async function forumAt(origin: string): Promise<Forum> {
   return discourseForumAt(origin)
 }
 
-/** The deployment keys a platform's real reader needs: Reddit's OAuth app; the others read without one. */
-export function readerKeys(platform: Platform): readonly string[] {
+/** The operator's keys a platform's real reader needs (core/keys.ts): Reddit's OAuth app; the others read without one. */
+export function readerKeys(platform: Platform): readonly ProviderKey[] {
   return needsConnection(platform) ? CONNECTION_KEYS[platform] : []
 }
 
 /** The keys each connected platform's OAuth app needs. */
-const CONNECTION_KEYS: Record<ConnectedPlatform, readonly string[]> = { reddit: REDDIT_KEYS }
+const CONNECTION_KEYS: Record<ConnectedPlatform, readonly ProviderKey[]> = { reddit: REDDIT_KEYS }
 
 /** What a reader can do, in the order of its contract. */
 export function capabilitiesOf(reader: PlatformReader): ReaderCapability[] {

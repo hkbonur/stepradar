@@ -193,14 +193,13 @@ function taskReportText(args: TaskReportArgs): string {
     if (args.data.total === 0) return `No comments ${window}.`
     return `${counted(args.data.total, 'comment')} ${window}. Most liked: ${quotedTitles(args.data.comments, args.data.total)}.`
   }
-  const { funnel, days, reachLabel, currency } = args.data
-  if (funnel.items === 0 && (funnel.clicks ?? 0) === 0 && funnel.signups === 0 && funnel.paid === 0)
-    return `Nothing posted, clicked or converted in the last ${days} days.`
+  const { funnel, days, reachLabel } = args.data
+  if (funnel.items === 0 && (funnel.clicks ?? 0) === 0) return `Nothing posted or clicked in the last ${days} days.`
   const mock = funnel.mock ? ' Some of it is mock data.' : ''
   const reach = funnel.reach === null ? `no ${reachLabel.toLowerCase()} read` : `${reachLabel.toLowerCase()} ${funnel.reach}`
   const comments = funnel.replies === null ? 'no comments read' : counted(funnel.replies, 'comment')
   const clicks = funnel.clicks === null ? 'no clicks counted' : counted(funnel.clicks, 'click')
-  return `Last ${days} days: ${counted(funnel.items, 'item')} posted, ${reach}, ${comments}, ${clicks}, ${counted(funnel.signups, 'signup')}, ${funnel.paid} paid (${funnel.value} ${currency}).${mock}`
+  return `Last ${days} days: ${counted(funnel.items, 'item')} posted, ${reach}, ${comments}, ${clicks}.${mock}`
 }
 
 function counted(count: number, noun: string): string {
@@ -396,8 +395,7 @@ function majorityLanguage(posts: AccountPostSample[]): string {
 
 /**
  * What a mock post is about: a model's pillar, never its words, since the
- * writer refuses a copy; a round-up's count of questions; a reworked post's
- * title; a launch's news; else the post's first signal, else its concept.
+ * writer refuses a copy; a round-up's count of questions; a launch's news; else the post's first signal, else its concept.
  */
 function topicOf(brief: PostBrief): string {
   const basis = brief.basis
@@ -407,8 +405,6 @@ function topicOf(brief: PostBrief): string {
       return `What people answered most about ${brief.pillar}`
     case 'roundup':
       return `${basis.questions.length} questions people asked about ${basis.pillar}`
-    case 'rework':
-      return `What worked on ${basis.post.placeName}: ${basis.post.title}`
     case 'launch':
       return `New in ${brief.sponsorName}: ${basis.what}`
   }

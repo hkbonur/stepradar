@@ -27,8 +27,9 @@ http.route({
     const code = params.get('code')
     if (code !== null && params.get('error') === null) {
       try {
-        const granted = await exchangeCode(code)
-        const username = await redditUsername(granted.accessToken)
+        const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+        const granted = await exchangeCode(keys, code)
+        const username = await redditUsername(keys, granted.accessToken)
         await ctx.runMutation(internal.internal.connections.finish, {
           accountId: pending.accountId,
           refreshToken: granted.refreshToken,

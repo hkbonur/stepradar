@@ -25,8 +25,6 @@ const PRODUCT = {
   sponsorName: 'Ledgerly',
   sponsorUrl: 'https://app.ledgerly.example',
   sponsorPitch: 'Bookkeeping that categorises every receipt for you.',
-  valuePerPaid: 49,
-  currency: 'USD',
   appUrl: 'http://localhost:3300/',
 }
 
@@ -66,8 +64,6 @@ describe('first-run setup', () => {
       sponsorName: 'Ledgerly',
       sponsorPitch: 'Bookkeeping that categorises every receipt for you.',
       appUrl: 'http://localhost:3300',
-      valuePerPaid: 49,
-      currency: 'USD',
     })
     expect(await roster(t)).toEqual([])
     await expect(t.mutation(api.private.workspace.create, PRODUCT)).rejects.toThrow('Your product is already set up.')
@@ -87,8 +83,8 @@ describe('first-run setup', () => {
 
   it('changes the product in place', async () => {
     const t = await withProduct()
-    await t.mutation(api.private.workspace.update, { ...PRODUCT, sponsorUrl: 'https://ledgerly.example/app', valuePerPaid: 59 })
-    expect(await t.query(api.private.workspace.get, {})).toMatchObject({ sponsorUrl: 'https://ledgerly.example/app', valuePerPaid: 59 })
+    await t.mutation(api.private.workspace.update, { ...PRODUCT, sponsorUrl: 'https://ledgerly.example/app' })
+    expect(await t.query(api.private.workspace.get, {})).toMatchObject({ sponsorUrl: 'https://ledgerly.example/app' })
   })
 })
 
@@ -191,7 +187,7 @@ describe('onboarding', () => {
         title: "Put the bio and its link on @nora_notion's profile",
         why: expect.stringMatching(
           new RegExp(
-            `^People who read a reply or a post open the profile next\\. Its bio: "${proposal.bio}" Its link, so the signups the profile brings count for the account: http://localhost:3300/go/[a-z0-9]+$`
+            `^People who read a reply or a post open the profile next\\. Its bio: "${proposal.bio}" Its link, so the visits the profile brings count for the account: http://localhost:3300/go/[a-z0-9]+$`
           )
         ),
         action: { kind: 'visit', url: 'https://x.com/settings/profile' },
@@ -233,12 +229,9 @@ describe('onboarding', () => {
   it('says which key is missing in real mode before the writer proposes, in words the studio shows', async () => {
     const t = await withProduct()
     vi.stubEnv('PROVIDERS_MODE', 'real')
-    vi.stubEnv('ANTHROPIC_API_KEY', '')
     const proposing = t.action(api.private.onboarding.propose, NORA)
     await expect(proposing).rejects.toBeInstanceOf(ConvexError)
-    await expect(proposing).rejects.toThrow(
-      'ANTHROPIC_API_KEY is not set on this deployment. The Providers page lists the keys each provider needs.'
-    )
+    await expect(proposing).rejects.toThrow('The Anthropic API key is not set. Add it on the Providers page.')
   })
 
   it('refuses a proposal without a niche or with too few pillars', async () => {
