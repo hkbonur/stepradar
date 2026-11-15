@@ -19,19 +19,29 @@ describe('xLength', () => {
 describe('postSlotHours', () => {
   it('spaces the posts three hours from the publish hour', () => {
     expect(postSlotHours(x)).toEqual([15, 18])
-    expect(postSlotHours({ ...x, cadence: { postsPerDay: 1, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })).toEqual([15])
+    expect(postSlotHours({ ...x, cadence: { postDays: 7, postsPerDay: 1, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })).toEqual([
+      15,
+    ])
   })
   it('slides the day earlier so the last post lands by 23', () => {
-    expect(postSlotHours({ ...x, cadence: { postsPerDay: 4, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })).toEqual([
+    expect(postSlotHours({ ...x, cadence: { postDays: 7, postsPerDay: 4, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })).toEqual([
       14, 17, 20, 23,
     ])
     expect(
-      postSlotHours({ ...x, publishHour: 23, cadence: { postsPerDay: 2, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })
+      postSlotHours({
+        ...x,
+        publishHour: 23,
+        cadence: { postDays: 7, postsPerDay: 2, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 },
+      })
     ).toEqual([20, 23])
   })
   it('never goes below midnight', () => {
     expect(
-      postSlotHours({ ...x, publishHour: 23, cadence: { postsPerDay: 9, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 } })[0]
+      postSlotHours({
+        ...x,
+        publishHour: 23,
+        cadence: { postDays: 7, postsPerDay: 9, kinds: ['text'], intents: ['ask'], repliesPerDay: 5 },
+      })[0]
     ).toBe(0)
   })
 })

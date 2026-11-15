@@ -20,13 +20,14 @@ import {
   canApply,
   type ImportedPost,
   itemTextOf,
+  postWeekdays,
 } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { enqueueJob, markFailed } from '../jobs/queue'
 import { refusal } from '../lib/errors'
 import type { PostBasis } from '../lib/validators'
-import { dayKey, instantAt } from './dates'
+import { dayKey, instantAt, weekdayOf } from './dates'
 import { applyEvent, assertTransition } from './pipeline'
 import { postingTimeOf, slotHourOf } from './variants'
 
@@ -139,6 +140,39 @@ export async function createIdea(ctx: MutationCtx, account: Doc<'accounts'>, inp
   for (const signalId of [...input.signalIds, ...basisSignalIds(input.basis)]) await ctx.db.patch(signalId, { status: 'used' })
   await queueWriteIfDue(ctx, account, { _id: postId, status: 'idea', plannedFor: input.plannedFor }, now)
   return postId
+}
+
+/**
+ * The ideas planned from today on days the cadence no longer posts on
+ * (shared `POST_WEEKDAYS`) go, and the signals they drew on go back to new
+ * for a later plan; how many went. A written post stays: what to do with
+ * it is the operator's call. A day keeps its first `postsPerDay` ideas.
+ */
+export async function dropIdeasOffCadence(ctx: MutationCtx, account: Doc<'accounts'>, now: number): Promise<number> {
+  const today = dayKey(now, account.timezone)
+  const ideas = (
+    await ctx.db
+      .query('posts')
+      .withIndex('by_account_status', (q) => q.eq('accountId', account._id).eq('status', 'idea'))
+      .collect()
+  )
+    .filter((post) => post.plannedFor >= today)
+    .sort((a, b) => a.scheduledAt - b.scheduledAt)
+  const weekdays = new Set(postWeekdays(account.cadence.postDays))
+  const kept = new Map<string, number>()
+  let dropped = 0
+  for (const idea of ideas) {
+    const onPostingDay = weekdays.has(weekdayOf(idea.plannedFor))
+    const sameDay = kept.get(idea.plannedFor) ?? 0
+    if (onPostingDay && sameDay < account.cadence.postsPerDay) {
+      kept.set(idea.plannedFor, sameDay + 1)
+      continue
+    }
+    for (const signalId of [...idea.signalIds, ...basisSignalIds(idea.basis)]) await ctx.db.patch(signalId, { status: 'new' })
+    await ctx.db.delete(idea._id)
+    dropped += 1
+  }
+  return dropped
 }
 
 /**

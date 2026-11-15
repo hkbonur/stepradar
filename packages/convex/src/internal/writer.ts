@@ -68,7 +68,7 @@ export const planWeek = internalMutation({
       .map((signal) => ({ id: signal._id, title: signal.title, score: signalFreshness(signal, now), topics: signal.topics }))
       .filter((signal) => !isCold(signal.score))
     const met = await communitiesOf(ctx, account._id)
-    const waits = planWaits(placeOf(account), met)
+    const waits = planWaits(placeOf(account), account.cadence, met)
     if (waits !== null) return { skipped: waits }
     const communities = activeCommunities(met)
     const worked = await whatWorked(ctx, account)

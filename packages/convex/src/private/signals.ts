@@ -99,7 +99,7 @@ export const makePost = mutation({
  */
 async function metCommunityOf(ctx: QueryCtx, account: Doc<'accounts'>): Promise<PlannerCommunity> {
   const all = await communitiesOf(ctx, account._id)
-  const waits = planWaits(placeOf(account), all)
+  const waits = planWaits(placeOf(account), account.cadence, all)
   if (waits !== null) throw refusal(waits)
   const communities = activeCommunities(all)
   const posts = await ctx.db

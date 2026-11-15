@@ -101,7 +101,7 @@ describe('connecting a Reddit account', () => {
       ...identity,
       ...proposal,
       publishHour: 15,
-      cadence: { postsPerDay: 1, kinds: ['text'], intents: ['ask'], repliesPerDay: 3 },
+      cadence: { postDays: 7, postsPerDay: 1, kinds: ['text'], intents: ['ask'], repliesPerDay: 3 },
       sponsorDial: 0.3,
       timezone: 'Europe/Oslo',
     })

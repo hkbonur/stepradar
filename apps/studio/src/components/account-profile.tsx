@@ -1,13 +1,21 @@
 import { api } from '@stepradar/convex/_generated/api'
 import type { Doc, Id } from '@stepradar/convex/_generated/dataModel'
-import { PLATFORM_POST_KINDS, POST_KIND_LABELS, parsePillars, placeLabel, placeOf, type PlatformFormat } from '@stepradar/shared'
+import {
+  PLATFORM_POST_KINDS,
+  POST_KIND_LABELS,
+  parsePillars,
+  placeLabel,
+  placeOf,
+  type PlatformFormat,
+  cadenceText,
+} from '@stepradar/shared'
 import { useMutation } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
 import { FormatFields } from './format-fields'
 import { Button, Card, ErrorLine, Field, type FormState, Input, Mono, Textarea } from './ui'
 import { errorMessage } from '@/lib/errors'
-import { formatHour, plural } from '@/lib/format'
+import { plural } from '@/lib/format'
 
 type BioLinkData = NonNullable<NonNullable<FunctionReturnType<typeof api.private.accounts.get>>['bioLink']>
 
@@ -23,9 +31,14 @@ export function ProfileCard(props: { account: Doc<'accounts'>; bioLink: BioLinkD
       <dl className="space-y-3 text-sm">
         {account.audience && <Row label="Audience">{account.audience}</Row>}
         <Row label={`On ${placeLabel(placeOf(account))}`}>
-          <span className="tabular">{account.cadence.postsPerDay}</span> {plural(account.cadence.postsPerDay, 'post', 'posts')} a day at{' '}
-          <Mono>{formatHour(account.publishHour)}</Mono> {account.timezone}:{' '}
-          {account.cadence.kinds.map((kind) => POST_KIND_LABELS[kind].toLowerCase()).join(', ')}.{' '}
+          {account.cadence.postDays === 0 ? (
+            `${cadenceText(account)}.`
+          ) : (
+            <>
+              {cadenceText(account)} {account.timezone}:{' '}
+              {account.cadence.kinds.map((kind) => POST_KIND_LABELS[kind].toLowerCase()).join(', ')}.
+            </>
+          )}{' '}
           <span className="tabular">{account.cadence.repliesPerDay}</span> {plural(account.cadence.repliesPerDay, 'reply', 'replies')} a
           day.
         </Row>

@@ -7,6 +7,7 @@ import {
   POST_KIND_LABELS,
   REPLIES_PER_DAY_MAX,
   REPLIES_PER_DAY_MIN,
+  POST_WEEKDAYS,
   postSlotHours,
   type PlatformFormat,
   type XCadence,
@@ -30,8 +31,21 @@ export function FormatFields(props: { value: PlatformFormat; onChange: (next: Pl
   )
 }
 
+/** A weekday's short name, Monday 0 (shared `POST_WEEKDAYS`). */
+const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+/** Each number of days a week with posts, as the picker lists it: which days, or that the account only replies. */
+function postDaysLabel(days: number): string {
+  if (days === 0) return 'None: replies only'
+  if (days === 7) return 'Every day'
+  const weekdays = POST_WEEKDAYS[days]
+  if (weekdays === undefined) throw new Error(`${days} is no number of days a week`)
+  return weekdays.map((weekday) => WEEKDAY_SHORT[weekday]).join(', ')
+}
+
 /**
- * The account's post cadence: how many posts a day, three hours apart from the first
+ * The account's post cadence: on which days of the week it posts (none for
+ * an account that only replies), how many posts each of those days, three hours apart from the first
  * post's hour, which kinds and intents the planner rotates through, and how
  * many replies the account drafts a day (zero turns listening off). Kinds keep
  * POST_KINDS order and intents POST_INTENTS order, and the last ticked one of
@@ -44,17 +58,32 @@ function CadenceFields(props: { format: PlatformFormat; onChange: (cadence: XCad
   const inRange = Number.isInteger(postsPerDay) && postsPerDay >= CADENCE_POSTS_MIN && postsPerDay <= CADENCE_POSTS_MAX
   return (
     <>
-      <Field
-        label="Posts a day"
-        hint={inRange ? postSlotHours(props.format).map(formatHour).join(', ') : `${CADENCE_POSTS_MIN} to ${CADENCE_POSTS_MAX}`}
-      >
-        <NumberInput
-          value={cadence.postsPerDay}
-          min={CADENCE_POSTS_MIN}
-          max={CADENCE_POSTS_MAX}
-          onChange={(postsPerDay) => props.onChange({ ...cadence, postsPerDay })}
-        />
+      <Field label="Days with posts" hint="A forum or a subreddit reads one a day as advertising">
+        <select
+          className="field"
+          value={cadence.postDays}
+          onChange={(event) => props.onChange({ ...cadence, postDays: Number(event.target.value) })}
+        >
+          {POST_WEEKDAYS.map((_, days) => (
+            <option key={days} value={days}>
+              {postDaysLabel(days)}
+            </option>
+          ))}
+        </select>
       </Field>
+      {cadence.postDays > 0 && (
+        <Field
+          label="Posts on those days"
+          hint={inRange ? postSlotHours(props.format).map(formatHour).join(', ') : `${CADENCE_POSTS_MIN} to ${CADENCE_POSTS_MAX}`}
+        >
+          <NumberInput
+            value={cadence.postsPerDay}
+            min={CADENCE_POSTS_MIN}
+            max={CADENCE_POSTS_MAX}
+            onChange={(postsPerDay) => props.onChange({ ...cadence, postsPerDay })}
+          />
+        </Field>
+      )}
       <OrderedCheckboxes
         legend="Post kinds"
         // A thread is X's: elsewhere a post is one part (shared PLATFORM_POST_KINDS).

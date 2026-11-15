@@ -101,7 +101,7 @@ export async function planTwoWeeks(ctx: MutationCtx, account: Doc<'accounts'>, n
 
 /** Why the account plans no post (core/planner `planWaits`), read against its communities; null when it can. */
 export async function planWaitsOf(ctx: Reader, account: Doc<'accounts'>): Promise<string | null> {
-  return planWaits(placeOf(account), await communitiesOf(ctx, account._id))
+  return planWaits(placeOf(account), account.cadence, await communitiesOf(ctx, account._id))
 }
 
 /**

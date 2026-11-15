@@ -30,7 +30,7 @@ function xFormat(kinds: PostKind[]): PlatformFormat {
   return {
     platform: 'x',
     publishHour: 9,
-    cadence: { postsPerDay: 2, kinds, intents: [...POST_INTENTS], repliesPerDay: 5 },
+    cadence: { postDays: 7, postsPerDay: 2, kinds, intents: [...POST_INTENTS], repliesPerDay: 5 },
   }
 }
 

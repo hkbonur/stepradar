@@ -213,7 +213,7 @@ describe('accountCatalog', () => {
 describe('posting time', () => {
   const format = (publishHour: number, postsPerDay: number) => ({
     publishHour,
-    cadence: { postsPerDay, repliesPerDay: 5, kinds: ['text' as const], intents: ['teach' as const] },
+    cadence: { postDays: 7, postsPerDay, repliesPerDay: 5, kinds: ['text' as const], intents: ['teach' as const] },
   })
 
   it('fits a day only when every variant moves every post by its offset within the day', () => {

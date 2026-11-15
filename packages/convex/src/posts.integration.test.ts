@@ -22,7 +22,7 @@ const KINDS: PostKind[] = ['text', 'thread']
 const X_FORMAT: PlatformFormat = {
   platform: 'x',
   publishHour: 22,
-  cadence: { postsPerDay: 2, kinds: KINDS, intents: [...POST_INTENTS], repliesPerDay: 5 },
+  cadence: { postDays: 7, postsPerDay: 2, kinds: KINDS, intents: [...POST_INTENTS], repliesPerDay: 5 },
 }
 
 type Test = ReturnType<typeof setup>
@@ -88,8 +88,8 @@ describe('posts on X', () => {
       }
     })
 
-    // Next week, so no slot is in the past.
-    const nextMonday = addDays(weekStart(dayKey(Date.now(), TIMEZONE)), 7)
+    // Two weeks out: on a Sunday next week's Monday is due tomorrow, and the plan would queue its writing at once.
+    const nextMonday = addDays(weekStart(dayKey(Date.now(), TIMEZONE)), 14)
     const first = await t.mutation(internal.internal.writer.planWeek, { accountId, weekStart: nextMonday })
     expect(first).toEqual({ planned: 7 * 2 })
     const posts = (await postsOf(t, accountId)).sort((a, b) => a.scheduledAt - b.scheduledAt)

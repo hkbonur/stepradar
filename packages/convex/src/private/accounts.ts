@@ -4,7 +4,7 @@ import { internal } from '../_generated/api'
 import type { Doc } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'
 import { dayKey, weekStart } from '../core/dates'
-import { postBeingWritten } from '../core/posts'
+import { postBeingWritten, dropIdeasOffCadence } from '../core/posts'
 import { assertFormat } from '../core/formats'
 import { workingAccountIds } from '../core/jobs'
 import { replySummary } from '../core/replies'
@@ -146,7 +146,7 @@ export const get = query({
       // The link the operator puts on the account's profile (core/links.ts); null until it is made.
       bioLink: await bioLinkOf(ctx, account, await workspaceOf(ctx, account)),
       // Why the writer plans no post yet, on Reddit and forums before the listener met a community (core/planner `planWaits`).
-      planWaits: planWaits(placeOf(account), communities),
+      planWaits: planWaits(placeOf(account), account.cadence, communities),
       // What the account's reader reads, so the studio offers only the steps it can take.
       reads: capabilitiesOf(await accountReader(ctx, account)),
     }
@@ -169,6 +169,8 @@ export const update = mutation({
     await assertHoursKept(ctx, account, fields)
     assertAffiliation(fields.affiliationLine, (await workspaceOf(ctx, account)).sponsorName)
     await ctx.db.patch(accountId, fields)
+    // Fewer days or posts a day leave ideas planned where the cadence no longer posts.
+    await dropIdeasOffCadence(ctx, { ...account, ...fields }, Date.now())
   },
 })
 

@@ -498,6 +498,7 @@ export async function assertHoursKept(
   const same =
     next.publishHour === account.publishHour &&
     next.cadence.postsPerDay === account.cadence.postsPerDay &&
+    next.cadence.postDays === account.cadence.postDays &&
     next.timezone === account.timezone
   if (same) return
   const running = await ctx.db

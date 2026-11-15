@@ -9,6 +9,7 @@ import {
   type XCadence,
   PLATFORM_POST_KINDS,
   PLATFORM_KIND_LABELS,
+  POST_WEEKDAYS,
 } from '@stepradar/shared'
 import type { Doc } from '../_generated/dataModel'
 import { refusal } from '../lib/errors'
@@ -46,7 +47,10 @@ export function assertFormat(format: PlatformFormat): void {
 }
 
 function assertCadence(label: string, cadence: XCadence): void {
-  const { postsPerDay, kinds, intents, repliesPerDay } = cadence
+  const { postDays, postsPerDay, kinds, intents, repliesPerDay } = cadence
+  if (!Number.isInteger(postDays) || postDays < 0 || postDays > POST_WEEKDAYS.length - 1) {
+    throw refusal(`${label}: the days a week with posts are 0 to ${POST_WEEKDAYS.length - 1}.`)
+  }
   if (!Number.isInteger(postsPerDay) || postsPerDay < CADENCE_POSTS_MIN || postsPerDay > CADENCE_POSTS_MAX) {
     throw refusal(`${label}: posts per day is ${CADENCE_POSTS_MIN} to ${CADENCE_POSTS_MAX}.`)
   }

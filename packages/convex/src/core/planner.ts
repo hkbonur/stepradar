@@ -26,6 +26,7 @@ import {
   type PostLength,
   type SponsorSegment,
   type XCadence,
+  postWeekdays,
 } from '@stepradar/shared'
 import type { Doc, Id } from '../_generated/dataModel'
 import { activeCommunities } from './communities'
@@ -183,8 +184,10 @@ function planSlots(args: PostSlotsInput, weekly: readonly WeeklyPost[]): Planned
   const { platform, cadence } = args.account
   if (cadence.kinds.length === 0) throw new Error('a cadence without post kinds cannot plan posts')
   const week = Array.from({ length: 7 }, (_, offset) => addDays(args.weekStart, offset))
+  // Only the weekdays of the cadence carry posts (shared `POST_WEEKDAYS`); the week starts on a Monday.
+  const cadenceDays = new Set(postWeekdays(cadence.postDays).map((weekday) => week[weekday]))
   const open = (day: string, hour: number) =>
-    !args.posts.some((post) => post.plannedFor === day) && instantAt(day, hour, args.account.timezone) > args.now
+    cadenceDays.has(day) && !args.posts.some((post) => post.plannedFor === day) && instantAt(day, hour, args.account.timezone) > args.now
   const slots: (PlannedDay & { hour: number })[] = []
   // A decided post model, while no post model test runs: every evergreen post takes a standout while one is left.
   const modelsInForce =
@@ -464,12 +467,20 @@ export function noReadableCommunity(forumName: string): string {
   return `Stepradar cannot read the categories of ${forumName} or their rules, so it plans no post there. Post there yourself, and paste a thread to have a reply drafted.`
 }
 
+/** Why an account with no days of posts plans none. */
+export const POSTING_OFF = 'This account only drafts replies: give it days with posts in its settings to plan posts.'
+
 /**
  * Why the account plans no post (shared `postPlacingOf`), or null when it
  * can: the writer's plan, Plan this week and the account page read it, and
  * the account plans two weeks once a community ends the wait.
  */
-export function planWaits(place: PlatformPlace, communities: readonly { removedAt?: number }[]): string | null {
+export function planWaits(
+  place: PlatformPlace,
+  cadence: Pick<XCadence, 'postDays'>,
+  communities: readonly { removedAt?: number }[]
+): string | null {
+  if (cadence.postDays === 0) return POSTING_OFF
   const placing = postPlacingOf(place)
   switch (placing.kind) {
     case 'anywhere':

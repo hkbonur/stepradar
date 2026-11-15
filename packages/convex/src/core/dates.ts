@@ -17,12 +17,16 @@ export function addDays(day: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-/** Monday of the week that contains `day`. */
-export function weekStart(day: string): string {
+/** Which day of its week `day` is, Monday 0 to Sunday 6. */
+export function weekdayOf(day: string): number {
   const [y, m, d] = day.split('-').map(Number)
   const date = new Date(Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1))
-  const weekday = (date.getUTCDay() + 6) % 7 // Monday = 0
-  return addDays(day, -weekday)
+  return (date.getUTCDay() + 6) % 7
+}
+
+/** Monday of the week that contains `day`. */
+export function weekStart(day: string): string {
+  return addDays(day, -weekdayOf(day))
 }
 
 /**

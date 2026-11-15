@@ -89,7 +89,7 @@ async function launchPlace(ctx: MutationCtx, account: Doc<'accounts'>, day: stri
   if (instantAt(day, hour, account.timezone) <= now)
     return { kind: 'left out', why: `Its posting hour on ${shortDayLabel(day)} has passed.` }
   const communities = await communitiesOf(ctx, account._id)
-  const waits = planWaits(placeOf(account), communities)
+  const waits = planWaits(placeOf(account), account.cadence, communities)
   if (waits !== null) return { kind: 'left out', why: waits }
   // On X a launch is a thread where the cadence has threads; everywhere else a full post.
   const shape: Extract<LaunchPlace, { kind: 'placed' }>['shape'] =

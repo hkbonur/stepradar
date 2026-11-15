@@ -246,6 +246,7 @@ export const itemRefValidator = v.union(
 
 /** An account's post cadence and reply budget (shared `XCadence`). Ranges, and each kind and intent once, are checked by core/formats.ts. */
 export const xCadenceValidator = v.object({
+  postDays: v.number(),
   postsPerDay: v.number(),
   kinds: v.array(postKindValidator),
   intents: v.array(postIntentValidator),

@@ -32,6 +32,33 @@ describe('content', () => {
     expect(posts.filter((post) => post.signalIds.includes(problem._id))).toHaveLength(1)
   })
 
+  it('drops the ideas on days the cadence no longer posts on, and frees the signals they drew on', async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx))
+    const signals = await t.run(async (ctx) =>
+      Promise.all(
+        ['retries', 'webhooks', 'forms'].map((topic) =>
+          insertSignal(ctx, account, { title: `How do I fix ${topic}?`, score: 95, foundAt: Date.now() })
+        )
+      )
+    )
+    // Two weeks out, so no idea is due to be written while the test runs, whatever today is.
+    const later = addDays(weekStart(dayKey(Date.now(), TIMEZONE)), 14)
+    await t.mutation(internal.internal.writer.planWeek, { accountId: account._id, weekStart: later })
+    const planned = await t.run((ctx) => ctx.db.query('posts').collect())
+    expect(new Set(planned.map((post) => post.plannedFor)).size).toBe(7)
+    const { _id, _creationTime, workspaceId, handle, platform, paused, createdAt, voice, strategy, forum, ...settings } = account
+    await t.mutation(api.private.accounts.update, { accountId: account._id, ...settings, cadence: { ...account.cadence, postDays: 2 } })
+    const kept = await t.run((ctx) => ctx.db.query('posts').collect())
+    // That week's Tuesday and Thursday keep their ideas, two each; every other day's went.
+    expect(kept.map((post) => post.plannedFor).sort()).toEqual([addDays(later, 1), addDays(later, 1), addDays(later, 3), addDays(later, 3)])
+    // A signal a dropped idea drew on is new again for a later plan; one a kept idea draws on stays used.
+    const keptDraws = new Set(kept.flatMap((post) => post.signalIds))
+    const statuses = await t.run(async (ctx) => Promise.all(signals.map(async (signal) => (await ctx.db.get(signal._id))?.status)))
+    expect(statuses).toEqual(signals.map((signal) => (keptDraws.has(signal._id) ? 'used' : 'new')))
+    expect(planned.some((post) => post.signalIds.length > 0 && !kept.some((other) => other._id === post._id))).toBe(true)
+  })
+
   it("sends a draft carrying another post's tracked link back to the writer to leave it out", async () => {
     const t = setup()
     const post = await t.run(async (ctx) =>

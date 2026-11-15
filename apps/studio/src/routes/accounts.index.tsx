@@ -46,7 +46,7 @@ function AccountsPage() {
                     </div>
                     <p className="mt-0.5 line-clamp-1 text-ash">{account.niche}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ash">
-                      <span className="tabular">{account.cadence.postsPerDay} a day</span>
+                      <span className="tabular">{postsShort(account.cadence)}</span>
                       <span className="tabular">sponsor {Math.round(account.sponsorDial * 100)}%</span>
                       <span>{account.pillars.join(' · ')}</span>
                     </div>
@@ -87,4 +87,12 @@ function Count(props: { label: string; value: number; tone?: 'red' | 'amber' }) 
       </dd>
     </div>
   )
+}
+
+/** How often an account posts, as its row says it in a few words: "2 a day", "2 days a week", or none. */
+function postsShort(cadence: { postDays: number; postsPerDay: number }): string {
+  if (cadence.postDays === 0) return 'Replies only'
+  if (cadence.postDays === 7) return `${cadence.postsPerDay} a day`
+  const days = `${cadence.postDays} ${cadence.postDays === 1 ? 'day' : 'days'} a week`
+  return cadence.postsPerDay === 1 ? days : `${cadence.postsPerDay} a day, ${days}`
 }

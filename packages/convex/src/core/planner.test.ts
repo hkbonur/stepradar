@@ -11,6 +11,8 @@ import {
   type PlannerSignal,
   type PlannerStandout,
   type PostExperimentPlan,
+  planWaits,
+  POSTING_OFF,
 } from './planner'
 
 /** A signal id for a planner test: the planner never reads the table, only compares ids. */
@@ -80,7 +82,7 @@ describe('planPostSlots', () => {
   const format: PlatformFormat = {
     platform: 'x',
     publishHour: 9,
-    cadence: { postsPerDay: 1, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 },
+    cadence: { postDays: 7, postsPerDay: 1, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 },
   }
 
   it('shares the post slots out by the account’s weights, counting its recent posts', () => {
@@ -122,6 +124,37 @@ describe('planPostSlots', () => {
     expect(posts.filter((post) => post.pillar === 'b')).toHaveLength(3)
   })
 
+  it('plans only the weekdays of the cadence, and nothing for an account that only replies', () => {
+    const slots = (postDays: number, postsPerDay: number) =>
+      planPostSlots({
+        experiment: null,
+        kindSwaps: [],
+        standouts: [],
+        roundup: null,
+        weekStart: '2026-10-19',
+        account: {
+          platform: 'x',
+          pillars: ['a'],
+          sponsorDial: 0,
+          sponsorRampPosts: 0,
+          timezone: 'UTC',
+          voice: undefined,
+          strategy: undefined,
+          publishHour: 9,
+          cadence: { ...format.cadence, postDays, postsPerDay },
+        },
+        posts: [],
+        communities: [],
+        signals: [],
+        now: Date.UTC(2026, 9, 13),
+      }).map((post) => post.plannedFor)
+    // The week of 2026-10-19 starts on a Monday: two days a week are its Tuesday and Thursday.
+    expect(slots(2, 1)).toEqual(['2026-10-20', '2026-10-22'])
+    expect(slots(2, 2)).toEqual(['2026-10-20', '2026-10-20', '2026-10-22', '2026-10-22'])
+    expect(slots(0, 1)).toEqual([])
+    expect(planWaits({ platform: 'x' }, { postDays: 0 }, [])).toBe(POSTING_OFF)
+  })
+
   it('makes a long slot a thread when the cadence has threads, and a full post when it has none', () => {
     const plainAccount = {
       platform: 'x' as const,
@@ -145,10 +178,10 @@ describe('planPostSlots', () => {
         signals: [],
         now: Date.UTC(2026, 9, 13),
       })
-    const mixed = week({ postsPerDay: 3, kinds: ['text', 'thread'], intents: ['teach'], repliesPerDay: 5 })
+    const mixed = week({ postDays: 7, postsPerDay: 3, kinds: ['text', 'thread'], intents: ['teach'], repliesPerDay: 5 })
     for (const post of mixed) expect(post.kind === 'thread').toBe(post.length === 'long')
     expect(mixed.some((post) => post.kind === 'thread')).toBe(true)
-    const textOnly = week({ postsPerDay: 3, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 })
+    const textOnly = week({ postDays: 7, postsPerDay: 3, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 })
     expect(textOnly.every((post) => post.kind === 'text' && post.length !== 'long')).toBe(true)
   })
 })
@@ -221,7 +254,11 @@ describe('the sponsor over a week', () => {
       standouts: overrides.standouts ?? [],
       roundup: overrides.roundup ?? null,
       weekStart: '2026-10-19',
-      account: { ...base, ...overrides, cadence: { postsPerDay: 1, kinds: ['text'], intents: overrides.intents, repliesPerDay: 5 } },
+      account: {
+        ...base,
+        ...overrides,
+        cadence: { postDays: 7, postsPerDay: 1, kinds: ['text'], intents: overrides.intents, repliesPerDay: 5 },
+      },
       posts,
       communities: [],
       signals: overrides.signals ?? [],
@@ -392,7 +429,7 @@ describe('the sponsor over a week', () => {
         ...base,
         platform: 'x',
         publishHour: 10,
-        cadence: { postsPerDay: 2, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 },
+        cadence: { postDays: 7, postsPerDay: 2, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 },
       },
       posts: [],
       communities: [],
@@ -427,7 +464,11 @@ describe('the sponsor over a week', () => {
         standouts: [],
         roundup: null,
         weekStart: '2026-10-19',
-        account: { ...base, platform: 'reddit', cadence: { postsPerDay: 1, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 } },
+        account: {
+          ...base,
+          platform: 'reddit',
+          cadence: { postDays: 7, postsPerDay: 1, kinds: ['text'], intents: ['teach'], repliesPerDay: 5 },
+        },
         posts,
         communities,
         signals: [],
