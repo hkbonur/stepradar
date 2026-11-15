@@ -1,13 +1,14 @@
 import { v } from 'convex/values'
-import { PLATFORMS, REACH_LABELS, communityLabel, placeOf, type PlatformPlace } from '@stepradar/shared'
+import { PLATFORMS, REACH_LABELS, communityLabel, placeOf, type Platform, type PlatformPlace, type ProviderKey } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalAction, internalMutation, type ActionCtx } from '../_generated/server'
 import { insertAccountPosts } from '../core/history'
+import { missingKeys } from '../core/keys'
 import { logRepeatedQuestions, writeDailyBrief } from '../core/research'
 import { refusal } from '../lib/errors'
 import { providersMode } from '../lib/env'
-import { cannotRead, platformReader, type FoundSignal, type FoundThread } from '../providers/platforms'
+import { cannotRead, platformReader, readerKeys, type FoundSignal, type FoundThread } from '../providers/platforms'
 import { suggestionsProvider } from '../providers/suggestions'
 import { importedPostValidator, signalSourceValidator } from '../lib/validators'
 import { actionReader } from './connections'
@@ -29,8 +30,8 @@ export const pollSignals = internalAction({
   },
 })
 
-/** How many signals a poll stored new. */
-type PollResult = { found: number }
+/** How many signals a poll stored new, and the platforms it left unread for want of the operator's keys, with the keys. */
+type PollResult = { found: number; unread: { platform: Platform; missing: ProviderKey[] }[] }
 
 /**
  * One poll of every source the researcher reads, for the hourly poll and the
@@ -57,13 +58,20 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, sponsorName
     ...forums.map((forum) => ({ platform: 'forum' as const, forum })),
   ]
   let found = 0
+  const unread: PollResult['unread'] = []
   for (const place of places) {
+    // A platform whose app keys are not set is left out and named, so the others are still read; nothing stands in for it (ADR 0002).
+    const missing = providersMode() === 'real' ? missingKeys(keys, readerKeys(place.platform)) : []
+    if (missing.length > 0) {
+      unread.push({ platform: place.platform, missing })
+      continue
+    }
     // A search for the niche reads for no account, so it needs no connection.
     const search = platformReader(place, null, keys).search
     if (search) found += await store((await search(query)).map((thread) => signalOf(place, thread)))
   }
   found += await store(await suggestionsProvider().find(query))
-  return { found }
+  return { found, unread }
 }
 
 /** A found thread as the researcher keeps it: titled, summed up where it was said, its reach and comments, scored by how much it moves. */

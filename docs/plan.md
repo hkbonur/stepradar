@@ -505,6 +505,12 @@ The first real sweeps of four forum accounts (the n8n Community, the Make Commun
 - [x] On a Discourse forum a search reads every topic started since the query's time, newest first, with no term, and the classifier judges which are worth answering. A found topic names no pillar.
 - [x] A topic from earlier on the day the query starts is left out: Discourse filters by the day only.
 
+### Slice 26: one missing key stops only its platform's research (operator, 2026-11-15)
+
+The researcher's poll searches every platform for every account, so in real mode without the Reddit app's keys every account's `poll_signals` failed, the forum accounts' too, and no account got signals or post ideas. Short search terms for Reddit and Hacker News were measured first and set aside: on Hacker News neither the pillars nor short terms found Formstep's niche (0 stories in a week for most; "form builder" and "n8n" matched loosely), and Reddit refuses an unsigned search, so it waits for the keys.
+
+- [x] In real mode a poll leaves out a platform whose reader's keys are not set, and its result names the platform and the keys (`unread`); the other platforms and the search suggestions are still read. Nothing stands in for the platform left out (ADR 0002), and a sweep or a connection on that platform's own account is still refused by the missing key's name.
+
 ### Later
 
 - [ ] The X real reader, once the tier is chosen (decision 3 stands, operator, 2026-10-23).
@@ -551,6 +557,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slice 23: done. PostHog, conversions, probable conversions, the value per paying customer and the reworked post are out; the funnel, the ladder, the weights, the goal note, the growth line and the digest read clicks and reach (ADR 0003 amended). `posts.integration.test.ts` "plans post slots by the cadence" failed before the slice and still does.
 - Slice 24: done. The operator's provider keys live in `providerKeys`, set from the setup's new key step and the Providers page's Your keys card; every action reads them once and hands them to the providers it builds (ADR 0005). The review of slices 23 and 24 found that a growth span dropped the change from the read before it, that the digest added karma, followers and likes into one number, that "what works" added reach across platforms and counted clicks against reach never read, and that the leak kept a one-step funnel; all fixed, the leak now one click flow (shared `clickLeak`). A key shorter than 12 characters is refused, and the setup's Add it later shows in mock mode only.
 - Slice 25: done. A Discourse search reads the forum's newest topics without a term. Read live on 2026-11-15, a Sunday: in 12 hours the n8n Community started 3 topics, the Make Community 1, the Bubble Forum 1 and the Softr Community none; the classifier turned down all but the one already drafted (two were product spam, one a services ad, one a beginner's self-hosting question).
+- Slice 26: done. Read live: the n8n account's poll stored 21 signals (20 from the four forums, 1 search suggestion, none from Hacker News) and named Reddit unread with its three keys.
 
 #### Left for later
 
@@ -570,6 +577,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slice 23: where nothing reads an account's numbers and its posts link directly (an unconnected Reddit account, LinkedIn), no experiment can be decided on it: signups were the rung that reached it. A community weight has nothing to break a tie on reach. The growth line's karma or followers gained needs two reads in a span, so a new account shows none in its first week.
 - Slice 24: the onboarding does not ask for the Reddit app's keys when a Reddit account is added: connecting it is refused by the missing key's name, which points to the Providers page. With no sign-in, anyone who reaches the backend can replace or remove a key. Switching to real mode is still one `convex env set PROVIDERS_MODE real`.
 - Slice 25: the researcher's poll reads a forum the same way, so a forum's signals are its five topics of the week that move most, with no pillar: a standout from a forum is filed under the first pillar, and a forum's questions never make a round-up. One search page holds 50 topics, which a busy forum may start within a week. A sweep's result counts what it kept and skipped, not what the classifier dropped, so `kept: 0, skipped: 0` reads like an empty search though the forum was read. Reddit and Hacker News still search each pillar as a phrase.
+- Slice 26: a poll's `unread` shows only in the job's result; nothing on Today or the Providers page says research skips Reddit. Whether short search terms beat the pillars on Reddit is to be measured once the keys are set.
 
 ## Risks worth knowing
 

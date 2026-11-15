@@ -26,6 +26,11 @@ export function requireKey(keys: ProviderKeys, name: ProviderKey): string {
   return value
 }
 
+/** The keys of `names` the operator has not set, in their order. */
+export function missingKeys(keys: ProviderKeys, names: readonly ProviderKey[]): ProviderKey[] {
+  return names.filter((name) => keys[name] === undefined)
+}
+
 /** What the studio may know of each key: whether it is set, its last characters and when; never the key. */
 export type KeyStatus = { name: ProviderKey; set: false } | { name: ProviderKey; set: true; ending: string; setAt: number }
 

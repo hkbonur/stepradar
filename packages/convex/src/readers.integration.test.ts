@@ -9,6 +9,8 @@ import { setup } from '../test/setup'
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 describe('platform readers', () => {
@@ -41,6 +43,38 @@ describe('platform readers', () => {
     await t.action(internal.internal.researcher.pollSignals, { accountId: account._id })
     const signals = await t.run((ctx) => ctx.db.query('signals').collect())
     expect([...new Set(signals.map((signal) => signal.source))].sort()).toEqual(['hackernews', 'reddit', 'search', 'x'])
+  })
+
+  it('leaves a platform out of the poll in real mode while its app keys are not set, names the keys, and still reads the others', async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' }))
+    vi.stubEnv('PROVIDERS_MODE', 'real')
+    const now = Math.floor(Date.now() / 1000)
+    const fetch = vi.fn(async (input: string | URL) => {
+      const url = new URL(String(input))
+      if (url.host === 'hn.algolia.com') {
+        const hit = {
+          objectID: '9001',
+          title: 'Ask HN: How do you collect client documents?',
+          url: null,
+          author: 'dana',
+          created_at_i: now - 600,
+          points: 12,
+          num_comments: 4,
+        }
+        return Response.json({ hits: [hit] })
+      }
+      if (url.host === 'suggestqueries.google.com') return Response.json([url.searchParams.get('q'), []])
+      throw new Error(`unexpected fetch ${url}`)
+    })
+    vi.stubGlobal('fetch', fetch)
+
+    expect(await t.action(internal.internal.researcher.pollSignals, { accountId: account._id })).toEqual({
+      found: 1,
+      unread: [{ platform: 'reddit', missing: ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET', 'REDDIT_USER_AGENT'] }],
+    })
+    expect(fetch.mock.calls.some(([input]) => String(input).includes('reddit.com'))).toBe(false)
+    expect(await t.run((ctx) => ctx.db.query('signals').collect())).toMatchObject([{ source: 'hackernews', externalId: '9001' }])
   })
 
   it("reads on Reddit, Hacker News and Discourse forums in real mode, Reddit's account only once connected, and nothing on X or LinkedIn", () => {
