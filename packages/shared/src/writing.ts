@@ -10,7 +10,8 @@ export const WRITING_RULES: readonly string[] = [
   'Never claim something happened to you, or a habit, setup, number, client or result of yours ("I got paged", "I always add", "in my setup"), unless your account bible or memory states it. Say what to do ("add a Code node"), not what you do.',
   'Keep most sentences under 25 words and vary their length. Split a sentence that chains three clauses or more, and put a list of more than two items in its own sentence.',
   'No "not X but Y", "not just X, Y" or "it\'s not X, it\'s Y": say what is true directly.',
-  'No openers that announce the point ("Here\'s the thing", "Let\'s dive in", "Honestly?", "Real talk") and no closing line that repeats it.',
+  'No openers that announce the point ("Here\'s the thing", "Let\'s dive in", "Honestly?", "Real talk", "This post covers") and no closing line that repeats it.',
+  'Keep a paragraph to two to four sentences, with a blank line between paragraphs.',
   'No lists of three unless there are three things. No sayings that sound deep ("at its core", "the real question is").',
   'No em or en dashes: use a comma, a colon, a period or parentheses.',
   'Plain verbs: is, has, uses. Avoid delve, tapestry, testament, pivotal, crucial, robust, seamless, leverage, showcase, underscore, meticulous, vibrant, landscape.',
@@ -35,7 +36,8 @@ const TELLS: readonly Tell[] = [
     problem: (found) => `Cut the chatbot phrase "${found}".`,
   },
   {
-    pattern: /(?:^|[.!?\n]\s*)(?:here'?s the thing|let'?s dive in|let'?s break (?:this|it) down|without further ado|real talk|honestly\?)/i,
+    pattern:
+      /(?:^|[.!?\n]\s*)(?:here'?s the thing|let'?s dive in|let'?s break (?:this|it) down|without further ado|real talk|honestly\?|(?:in )?this post (?:gives|covers|shows|is about|walks)\b)/i,
     problem: (found) => `Cut the opener "${found.replace(/^[.!?\s]+/, '')}" and make the point.`,
   },
   {
@@ -44,6 +46,9 @@ const TELLS: readonly Tell[] = [
   },
   { pattern: STOCK_WORDS, problem: (found) => `Use a plain word for "${found}".` },
 ]
+
+/** A paragraph longer than this reads as a wall: about five sentences. */
+const PARAGRAPH_MAX = 600
 
 /** Code is quoted as written: a flag's dashes are no tell. */
 const CODE = /```[\s\S]*?```|`[^`\n]*`/g
@@ -57,8 +62,10 @@ export function writingTells(text: string, exempt: readonly string[]): string[] 
   const read = exempt
     .filter((words) => words.trim() !== '')
     .reduce((rest, words) => rest.split(words.trim()).join(' '), text.replace(CODE, ' '))
-  return TELLS.flatMap((tell) => {
+  const tells = TELLS.flatMap((tell) => {
     const match = tell.pattern.exec(read)
     return match === null ? [] : [tell.problem(match[0].trim())]
   })
+  const wall = read.split(/\n\s*\n/).some((paragraph) => paragraph.trim().length > PARAGRAPH_MAX)
+  return wall ? [...tells, 'Break the text into paragraphs of two to four sentences, with a blank line between them.'] : tells
 }

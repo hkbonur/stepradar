@@ -22,6 +22,15 @@ describe('writing tells', () => {
     ])
   })
 
+  it('sends back a post that announces itself, and a wall of text', () => {
+    const sentence = 'Use ?? instead of || so a budget of 0 stays 0 in the expression. '
+    expect(writingTells(`This post gives two checks. ${sentence.repeat(10)}`, [])).toEqual([
+      'Cut the opener "This post gives" and make the point.',
+      'Break the text into paragraphs of two to four sentences, with a blank line between them.',
+    ])
+    expect(writingTells(`${sentence.repeat(4)}\n\n${sentence.repeat(4)}`, [])).toEqual([])
+  })
+
   it("reads an it's-not contrast and a staged opener after a sentence", () => {
     expect(writingTells("The fix is small. Honestly? It's not the node, it's the trigger.", [])).toEqual([
       'Cut the opener "Honestly?" and make the point.',
