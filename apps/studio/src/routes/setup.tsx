@@ -1,10 +1,16 @@
 import { api } from '@stepradar/convex/_generated/api'
-import { PROVIDER_KEY_HINTS, PROVIDER_KEY_LABELS, providerKeyProblem } from '@stepradar/shared'
+import {
+  PROVIDER_KEY_HINTS,
+  PROVIDER_KEY_LABELS,
+  providerKeyProblem,
+  sponsorProductProblems,
+  sponsorProfileProblems,
+} from '@stepradar/shared'
 import { Navigate, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import type { FunctionReturnType } from 'convex/server'
 import React from 'react'
-import { ProductFields, emptyProduct, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { ProductFields, ProfileFields, emptyProduct, productFields, type ProductDraft } from '@/components/product-fields'
 import { keyStatusText } from '@/components/provider-keys'
 import { SetupSteps } from '@/components/setup-steps'
 import { Button, ErrorLine, Field, Input, Mono, Skeleton } from '@/components/ui'
@@ -17,15 +23,17 @@ export const Route = createFileRoute('/setup')({ component: SetupPage })
  * The first run (DESIGN.md, Setup): before any workspace exists the studio
  * opens here, without the sidebar, since every other page needs the product.
  * A welcome that says what Stepradar does, then the product the accounts
- * promote, then the Anthropic key the agents write with (ADR 0005); saving
- * stores the key, makes the workspace and hands over to the account
- * onboarding, the setup's last step. The key can wait: the Providers page
- * takes it later.
+ * promote, then the Anthropic key the agents write with (ADR 0005), stored as
+ * that step ends so the writer can propose the product's profile in the next
+ * one: what a search asks for beyond each account's pillars. Saving makes the
+ * workspace and hands over to the account onboarding, the setup's last step.
+ * The key can wait in mock mode, and the profile can stay empty: the
+ * Providers page takes both later.
  */
-type Step = 'welcome' | 'product' | 'key'
+type Step = 'welcome' | 'product' | 'key' | 'profile'
 
 /** The step that may show its problems: none until the operator tried to go on, so a blank form never opens red. */
-type Tried = 'product' | 'key' | null
+type Tried = 'product' | 'key' | 'profile' | null
 
 function SetupPage() {
   const workspace = useQuery(api.private.workspace.get, {})
@@ -54,20 +62,49 @@ function SetupPage() {
   // A key already stored, from an earlier try or the Providers page, needs no other.
   const keyNeeded = !stored.set || key.trim() !== ''
 
+  // Each step checks its own part of the product (shared workspace.ts), so a step never names another's problem.
+  const fields = productFields(draft)
+  const productStepProblems = sponsorProductProblems(fields)
+  const profileStepProblems = sponsorProfileProblems(fields.sponsorProfile, fields.sponsorName)
+
   const toKey = (event: React.FormEvent) => {
     event.preventDefault()
     setTried('product')
-    if (productProblems(draft).length > 0) return
+    if (productStepProblems.length > 0) return
     setStep('key')
   }
 
-  const save = async (withKey: boolean) => {
+  /** The key is stored as its step ends, so the next step's proposal can be written with it. */
+  const toProfile = async (withKey: boolean) => {
     if (saving) return
     setSaving(true)
     setError(null)
     try {
       if (withKey) await storeKey({ name: 'ANTHROPIC_API_KEY', value: key })
-      await create({ ...productFields(draft), appUrl: window.location.origin })
+      setKey('')
+      setTried(null)
+      setStep('profile')
+    } catch (caught) {
+      setError(errorMessage(caught))
+    }
+    setSaving(false)
+  }
+
+  const submitKey = (event: React.FormEvent) => {
+    event.preventDefault()
+    setTried('key')
+    if (keyNeeded && keyProblem !== null) return
+    void toProfile(keyNeeded)
+  }
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setTried('profile')
+    if (saving || profileStepProblems.length > 0) return
+    setSaving(true)
+    setError(null)
+    try {
+      await create({ ...fields, appUrl: window.location.origin })
       await navigate({ to: '/onboarding', search: { first: true }, replace: true })
     } catch (caught) {
       setError(errorMessage(caught))
@@ -75,16 +112,10 @@ function SetupPage() {
     }
   }
 
-  const submitKey = (event: React.FormEvent) => {
-    event.preventDefault()
-    setTried('key')
-    if (keyNeeded && keyProblem !== null) return
-    void save(keyNeeded)
-  }
-
   if (step === 'welcome') return <Welcome mode={providers.mode} onStart={() => setStep('product')} />
 
-  const productShown = tried === 'product' ? productProblems(draft) : []
+  const productShown = tried === 'product' ? productStepProblems : []
+  const profileShown = tried === 'profile' ? profileStepProblems : []
   return (
     <div className="space-y-8">
       <SetupSteps current={step} />
@@ -130,15 +161,35 @@ function SetupPage() {
           <div aria-live="polite">{error && <ErrorLine>{error}</ErrorLine>}</div>
           <div className="flex flex-wrap gap-2">
             <Button type="submit" variant="primary" busy={saving}>
-              Save and build your accounts
+              Next
             </Button>
-            {/* In real mode the writer needs the key to propose an account, the setup's next step. */}
+            {/* In real mode the writer needs the key to propose the profile and an account, the setup's next steps. */}
             {!stored.set && providers.mode === 'mock' && (
-              <Button variant="ghost" disabled={saving} onClick={() => void save(false)}>
+              <Button variant="ghost" disabled={saving} onClick={() => void toProfile(false)}>
                 Add it later
               </Button>
             )}
             <Button variant="ghost" disabled={saving} onClick={() => setStep('product')}>
+              Back
+            </Button>
+          </div>
+        </form>
+      )}
+      {step === 'profile' && (
+        <form className="card space-y-5" onSubmit={save} noValidate>
+          <StepHeading
+            lead={`Threads rarely say a product's pitch. They name what people use today, or call the thing by a plain word. The writer proposes both for ${draft.sponsorName.trim()} from its website, and a search asks for them beside each account's pillars; change anything, or leave it empty and fill it in later on the Providers page.`}
+          >
+            What should Stepradar search for?
+          </StepHeading>
+          <ProfileFields value={draft} onChange={patch} invalid={profileShown.map((problem) => problem.field)} />
+          <Problems messages={profileShown.map((problem) => problem.message)} />
+          <div aria-live="polite">{error && <ErrorLine>{error}</ErrorLine>}</div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" variant="primary" busy={saving}>
+              Save and build your accounts
+            </Button>
+            <Button variant="ghost" disabled={saving} onClick={() => setStep('key')}>
               Back
             </Button>
           </div>
@@ -159,11 +210,12 @@ function Welcome(props: { mode: FunctionReturnType<typeof api.private.providers.
         </p>
       </div>
       <div>
-        <h2 className="eyebrow mb-3">Three steps to start</h2>
+        <h2 className="eyebrow mb-3">Four steps to start</h2>
         <ol className="divide-y divide-mist border-y border-mist">
           {[
             ['Your product', 'What the accounts promote, in your words.'],
             ['Your Anthropic key', 'The agents write with Claude on it; it can wait until you switch to real mode.'],
+            ['What to search for', 'The competitors and search terms threads are found by, proposed from your website.'],
             [
               'Your accounts',
               `One to five of your own accounts on ${platformsInWords('conjunction')}, each with a niche and an audience you pick.`,

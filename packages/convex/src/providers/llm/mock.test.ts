@@ -1,4 +1,5 @@
 import {
+  sponsorProblems,
   EXPERIMENT_CATALOG,
   PLATFORM_LABELS,
   POST_INTENTS,
@@ -211,5 +212,21 @@ describe('the mock reply writer', () => {
     expect(await write('question')).toMatch(/\?$/)
     expect(await write('tip')).not.toMatch(/\?$/)
     expect(await write('story')).not.toEqual(await write('tip'))
+  })
+})
+
+describe("the mock writer's product profile", () => {
+  it('is made from the pitch, within the limits, and never names the sponsor as its own competitor', async () => {
+    const profile = await mockLlm.proposeProfile({
+      sponsorName: SPONSOR,
+      sponsorUrl: 'https://formstep.io',
+      sponsorPitch: PITCH,
+      page: null,
+    })
+    expect(
+      sponsorProblems({ sponsorName: SPONSOR, sponsorUrl: 'https://formstep.io', sponsorPitch: PITCH, sponsorProfile: profile })
+    ).toEqual([])
+    expect(profile.searchTerms.length).toBeGreaterThan(0)
+    expect(profile.competitors).not.toContain(SPONSOR)
   })
 })

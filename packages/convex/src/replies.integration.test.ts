@@ -146,6 +146,30 @@ describe('engagement on X', () => {
     for (const reply of all) expect(reply.fit).toMatchObject({ relevant: true, replyWorthy: true })
   })
 
+  it("hears what the sponsor's profile adds, in a query of its own beside the pillars", async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx))
+    await setBudget(t, account, 20)
+    // The mock's posts say a term inside a sentence, so in lower case.
+    const NAMED = /typeform/i
+    const classify = vi.spyOn(mockClassifier, 'classify')
+    await listenNow(t, account)
+    const without = classify.mock.calls.flatMap(([brief]) => brief.posts).filter((post) => NAMED.test(post.text))
+    expect(without).toEqual([])
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(account.workspaceId, { sponsorProfile: { competitors: ['Typeform'], searchTerms: [] } })
+    })
+    classify.mockClear()
+    vi.setSystemTime(Date.now() + WINDOW_MS)
+    await listenNow(t, account)
+    const read = classify.mock.calls.flatMap(([brief]) => brief.posts)
+    classify.mockRestore()
+    // The classifier reads the pillars' posts as before, and the competitor's beside them.
+    expect(read.some((post) => NAMED.test(post.text))).toBe(true)
+    expect(read.some((post) => !NAMED.test(post.text))).toBe(true)
+  })
+
   it('drafts within the day’s budget, and records the operator’s posted reply by its link', async () => {
     const t = setup()
     const account = await t.run((ctx) => insertAccount(ctx))

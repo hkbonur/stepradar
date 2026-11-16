@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import React from 'react'
 import { NotificationSettings } from '@/components/notification-settings'
-import { ProductFields, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
+import { ProductFields, ProfileFields, productDraft, productFields, productProblems, type ProductDraft } from '@/components/product-fields'
 import { ProviderKeys } from '@/components/provider-keys'
 import { Alert, Button, Card, Collapsible, ErrorLine, Field, Input, Mono, PageHeader, Pill, Skeleton } from '@/components/ui'
 import { cn } from '@/lib/cn'
@@ -157,18 +157,9 @@ function WorkspaceForm() {
   if (workspace === undefined) return <Skeleton className="h-40" />
   // The root sends a first run to the setup, so this page never shows without a workspace.
   if (workspace === null) return null
+  const saved = productDraft(workspace)
   // Keyed on what is saved, so a save from another tab or the setup refills the form.
-  return (
-    <ProductForm
-      key={[workspace.sponsorName, workspace.sponsorUrl, workspace.sponsorPitch].join('\u0000')}
-      saved={{
-        sponsorName: workspace.sponsorName,
-        sponsorUrl: workspace.sponsorUrl,
-        sponsorPitch: workspace.sponsorPitch,
-      }}
-      appUrl={workspace.appUrl}
-    />
-  )
+  return <ProductForm key={Object.values(saved).join('\u0000')} saved={saved} appUrl={workspace.appUrl} />
 }
 
 function ProductForm(props: { saved: ProductDraft; appUrl: string }) {
@@ -201,6 +192,7 @@ function ProductForm(props: { saved: ProductDraft; appUrl: string }) {
   return (
     <form onSubmit={submit} className="space-y-4" noValidate>
       <ProductFields value={draft} onChange={patch} invalid={problems.map((problem) => problem.field)} />
+      <ProfileFields value={draft} onChange={patch} invalid={problems.map((problem) => problem.field)} />
       <Field label="Studio address" hint="Where tracked links live.">
         <Input name="appUrl" type="url" value={appUrl} onChange={(event) => setAppUrl(event.target.value)} />
       </Field>

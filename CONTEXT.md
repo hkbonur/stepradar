@@ -18,6 +18,10 @@ _Avoid_: viewer, customer (that is the sponsor's relationship), audience (fine f
 The product the operator builds and promotes, set up on the first run (**Setup**) and kept on the workspace: its name, its website (where tracked links send readers), and its **pitch** (what it does, in one sentence the writer says in its own words, never as an ad read). A draft either names the sponsor, with the affiliation line, or leaves it out so the account helps on its own. The demo seed's sponsor is Formstep.
 _Avoid_: client, advertiser, brand.
 
+**Product profile**:
+What a search asks for beyond an account's pillars, kept on the workspace beside the sponsor's pitch: the sponsor's **competitors** (other products that do the same job, by name) and its **search terms** (what people call what it does, one to three words each). A thread rarely says a pitch's or a pillar's words, so a search asks for both in a query of its own beside each account's pillars, with its own limit. The writer proposes both from the product and its website, read once and never stored; the operator edits them, and either list may stay empty. A platform or tool the sponsor plugs into is no competitor: a thread there names it every time. The classifier does not read the profile: it knows a competitor's thread from the pitch.
+_Avoid_: profile on its own (an account's profile is its page on its platform), keywords, ICP, lead.
+
 ## Accounts
 
 **Account**:

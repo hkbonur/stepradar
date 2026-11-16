@@ -1,4 +1,4 @@
-import type { ImportedPost, ItemCounts, ReplyOrigin, ReplyStatus, VoiceEdit } from '@stepradar/shared'
+import type { ImportedPost, ItemCounts, ReplyOrigin, ReplyStatus, SponsorProfile, VoiceEdit } from '@stepradar/shared'
 
 /**
  * The demo's hand-written content (internal/seed.ts): the history of the X
@@ -279,6 +279,12 @@ const ADA_X_REPLIES: SeededAccountPost[] = [
 ]
 
 /** What the analyst wrote about Ada's account when it learned the voice; the counted part comes from voiceStats. */
+/** The demo sponsor's profile: what people call what Formstep does and what they compare it with. */
+export const SPONSOR_PROFILE: SponsorProfile = {
+  competitors: ['Typeform', 'Jotform', 'Tally'],
+  searchTerms: ['client intake form', 'approval form', 'human in the loop'],
+}
+
 export const ADA_VOICE_TEXT: VoiceEdit = {
   language: 'en',
   summary:

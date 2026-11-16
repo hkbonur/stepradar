@@ -1,4 +1,4 @@
-import { DEFAULT_FORMATS, type AccountIdentity, type AccountProposal } from '@stepradar/shared'
+import { DEFAULT_FORMATS, emptySponsorProfile, type AccountIdentity, type AccountProposal } from '@stepradar/shared'
 import type { FunctionArgs } from 'convex/server'
 import { ConvexError } from 'convex/values'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -25,6 +25,7 @@ const PRODUCT = {
   sponsorName: 'Ledgerly',
   sponsorUrl: 'https://app.ledgerly.example',
   sponsorPitch: 'Bookkeeping that categorises every receipt for you.',
+  sponsorProfile: emptySponsorProfile(),
   appUrl: 'http://localhost:3300/',
 }
 
@@ -78,6 +79,31 @@ describe('first-run setup', () => {
     await expect(t.mutation(api.private.workspace.create, { ...PRODUCT, sponsorPitch: 'Books.' })).rejects.toThrow(
       'Say what the product does'
     )
+    expect(await t.query(api.private.workspace.get, {})).toBeNull()
+  })
+
+  it("keeps the product's profile tidied, and refuses one past its limits or that names the product as its own competitor", async () => {
+    const t = setup()
+    const sponsorProfile = { competitors: [' Xero ', 'xero', ''], searchTerms: ['receipt scanner'] }
+    await expect(
+      t.mutation(api.private.workspace.create, { ...PRODUCT, sponsorProfile: { ...sponsorProfile, competitors: ['ledgerly'] } })
+    ).rejects.toThrow('A competitor is another product: take Ledgerly out.')
+    await t.mutation(api.private.workspace.create, { ...PRODUCT, sponsorProfile })
+    expect((await t.query(api.private.workspace.get, {}))?.sponsorProfile).toEqual({
+      competitors: ['Xero'],
+      searchTerms: ['receipt scanner'],
+    })
+  })
+
+  it('proposes a profile for the product the setup names, before any workspace exists, and stores nothing', async () => {
+    const t = setup()
+    const { sponsorName, sponsorUrl, sponsorPitch } = PRODUCT
+    await expect(t.action(api.private.workspace.proposeProfile, { sponsorName, sponsorUrl, sponsorPitch: 'Books.' })).rejects.toThrow(
+      'Say what the product does'
+    )
+    const proposal = await t.action(api.private.workspace.proposeProfile, { sponsorName, sponsorUrl, sponsorPitch })
+    expect(proposal.site).toEqual({ read: true })
+    expect(proposal.profile.searchTerms).toEqual(['bookkeeping', 'categorises', 'every'])
     expect(await t.query(api.private.workspace.get, {})).toBeNull()
   })
 

@@ -11,6 +11,8 @@ import {
   type PostLength,
   type ReplyOrigin,
   type SignalSource,
+  type SponsorProduct,
+  type SponsorProfile,
   type Voice,
   type VoiceStats,
   type Weekday,
@@ -246,6 +248,12 @@ export interface ProposalBrief {
   roster: { name: string; handle: string; platform: Platform; niche: string }[]
 }
 
+/** What the writer reads to propose the sponsor's profile (shared `SponsorProfile`), at setup and on the Providers page. */
+export interface ProfileBrief extends SponsorProduct {
+  /** The words of the sponsor's website (providers/site), or null when it could not be read: the proposal then rests on the name and the pitch. */
+  page: string | null
+}
+
 export interface ChatTurn {
   author: 'operator' | 'account'
   text: string
@@ -305,6 +313,8 @@ export interface LlmProvider {
   learnVoice(brief: VoiceBrief): Promise<VoiceDraft>
   /** A new account for a niche and an audience, which the operator edits before it is created. */
   proposeAccount(brief: ProposalBrief): Promise<AccountProposal>
+  /** The sponsor's profile, made to fit (shared `fitSponsorProfile`), which the operator edits before it is saved. */
+  proposeProfile(brief: ProfileBrief): Promise<SponsorProfile>
   /** The account's reply in its own chat; `directive` is set when the message was stored as one. */
   reply(args: { account: AccountBrief; history: ChatTurn[]; directive?: string }): Promise<string>
   /** What an operator's chat message asks for; `conversation` when it asks for no change and no task. */

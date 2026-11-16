@@ -54,6 +54,7 @@ export const status = query({
           }
         }),
         { name: 'suggestions', real: 'Google autocomplete (unofficial)', hasReal: true, needs: [] as string[] },
+        { name: 'site', real: "The product's website, read once for a profile proposal", hasReal: true, needs: [] as string[] },
         { name: 'notifier', real: 'Web push', hasReal: true, needs: ['VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT'] },
       ],
       recentJobs,

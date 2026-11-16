@@ -4,6 +4,7 @@ import {
   answersFirst,
   fitVerdict,
   namesSponsor,
+  profileSearchTerms,
   repliesLeft,
   replyProblems,
   wentOutAt,
@@ -37,6 +38,7 @@ import { enqueueJob } from '../jobs/queue'
 import { providersMode } from '../lib/env'
 import { heardFitValidator, heardThreadValidator, threadLinkValidator, writtenReplyValidator } from '../lib/validators'
 import { cannotRead, type FoundThread, type PlatformReader, type SearchQuery } from '../providers/platforms'
+import { searchTermGroups } from '../providers/platforms/found'
 import { llmProvider, type PostedLately, type ReplyBrief, type ReplyDraft } from '../providers/llm'
 import type { BriefVariant, LlmProvider } from '../providers/llm/types'
 import { classifierProvider, classifyBriefOf } from '../providers/classifier'
@@ -55,7 +57,7 @@ import { variantsOf } from '../core/variants'
  * rules are in core/replies.ts.
  */
 
-/** How many threads a sweep's search keeps over all the pillars, the ones that move most first. */
+/** How many threads one query of a sweep keeps over all its terms, the ones that move most first. */
 const LISTEN_SEARCH_LIMIT = 10
 
 /** A found thread as the listener hears it: found by search, matched to the first pillar among its topics. */
@@ -88,7 +90,7 @@ async function sweepSearch(
 /** What one pass of the listener's path did: the rows it kept or passed on, and the communities whose rules it could not read. */
 export type HeardResult = HeardOutcome & { rulesUnread: UnreadCommunity[] }
 
-/** The listener's sweep: what is said in the account's pillars, kept where it is worth answering. Mentions and comments come through the comment poll (internal/comments.ts). */
+/** The listener's sweep: what is said in the account's pillars and in the words of the sponsor's profile, kept where it is worth answering. Mentions and comments come through the comment poll (internal/comments.ts). */
 export const listen = internalAction({
   args: { accountId: v.id('accounts') },
   handler: async (ctx, args): Promise<HeardResult | { skipped: string }> => {
@@ -97,13 +99,17 @@ export const listen = internalAction({
     if (!listens(account)) return { skipped: 'replies are off' }
     const keys = await ctx.runQuery(internal.internal.keys.stored, {})
     const reader = actionReader(ctx, account, connection, keys)
-    if (!reader.search) throw refusal(cannotRead(placeOf(account), 'search'))
+    const search = reader.search
+    if (!search) throw refusal(cannotRead(placeOf(account), 'search'))
     const own = postsToMetCommunity(account.platform)
       ? await ctx.runQuery(internal.internal.replies.searchedCommunitiesOf, { accountId })
       : []
     // A found thread is fresh for less long than a mention, so the search looks only that far back: older ones would crowd out what can be answered.
-    const query = { terms: account.pillars, since: Date.now() - REPLY_FRESH_MS.search, sponsorName: workspace.sponsorName }
-    const found = await sweepSearch(reader.search, query, own)
+    const query = { since: Date.now() - REPLY_FRESH_MS.search, sponsorName: workspace.sponsorName }
+    // The pillars, then what the sponsor's profile adds: a thread that names a competitor or says a search term, found by no pillar.
+    const found = await searchTermGroups(reader, { own: account.pillars, profile: profileSearchTerms(workspace.sponsorProfile) }, (terms) =>
+      sweepSearch(search, { ...query, terms }, own)
+    )
     return judgeAndStore(
       ctx,
       { account, workspace, reader, keys },

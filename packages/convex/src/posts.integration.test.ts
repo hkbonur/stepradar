@@ -1,5 +1,6 @@
 import {
   POST_INTENTS,
+  emptySponsorProfile,
   postHook,
   postProblems,
   postSlotHours,
@@ -35,6 +36,7 @@ async function xAccount(t: Test): Promise<Id<'accounts'>> {
       sponsorName: 'Formstep',
       sponsorUrl: 'https://formstep.io',
       sponsorPitch: 'Forms that workflows and AI agents send to one customer; the answers come back into the flow.',
+      sponsorProfile: emptySponsorProfile(),
       appUrl: 'http://localhost:3300',
     })
     return ctx.db.insert('accounts', {

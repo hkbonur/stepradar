@@ -1,5 +1,14 @@
 import { v } from 'convex/values'
-import { PLATFORMS, REACH_LABELS, communityLabel, placeOf, type Platform, type PlatformPlace, type ProviderKey } from '@stepradar/shared'
+import {
+  PLATFORMS,
+  REACH_LABELS,
+  communityLabel,
+  placeOf,
+  profileSearchTerms,
+  type Platform,
+  type PlatformPlace,
+  type ProviderKey,
+} from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
 import { internalAction, internalMutation, internalQuery, type ActionCtx } from '../_generated/server'
@@ -13,7 +22,7 @@ import { suggestionsProvider } from '../providers/suggestions'
 import { classifierProvider, classifyBriefOf } from '../providers/classifier'
 import { importedPostValidator, signalSourceValidator } from '../lib/validators'
 import { actionReader } from './connections'
-import { threadMoves } from '../providers/platforms/found'
+import { searchTermGroups, threadMoves } from '../providers/platforms/found'
 
 /**
  * The researcher (CONTEXT.md, "Agent"): searches the platforms and the search
@@ -60,6 +69,7 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: 
     communities: null,
     sponsorName: workspace.sponsorName,
   }
+  const profile = profileSearchTerms(workspace.sponsorProfile)
   const mock = providersMode() === 'mock'
   const forums = await ctx.runQuery(internal.internal.data.forums, {})
   const keys = await ctx.runQuery(internal.internal.keys.stored, {})
@@ -77,8 +87,12 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: 
       continue
     }
     // A search for the niche reads for no account, so it needs no connection.
-    const search = platformReader(place, null, keys).search
-    if (search) threads.push(...(await search(query)).map((thread) => signalOf(place, thread)))
+    const reader = platformReader(place, null, keys)
+    const search = reader.search
+    if (!search) continue
+    // The account's own terms, then what the sponsor's profile adds, each query with its own limit.
+    const found = await searchTermGroups(reader, { own: query.terms, profile }, (terms) => search({ ...query, terms }))
+    threads.push(...found.map((thread) => signalOf(place, thread)))
   }
   // The classifier reads each thread once: one already stored keeps its status, and only its numbers follow the source.
   const known = new Set<string>(

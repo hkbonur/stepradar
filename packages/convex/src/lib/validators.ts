@@ -46,6 +46,12 @@ export const commentStatusValidator = literals(COMMENT_STATUSES)
 export const notificationKindValidator = literals(NOTIFICATION_KINDS)
 export const notificationStatusValidator = literals(NOTIFICATION_STATUSES)
 
+/** The sponsor's profile (shared `SponsorProfile`): what a search asks for beyond an account's pillars. */
+export const sponsorProfileValidator = v.object({
+  competitors: v.array(v.string()),
+  searchTerms: v.array(v.string()),
+})
+
 /** The operator's quiet hours (shared `QuietHours`). */
 export const quietHoursValidator = v.object({ start: v.number(), end: v.number(), timezone: v.string() })
 

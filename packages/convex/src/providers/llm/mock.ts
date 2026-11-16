@@ -21,6 +21,8 @@ import {
   hackerNewsTitlePrefix,
   missingReasons,
   type EngagementReasons,
+  fitSponsorProfile,
+  type SponsorProfile,
 } from '@stepradar/shared'
 import {
   type AccountPostSample,
@@ -29,6 +31,7 @@ import {
   type JudgeDraft,
   type PostBrief,
   type PostDraft,
+  type ProfileBrief,
   type ProposalBrief,
   type ReplyBrief,
   type ReplyDraft,
@@ -90,6 +93,9 @@ export const mockLlm: LlmProvider = {
   },
   async proposeAccount(brief) {
     return proposalFor(brief)
+  },
+  async proposeProfile(brief) {
+    return profileFor(brief)
   },
   async reply(args) {
     const last = args.history.at(-1)
@@ -433,6 +439,25 @@ function titleCase(word: string): string {
  * is the topic, and the pillars, bio and bible are templates around the
  * topic, the audience and the account's name.
  */
+/**
+ * A mock profile, deterministic from the pitch: what people use where no
+ * product is, and the pitch's first telling words as search terms. It reads
+ * no page.
+ */
+function profileFor(brief: ProfileBrief): SponsorProfile {
+  const words = brief.sponsorPitch
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word.length >= 5 && !SMALL_WORDS.has(word))
+  return fitSponsorProfile(
+    {
+      competitors: ['Spreadsheets', 'Email threads'],
+      searchTerms: words.slice(0, 3),
+    },
+    brief.sponsorName
+  )
+}
+
 function proposalFor(brief: ProposalBrief): AccountProposal {
   const words = brief.niche.split(/[^A-Za-z0-9]+/).filter((word) => word.length > 0)
   const topicWord = words.find((word) => !SMALL_WORDS.has(word.toLowerCase())) ?? words[0] ?? 'Craft'

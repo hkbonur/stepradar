@@ -1,3 +1,4 @@
+import { emptySponsorProfile } from '@stepradar/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, internal } from './_generated/api'
 import type { Id } from './_generated/dataModel'
@@ -93,6 +94,7 @@ describe('connecting a Reddit account', () => {
       sponsorName: 'Formstep',
       sponsorUrl: 'https://formstep.io',
       sponsorPitch: 'Forms that workflows and AI agents send to one customer.',
+      sponsorProfile: emptySponsorProfile(),
       appUrl: 'http://localhost:3300',
     })
     const identity = { platform: 'reddit' as const, handle: 'Nora_Builds', name: 'Nora', niche: 'n8n', audience: 'ops leads' }

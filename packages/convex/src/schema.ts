@@ -45,6 +45,7 @@ import {
   replyThreadValidator,
   signalSourceValidator,
   signalStatusValidator,
+  sponsorProfileValidator,
   sponsorSegmentValidator,
   strategyValidator,
   variantValidator,
@@ -61,6 +62,8 @@ export default defineSchema({
     sponsorUrl: v.string(),
     // What the product does, in one sentence the writer says in its own words when an account mentions it.
     sponsorPitch: v.string(),
+    // What people call what the product does and what they compare it with (CONTEXT.md, "Product profile").
+    sponsorProfile: sponsorProfileValidator,
     // Public origin of the studio app, for tracked links.
     appUrl: v.string(),
     // The operator's quiet hours, when nothing is pushed (shared notifications.ts); absent when they set none.

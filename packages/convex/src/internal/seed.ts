@@ -23,7 +23,7 @@ import { rememberFromOperator } from '../core/memory'
 import { logRepeatedQuestions, writeDailyBrief } from '../core/research'
 import { reviewStrategy } from '../core/strategy'
 import { storeCommunityRules } from '../core/communities'
-import { ADA_VOICE_TEXT, SEEDED_REPLIES, adaXHistory } from './seedData'
+import { ADA_VOICE_TEXT, SEEDED_REPLIES, SPONSOR_PROFILE, adaXHistory } from './seedData'
 
 /**
  * The demo workspace: two X accounts and Ada's account on the n8n Community
@@ -76,6 +76,7 @@ export const run = internalMutation({
       sponsorName: 'Formstep',
       sponsorUrl: 'https://formstep.io',
       sponsorPitch: 'Forms that workflows and AI agents send to one customer; the answers come back into the flow.',
+      sponsorProfile: SPONSOR_PROFILE,
       appUrl: args.appUrl ?? 'http://localhost:3300',
     })
 

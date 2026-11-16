@@ -9,6 +9,7 @@ import {
 } from '@stepradar/shared'
 import { z } from 'zod'
 import { refusal } from '../../lib/errors'
+import { htmlText } from '../html'
 import { rankFound } from './found'
 import type {
   ActivityQuery,
@@ -190,6 +191,7 @@ export function discourseReader(forum: Forum): PlatformReader {
   return {
     platform: 'forum',
     name: 'discourse',
+    searchIgnoresTerms: true,
 
     /**
      * Every topic started since the query's time, newest first, with no
@@ -216,7 +218,7 @@ export function discourseReader(forum: Forum): PlatformReader {
           externalId: discourseItemId(topic.id, 1),
           url: itemUrl(topic.slug, topic.id, 1),
           title: topic.title,
-          text: discourseText(post.blurb),
+          text: htmlText(post.blurb),
           postedAt,
           author: { handle: post.username, name: post.name || post.username },
           reach: post.like_count,
@@ -241,9 +243,9 @@ export function discourseReader(forum: Forum): PlatformReader {
           fresh.filter((action) => action.truncated === true),
           async (action) => [action.post_id, await postBy(read, `/posts/${action.post_id}.json`)] as const
         )
-        const texts = new Map(whole.flatMap(([id, post]) => (post === null ? [] : [[id, discourseText(post.cooked)]])))
+        const texts = new Map(whole.flatMap(([id, post]) => (post === null ? [] : [[id, htmlText(post.cooked)]])))
         for (const action of fresh) {
-          const text = texts.get(action.post_id) ?? discourseText(action.excerpt)
+          const text = texts.get(action.post_id) ?? htmlText(action.excerpt)
           const topic = action.action_type === NEW_TOPIC
           items.push({
             externalId: discourseItemId(action.topic_id, action.post_number),
@@ -283,7 +285,7 @@ export function discourseReader(forum: Forum): PlatformReader {
             externalId: id,
             parentId: externalId,
             author: { handle: post.username, name: post.name || post.username },
-            text: discourseText(post.cooked),
+            text: htmlText(post.cooked),
             url: `${forum.origin}/t/${item.topicId}/${post.post_number}`,
             // A post says only the category's id; the account's item it answers knows where it was said.
             community: null,
@@ -438,28 +440,5 @@ async function guidelinesOf(forum: Forum): Promise<string> {
   const start = page.indexOf("itemprop='mainContentOfPage'")
   if (start === -1) return ''
   const end = page.indexOf('<footer', start)
-  return discourseText(page.slice(page.indexOf('>', start) + 1, end === -1 ? undefined : end))
-}
-
-const ENTITIES: Record<string, string> = {
-  '&quot;': '"',
-  '&#39;': "'",
-  '&#x27;': "'",
-  '&lt;': '<',
-  '&gt;': '>',
-  '&nbsp;': ' ',
-  '&hellip;': '…',
-  '&amp;': '&',
-}
-
-/** Discourse writes a post as HTML: a paragraph, a line break, a list item and a heading end a line; a link keeps its text. Plain text. */
-export function discourseText(html: string): string {
-  return html
-    .replace(/<br\s*\/?>/g, '\n')
-    .replace(/<\/(?:p|li|h\d|pre|blockquote|aside|div)>/g, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&(?:quot|#39|#x27|lt|gt|nbsp|hellip|amp);/g, (entity) => ENTITIES[entity] ?? entity)
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  return htmlText(page.slice(page.indexOf('>', start) + 1, end === -1 ? undefined : end))
 }

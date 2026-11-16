@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { discourseForumAt, discourseReader, discourseText } from './discourse'
+import { discourseForumAt, discourseReader } from './discourse'
 
 const NOW = Date.UTC(2026, 9, 23, 9)
 const FORUM = { origin: 'https://community.n8n.io', name: 'n8n Community', software: 'discourse' as const }
@@ -306,14 +306,6 @@ describe("a category's rules", () => {
     expect(await rules('questions')).toBe(
       'Always Be Civil\n\nRespect our forum. Don’t post spam or otherwise vandalize the forum.\n\nQuestions: For troubleshooting issues. Share your workflow.'
     )
-  })
-})
-
-describe('discourseText', () => {
-  it('ends a line at a paragraph, a break or a list item, keeps a link’s text and decodes what Discourse escapes', () => {
-    expect(
-      discourseText('<p>Use the <a href="/t/x/1" class="mention">@kai</a> fix &amp; log</p><ul><li>once</li></ul>A<br>B &hellip;')
-    ).toBe('Use the @kai fix & log\n\nonce\n\nA\nB …')
   })
 })
 

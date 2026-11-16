@@ -1,8 +1,21 @@
-import { isWebUrl, sponsorProblems } from '@stepradar/shared'
+import {
+  isWebUrl,
+  sponsorProductProblems,
+  sponsorProfileProblems,
+  tidySponsorProfile,
+  type ProfileProposal,
+  type SponsorFields,
+  type SponsorProblem,
+  type SponsorProduct,
+} from '@stepradar/shared'
 import { v } from 'convex/values'
-import { mutation, query } from '../_generated/server'
+import { internal } from '../_generated/api'
+import { action, mutation, query } from '../_generated/server'
 import { requireWorkspace } from '../core/workspace'
 import { refusal } from '../lib/errors'
+import { sponsorProfileValidator } from '../lib/validators'
+import { llmProvider } from '../providers/llm'
+import { siteProvider } from '../providers/site'
 
 /**
  * The operator's workspace: the product the accounts promote and where
@@ -10,11 +23,13 @@ import { refusal } from '../lib/errors'
  * creates it.
  */
 
-const sponsorArgs = {
+const productArgs = {
   sponsorName: v.string(),
   sponsorUrl: v.string(),
   sponsorPitch: v.string(),
 }
+
+const sponsorArgs = { ...productArgs, sponsorProfile: sponsorProfileValidator }
 
 /** The workspace; null before the first-run setup made it. */
 export const get = query({
@@ -45,15 +60,38 @@ export const update = mutation({
   },
 })
 
-/** The product's fields, trimmed, refused with the shared words the studio already showed. */
-function checked(args: { sponsorName: string; sponsorUrl: string; sponsorPitch: string }) {
-  const [problem] = sponsorProblems(args)
+/**
+ * The writer's proposal for the sponsor's profile, from the product as the
+ * form has it and its website, read once. Nothing is stored: the operator
+ * edits the proposal and saves the product. The setup asks before a
+ * workspace exists, so the product comes as arguments.
+ */
+export const proposeProfile = action({
+  args: productArgs,
+  handler: async (ctx, args): Promise<ProfileProposal> => {
+    const product = checkedProduct(args)
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const site = await siteProvider().read(product.sponsorUrl)
+    const profile = await llmProvider(keys).proposeProfile({ ...product, page: site.read ? site.text : null })
+    return { profile, site: site.read ? { read: true } : site }
+  },
+})
+
+/** The product's fields, trimmed and its profile tidied, refused with the shared words the studio already showed. */
+function checked(args: SponsorFields): SponsorFields {
+  const product = checkedProduct(args)
+  refuseFirst(sponsorProfileProblems(args.sponsorProfile, product.sponsorName))
+  return { ...product, sponsorProfile: tidySponsorProfile(args.sponsorProfile) }
+}
+
+/** What the product is, trimmed: all a profile is proposed from. */
+function checkedProduct(args: SponsorProduct): SponsorProduct {
+  refuseFirst(sponsorProductProblems(args))
+  return { sponsorName: args.sponsorName.trim(), sponsorUrl: args.sponsorUrl.trim(), sponsorPitch: args.sponsorPitch.trim() }
+}
+
+function refuseFirst([problem]: SponsorProblem[]): void {
   if (problem !== undefined) throw refusal(problem.message)
-  return {
-    sponsorName: args.sponsorName.trim(),
-    sponsorUrl: args.sponsorUrl.trim(),
-    sponsorPitch: args.sponsorPitch.trim(),
-  }
 }
 
 /** Tracked links are built from it, so a bad one would break at click time; refuse it here instead. */

@@ -1,4 +1,5 @@
 import {
+  emptySponsorProfile,
   DEFAULT_FORMATS,
   JOB_KINDS,
   type PostStatus,
@@ -52,6 +53,7 @@ export async function insertAccount(
     sponsorName: 'Formstep',
     sponsorUrl: 'https://formstep.io',
     sponsorPitch: 'Forms that workflows and AI agents send to one customer; the answers come back into the flow.',
+    sponsorProfile: emptySponsorProfile(),
     appUrl: 'http://localhost:3300',
   })
   const accountId = await ctx.db.insert('accounts', {

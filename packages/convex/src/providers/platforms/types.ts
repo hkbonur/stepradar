@@ -119,6 +119,12 @@ export interface PlatformReader {
   readonly name: string
   /** Threads about the terms: what the listener answers and the researcher learns from. */
   readonly search?: (query: SearchQuery) => Promise<FoundThread[]>
+  /**
+   * Set where `search` reads the newest threads whatever the query's terms
+   * (a Discourse forum): a second query with other terms would find the same
+   * threads there, so it is asked once (found.ts `askedTerms`).
+   */
+  readonly searchIgnoresTerms?: true
   /** What is said to the account: posts that mention it and comments under its posts, newest first. */
   readonly mentions?: (query: MentionsQuery) => Promise<HeardMention[]>
   /** The account's own posts, newest first, a thread folded into its root as shared `parseXArchive` does: the history import. */
