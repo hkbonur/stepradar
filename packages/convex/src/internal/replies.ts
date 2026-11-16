@@ -2,6 +2,7 @@ import type { ProviderKeys } from '../core/keys'
 import { v } from 'convex/values'
 import {
   answersFirst,
+  draftRank,
   fitVerdict,
   namesSponsor,
   profileSearchTerms,
@@ -213,7 +214,7 @@ interface WritingContext {
    * The heard threads to write, at most REPLY_WRITES_PER_RUN, each with the
    * reply style it is written in: the ones the operator asked for (pasted,
    * or asked for again) and the answers to comments and mentions first and
-   * outside the budget (shared `answersFirst`), then the oldest others,
+   * outside the budget (shared `answersFirst`), then the others by rank (shared `draftRank`),
    * within what is left of today's reply budget. The rest wait for tomorrow's
    * budget, or go stale.
    */
@@ -240,7 +241,9 @@ export const writingContext = internalQuery({
         .collect()
     ).sort((a, b) => a.heardAt - b.heardAt)
     const first = waiting.filter(answersFirst)
-    const rest = waiting.filter((reply) => !answersFirst(reply))
+    // The budget goes to the threads that deserve it most (shared `draftRank`), not to the ones heard first.
+    const now = Date.now()
+    const rest = waiting.filter((reply) => !answersFirst(reply)).sort((a, b) => draftRank(b, now) - draftRank(a, now))
     const heard = [
       ...first.slice(0, REPLY_WRITES_PER_RUN),
       ...rest.slice(0, Math.min(Math.max(0, REPLY_WRITES_PER_RUN - first.length), left)),

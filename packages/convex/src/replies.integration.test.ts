@@ -53,7 +53,7 @@ async function operatorPosts(t: Test, reply: Doc<'replies'>): Promise<void> {
 }
 
 /** A thread heard on X a moment ago, waiting for the writer. */
-async function insertHeard(ctx: MutationCtx, account: Doc<'accounts'>, externalId: string): Promise<void> {
+async function insertHeard(ctx: MutationCtx, account: Doc<'accounts'>, externalId: string, score = HEARD_FIT.score): Promise<void> {
   await ctx.db.insert('replies', {
     accountId: account._id,
     origin: 'search',
@@ -67,7 +67,7 @@ async function insertHeard(ctx: MutationCtx, account: Doc<'accounts'>, externalI
       reach: 4_000,
       community: null,
     },
-    fit: HEARD_FIT,
+    fit: { ...HEARD_FIT, score },
     status: 'heard',
     text: '',
     operatorAsked: false,
@@ -206,6 +206,18 @@ describe('engagement on X', () => {
     await expect(t.mutation(api.private.replies.skip, { replyId: heard._id })).rejects.toThrow(
       'This reply is being written; only one waiting for you can be skipped.'
     )
+  })
+
+  it('spends the day’s budget on the thread that fits best, not on the one heard first', async () => {
+    const t = setup()
+    const account = await t.run((ctx) => insertAccount(ctx))
+    await setBudget(t, account, 1)
+    await t.run(async (ctx) => {
+      await insertHeard(ctx, account, 'loose', 0.45)
+      await insertHeard(ctx, account, 'close', 0.85)
+    })
+    await t.action(internal.internal.replies.writeReplies, { accountId: account._id })
+    expect((await view(t, account)).waiting.map((reply) => reply.inReplyTo)).toEqual(['close'])
   })
 
   it('passes on a draft and a heard post nobody touched within a day', async () => {
