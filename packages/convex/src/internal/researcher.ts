@@ -3,11 +3,15 @@ import {
   PLATFORMS,
   REACH_LABELS,
   communityLabel,
+  isThreadSource,
   placeOf,
   profileSearchTerms,
+  type Forum,
+  type HeardFit,
   type Platform,
   type PlatformPlace,
   type ProviderKey,
+  type SignalSource,
 } from '@stepradar/shared'
 import { internal } from '../_generated/api'
 import type { Doc, Id } from '../_generated/dataModel'
@@ -48,6 +52,19 @@ export const pollSignals = internalAction({
 const RESEARCH_SEARCH_LIMIT = 20
 
 /**
+ * Whether the classifier read a thread on the account's niche. Its yes or no
+ * flips from one read to the next on a thread at the edge (a Make question
+ * read for an n8n account), where its score stays low, so a thread is on the
+ * niche only when it also fits this well.
+ */
+function onNiche(fit: HeardFit): boolean {
+  return fit.relevant && fit.score >= RESEARCH_FIT_MIN
+}
+
+/** The least fit (0 to 1) a thread is kept at: measured on the live forums, an edge thread scores 0.1 to 0.4 and an on-niche one 0.45 and up. */
+const RESEARCH_FIT_MIN = 0.4
+
+/**
  * How many signals a poll stored new, how many of the threads it read for
  * the first time were on the account's niche and how many off it, and the
  * platforms it left unread for want of the operator's keys, with the keys.
@@ -56,9 +73,10 @@ type PollResult = { found: number; kept: number; offNiche: number; unread: { pla
 
 /**
  * One poll of every source the researcher reads, for the hourly poll and the
- * morning sweep alike: each platform whose reader searches, and each of the
- * workspace's forums, whatever the account's own platform, since a niche is
- * talked about everywhere, then the search suggestions. Comments and problems are not polled here: the comment
+ * morning sweep alike: each platform whose reader searches, then the search
+ * suggestions. An account on a product's forum reads its own forum only, since
+ * the workspace's other forums are about other products; any other account
+ * reads them all, since its niche is talked about everywhere. Comments and problems are not polled here: the comment
  * poll and the problem log write those.
  */
 async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: Doc<'workspaces'>): Promise<PollResult> {
@@ -75,9 +93,9 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: 
   const keys = await ctx.runQuery(internal.internal.keys.stored, {})
   const places: PlatformPlace[] = [
     ...PLATFORMS.flatMap((platform) => (platform === 'forum' ? [] : [{ platform }])),
-    ...forums.map((forum) => ({ platform: 'forum' as const, forum })),
+    ...forums.filter((forum) => readsForum(account, forum)).map((forum) => ({ platform: 'forum' as const, forum })),
   ]
-  const threads: FoundSignal[] = []
+  const found: FoundSignal[] = []
   const unread: PollResult['unread'] = []
   for (const place of places) {
     // A platform whose app keys are not set is left out and named, so the others are still read; nothing stands in for it (ADR 0002).
@@ -91,17 +109,19 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: 
     const search = reader.search
     if (!search) continue
     // The account's own terms, then what the sponsor's profile adds, each query with its own limit.
-    const found = await searchTermGroups(reader, { own: query.terms, profile }, (terms) => search({ ...query, terms }))
-    threads.push(...found.map((thread) => signalOf(place, thread)))
+    const threads = await searchTermGroups(reader, { own: query.terms, profile }, (terms) => search({ ...query, terms }))
+    found.push(...threads.map((thread) => signalOf(place, thread)))
   }
-  // The classifier reads each thread once: one already stored keeps its status, and only its numbers follow the source.
+  // What people type into Google about the account's terms, read like a thread: a job seeker's search is no signal.
+  found.push(...(await suggestionsProvider().find(query)))
+  // The classifier reads each signal once: one already stored keeps its status, and only its numbers follow the source.
   const known = new Set<string>(
     await ctx.runQuery(internal.internal.researcher.storedSignalIds, {
       accountId: account._id,
-      externalIds: threads.map((thread) => thread.externalId),
+      externalIds: found.map((signal) => signal.externalId),
     })
   )
-  const fresh = threads.filter((thread) => !known.has(thread.externalId))
+  const fresh = found.filter((signal) => !known.has(signal.externalId))
   const fits =
     fresh.length === 0
       ? []
@@ -109,31 +129,94 @@ async function pollSources(ctx: ActionCtx, account: Doc<'accounts'>, workspace: 
           classifyBriefOf(
             account,
             workspace,
-            fresh.map((thread) => ({ origin: 'search' as const, text: `${thread.title}\n\n${thread.summary}` }))
+            fresh.map((signal) => ({ origin: 'search' as const, text: `${signal.title}\n\n${signal.summary}` }))
           )
         )
-  const judged = fresh.map((thread, index) => {
+  const judged = fresh.map((signal, index) => {
     const fit = fits[index]
-    if (fit === undefined) throw new Error(`the classifier read ${fits.length} of ${fresh.length} found threads`)
-    // A thread off the account's niche is kept dismissed, so it is not read again and the operator can still see it.
-    return { ...thread, status: fit.relevant ? ('new' as const) : ('dismissed' as const) }
+    if (fit === undefined) throw new Error(`the classifier read ${fits.length} of ${fresh.length} found signals`)
+    // A signal off the account's niche is kept dismissed, so it is not read again and the operator can still see it.
+    return { ...signal, status: onNiche(fit) ? ('new' as const) : ('dismissed' as const) }
   })
-  const suggestions = (await suggestionsProvider().find(query)).map((signal) => ({ ...signal, status: 'new' as const }))
   const stored: number = await ctx.runMutation(internal.internal.researcher.storeSignals, {
     accountId: account._id,
     signals: [
-      ...threads.filter((thread) => known.has(thread.externalId)).map((thread) => ({ ...thread, status: 'new' as const })),
+      ...found.filter((signal) => known.has(signal.externalId)).map((signal) => ({ ...signal, status: 'new' as const })),
       ...judged,
-      ...suggestions,
     ],
     mock,
   })
   return {
     found: stored,
-    kept: judged.filter((thread) => thread.status === 'new').length,
-    offNiche: judged.filter((thread) => thread.status === 'dismissed').length,
+    kept: judged.filter((signal) => signal.status === 'new').length,
+    offNiche: judged.filter((signal) => signal.status === 'dismissed').length,
     unread,
   }
+}
+
+/**
+ * The account's signals still new that its search found, read again against its niche and
+ * pillars as they are now, after the operator changed them: the ones off
+ * the niche are dismissed. A dismissed signal stays dismissed, since the
+ * operator may have dismissed it, and a used one fed a post already.
+ */
+export const rejudgeSignals = internalAction({
+  args: { accountId: v.id('accounts') },
+  handler: async (ctx, args): Promise<{ read: number; dismissed: number }> => {
+    const { account, workspace } = await ctx.runQuery(internal.internal.data.getAccount, { accountId: args.accountId })
+    const signals = await ctx.runQuery(internal.internal.researcher.newFoundSignals, { accountId: args.accountId })
+    if (signals.length === 0) return { read: 0, dismissed: 0 }
+    const keys = await ctx.runQuery(internal.internal.keys.stored, {})
+    const fits = await classifierProvider(keys).classify(
+      classifyBriefOf(
+        account,
+        workspace,
+        signals.map((signal) => ({ origin: 'search' as const, text: `${signal.title}\n\n${signal.summary}` }))
+      )
+    )
+    const off = signals.flatMap((signal, index) => {
+      const fit = fits[index]
+      if (fit === undefined) throw new Error(`the classifier read ${fits.length} of ${signals.length} signals`)
+      return onNiche(fit) ? [] : [signal._id]
+    })
+    await ctx.runMutation(internal.internal.researcher.dismissOffNiche, { signalIds: off })
+    return { read: signals.length, dismissed: off.length }
+  },
+})
+
+/** A thread or a search suggestion the researcher found, which the classifier read; a comment or a problem was said to the account. */
+function foundBySearch(source: SignalSource): boolean {
+  return isThreadSource(source) || source === 'search'
+}
+
+/** The account's signals still new that the researcher's search found, as the classifier reads them. */
+export const newFoundSignals = internalQuery({
+  args: { accountId: v.id('accounts') },
+  handler: async (ctx, args): Promise<{ _id: Id<'signals'>; title: string; summary: string }[]> => {
+    const signals = await ctx.db
+      .query('signals')
+      .withIndex('by_account_external', (q) => q.eq('accountId', args.accountId))
+      .collect()
+    return signals
+      .filter((signal) => signal.status === 'new' && foundBySearch(signal.source))
+      .map(({ _id, title, summary }) => ({ _id, title, summary }))
+  },
+})
+
+/** Off the niche: dismissed, unless a post took the signal in the meantime. */
+export const dismissOffNiche = internalMutation({
+  args: { signalIds: v.array(v.id('signals')) },
+  handler: async (ctx, args) => {
+    for (const signalId of args.signalIds) {
+      const signal = await ctx.db.get(signalId)
+      if (signal?.status === 'new') await ctx.db.patch(signalId, { status: 'dismissed' })
+    }
+  },
+})
+
+/** Whether the researcher reads this forum for the account: its own, or every one for an account on no forum. */
+function readsForum(account: Doc<'accounts'>, forum: Forum): boolean {
+  return account.forum === undefined || account.forum.origin === forum.origin
 }
 
 /** The external ids of these the account has stored as signals already, from any source. */

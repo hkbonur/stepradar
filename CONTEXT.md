@@ -153,7 +153,7 @@ Where signals come from: `hackernews`, `reddit`, `x`, `linkedin`, `forum` (a pla
 _Avoid_: feed, channel, integration.
 
 **Freshness**:
-How much a signal still matters today: its score, halved every two days since the source posted it (or since the researcher found it, when the source does not say); an open problem keeps its score, since the problem is still there. Computed when it is read, never stored. Below 25 a signal is **cold**: the planner leaves it out, and an idea built on it is swapped at its last check.
+How much a signal still matters today: its score, weighed against what a thread usually scores where it was posted (a forum topic's handful of likes counts like a Reddit thread's dozens of upvotes) so every source reads from 0 to 100, halved every two days since the source posted it (or since the researcher found it, when the source does not say); an open problem keeps its score, since the problem is still there. Computed when it is read, never stored. Below 25 a signal is **cold**: the planner leaves it out, and an idea built on it is swapped at its last check.
 _Avoid_: recency, decay (fine for the mechanism), heat, trending score.
 
 **Morning brief**:

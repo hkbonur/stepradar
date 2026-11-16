@@ -18,6 +18,7 @@ import type { JudgedWords } from '../lib/validators'
 
 const RUNNERS: Record<JobKind, (ctx: ActionCtx, job: Doc<'jobs'>) => Promise<unknown>> = {
   poll_signals: (ctx, job) => ctx.runAction(internal.internal.researcher.pollSignals, { accountId: job.accountId }),
+  rejudge_signals: (ctx, job) => ctx.runAction(internal.internal.researcher.rejudgeSignals, { accountId: job.accountId }),
   morning_sweep: (ctx, job) => ctx.runAction(internal.internal.researcher.morningSweep, { accountId: job.accountId }),
   plan_week: (ctx, job) => ctx.runMutation(internal.internal.writer.planWeek, { accountId: job.accountId, weekStart: weekStartOf(job) }),
   write_post: (ctx, job) => ctx.runAction(internal.internal.writer.writePost, { postId: postIdOf(job) }),

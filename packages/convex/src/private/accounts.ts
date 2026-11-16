@@ -169,6 +169,10 @@ export const update = mutation({
     assertFormat({ platform: account.platform, publishHour: fields.publishHour, cadence: fields.cadence })
     await assertHoursKept(ctx, account, fields)
     assertAffiliation(fields.affiliationLine, (await workspaceOf(ctx, account)).sponsorName)
+    // The classifier read the signals against the niche and pillars they had: what is still new is read again.
+    if (fields.niche !== account.niche || fields.pillars.join('\n') !== account.pillars.join('\n')) {
+      await enqueueJob(ctx, { kind: 'rejudge_signals', accountId })
+    }
     // The bio item quotes the bio for the operator to copy, so it quotes the new one.
     if (fields.bio !== account.bio) await rewordBioItem(ctx, account, fields.bio)
     await ctx.db.patch(accountId, fields)

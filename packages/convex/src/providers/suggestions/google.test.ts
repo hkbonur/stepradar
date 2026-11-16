@@ -26,7 +26,7 @@ describe('search suggestions', () => {
     vi.useRealTimers()
   })
 
-  it('asks for each of the first four terms and its how-to, and scores a suggestion by its place in its own list', async () => {
+  it('asks for each of the first four terms and its how-to, leaves out the term given back, and scores a suggestion by its place in its own list', async () => {
     vi.useFakeTimers({ now: NOW })
     const asked = stubSuggestions({
       'n8n tutorials': ['n8n tutorials', 'n8n tutorials for beginners'],
@@ -34,19 +34,18 @@ describe('search suggestions', () => {
     })
     const found = await googleSuggestions.find({ terms: ['n8n tutorials', 'b', 'c', 'd', 'e'], limit: 10 })
     expect(asked).toEqual(['n8n tutorials', 'how to n8n tutorials', 'b', 'how to b', 'c', 'how to c', 'd', 'how to d'])
+    // Google gives each term back first: that says nothing people type that the account does not know.
     expect(found).toEqual([
       {
         source: 'search',
-        externalId: 'n8n tutorials',
-        title: 'n8n tutorials',
-        url: 'https://www.google.com/search?q=n8n%20tutorials',
-        summary: 'People type "n8n tutorials" into Google.',
-        score: 70,
+        externalId: 'n8n tutorials for beginners',
+        title: 'n8n tutorials for beginners',
+        url: 'https://www.google.com/search?q=n8n%20tutorials%20for%20beginners',
+        summary: 'People type "n8n tutorials for beginners" into Google.',
+        score: 65,
         topics: ['n8n', 'tutorials'],
         publishedAt: NOW,
       },
-      expect.objectContaining({ externalId: 'how to n8n tutorials', score: 70 }),
-      expect.objectContaining({ externalId: 'n8n tutorials for beginners', score: 65 }),
     ])
   })
 

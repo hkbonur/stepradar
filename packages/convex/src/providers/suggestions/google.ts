@@ -26,7 +26,8 @@ export const googleSuggestions: SuggestionsProvider = {
         const suggestions = await suggestionsFor(asked)
         for (const [rank, suggestion] of suggestions.entries()) {
           const key = suggestion.toLowerCase()
-          if (seen.has(key)) continue
+          // The term itself, given back first, says nothing people type that the account does not know.
+          if (key === asked.toLowerCase() || seen.has(key)) continue
           seen.add(key)
           found.push({
             source: 'search',

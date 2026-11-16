@@ -238,7 +238,8 @@ describe('the Signals page', () => {
         publishedAt: now,
       })
       await insertSignal(ctx, ada, { title: 'Dismissed', score: 99, foundAt: now, publishedAt: now, status: 'dismissed' })
-      const maxs = await insertSignal(ctx, max, { title: 'Max’s', score: 90, foundAt: now, publishedAt: now })
+      // 450 Reddit points weigh 90 (shared `signalFreshness`).
+      const maxs = await insertSignal(ctx, max, { title: 'Max’s', score: 450, foundAt: now, publishedAt: now })
       return { ada, max, refound, maxs }
     })
 
@@ -250,5 +251,52 @@ describe('the Signals page', () => {
     const everyone = await t.query(api.private.signals.list, {})
     expect(everyone).toHaveLength(200)
     expect(everyone.slice(0, 2).map((signal) => signal._id)).toEqual([maxs._id, refound._id])
+  })
+})
+
+describe('a new niche', () => {
+  it('reads the found signals still new again, and dismisses the ones off it', async () => {
+    const t = setup()
+    const now = Date.now()
+    const { account, onNiche, offNiche, suggestion, used, dismissed } = await t.run(async (ctx) => {
+      const account = await insertAccount(ctx)
+      const signal = (title: string, fields: { source?: Doc<'signals'>['source']; status?: Doc<'signals'>['status'] } = {}) =>
+        insertSignal(ctx, account, { title, foundAt: now, publishedAt: now, ...fields })
+      return {
+        account,
+        onNiche: await signal('Bubble privacy rules for client uploads'),
+        offNiche: await signal('Webhook retries in a self-hosted queue'),
+        // A search suggestion is read like a thread.
+        suggestion: await signal('webhook retries', { source: 'search' }),
+        used: await signal('Webhook retries that fed a post', { status: 'used' }),
+        dismissed: await signal('Bubble uploads the operator dismissed', { status: 'dismissed' }),
+      }
+    })
+    const { name, audience, tone, bio, bible, affiliationLine, publishHour, cadence, sponsorDial, sponsorRampPosts, timezone } = account
+    await t.mutation(api.private.accounts.update, {
+      accountId: account._id,
+      name,
+      audience,
+      tone,
+      bio,
+      bible,
+      affiliationLine,
+      publishHour,
+      cadence,
+      sponsorDial,
+      sponsorRampPosts,
+      timezone,
+      niche: 'Bubble apps for agencies',
+      pillars: ['Bubble privacy rules'],
+    })
+    await t.finishAllScheduledFunctions(() => {})
+    const statusOf = async (signal: Doc<'signals'>) => (await t.run((ctx) => ctx.db.get(signal._id)))?.status
+    expect(await Promise.all([onNiche, offNiche, suggestion, used, dismissed].map(statusOf))).toEqual([
+      'new',
+      'dismissed',
+      'dismissed',
+      'used',
+      'dismissed',
+    ])
   })
 })

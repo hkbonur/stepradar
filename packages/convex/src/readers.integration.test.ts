@@ -51,6 +51,26 @@ describe('platform readers', () => {
     expect([...new Set(signals.map((signal) => signal.source))].sort()).toEqual(['hackernews', 'reddit', 'search', 'x'])
   })
 
+  it("reads an account's own forum, not the workspace's other forums, which are about other products; another account reads every forum", async () => {
+    const t = setup()
+    const make = { origin: 'https://community.make.com', name: 'Make Community', software: 'discourse' as const }
+    const { onN8n, onLinkedin } = await t.run(async (ctx) => ({
+      onN8n: await insertAccount(ctx, { platform: 'forum', forum: N8N_FORUM, handle: 'ada' }),
+      onMake: await insertAccount(ctx, { platform: 'forum', forum: make, handle: 'ada' }),
+      onLinkedin: await insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' }),
+    }))
+    const forumsRead = async (accountId: typeof onN8n._id) => {
+      await t.action(internal.internal.researcher.pollSignals, { accountId })
+      const signals = await t.run((ctx) => ctx.db.query('signals').collect())
+      const origins = signals
+        .filter((signal) => signal.accountId === accountId && signal.source === 'forum') // A forum's signal is named by its forum (researcher `signalOf`); the mock's links lead nowhere.
+        .map((signal) => signal.externalId.split('/t/')[0])
+      return [...new Set(origins)].sort()
+    }
+    expect(await forumsRead(onN8n._id)).toEqual([N8N_FORUM.origin])
+    expect(await forumsRead(onLinkedin._id)).toEqual([make.origin, N8N_FORUM.origin])
+  })
+
   it('leaves a platform out of the poll in real mode while its app keys are not set, names the keys, and still reads the others', async () => {
     const t = setup()
     const account = await t.run((ctx) => insertAccount(ctx, { platform: 'linkedin', handle: 'ada-lovelace' }))

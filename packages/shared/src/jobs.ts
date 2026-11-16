@@ -14,6 +14,8 @@ export type JobStatus = (typeof JOB_STATUSES)[number]
 /** Every unit of agent work. Every job runs on the backend (ADR 0004): Stepradar never posts, so nothing needs the operator's machine. */
 export const JOB_KINDS = {
   poll_signals: { role: 'researcher' },
+  // A new niche or new pillars: the signals still new are read again against them.
+  rejudge_signals: { role: 'researcher' },
   // Every morning: poll the sources, log repeated questions as problems, write the daily brief.
   morning_sweep: { role: 'researcher' },
   plan_week: { role: 'writer' },
@@ -42,6 +44,7 @@ export const JOB_KIND_LIST = Object.keys(JOB_KINDS) as JobKind[]
 
 export const JOB_KIND_LABELS: Record<JobKind, string> = {
   poll_signals: 'Poll signals',
+  rejudge_signals: 'Read signals again',
   morning_sweep: 'Morning sweep',
   plan_week: 'Plan the week',
   write_post: 'Write the post',

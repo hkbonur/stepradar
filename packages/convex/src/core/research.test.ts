@@ -53,6 +53,8 @@ async function reactiveIdea(ctx: MutationCtx, account: Doc<'accounts'>, signal: 
   return post
 }
 
+// A Reddit or Hacker News signal's score is its points plus twice its comments; freshness weighs it against what is usual there
+// (shared `signalFreshness`): 367 Reddit points weigh 88, 30 Hacker News points 50.
 describe('writeDailyBrief', () => {
   it('counts what each source found in the last day, names the five freshest and the open problems, and expires', async () => {
     const t = setup()
@@ -61,7 +63,7 @@ describe('writeDailyBrief', () => {
       const queue = await insertSignal(ctx, account, {
         title: 'n8n queue mode for webhooks',
         source: 'reddit',
-        score: 88,
+        score: 367,
         foundAt: NOW - 2 * HOUR,
         publishedAt: NOW - 3 * HOUR,
       })
@@ -73,11 +75,11 @@ describe('writeDailyBrief', () => {
         publishedAt: NOW - 2 * HOUR,
       })
       // A source that says nothing about when is dated by when it was found.
-      const trend = await insertSignal(ctx, account, { title: 'n8n vs make', source: 'reddit', score: 64, foundAt: NOW - 10 * HOUR })
+      const trend = await insertSignal(ctx, account, { title: 'n8n vs make', source: 'reddit', score: 89, foundAt: NOW - 10 * HOUR })
       const hn = await insertSignal(ctx, account, {
         title: 'Show HN: a webhook inspector',
         source: 'hackernews',
-        score: 50,
+        score: 30,
         foundAt: NOW - HOUR,
         publishedAt: NOW - HOUR,
       })
@@ -92,7 +94,7 @@ describe('writeDailyBrief', () => {
       await insertSignal(ctx, account, {
         title: 'A slow thread',
         source: 'reddit',
-        score: 40,
+        score: 33,
         foundAt: NOW - 5 * HOUR,
         publishedAt: NOW - 5 * HOUR,
       })
@@ -100,7 +102,7 @@ describe('writeDailyBrief', () => {
       await insertSignal(ctx, account, {
         title: 'Old news',
         source: 'hackernews',
-        score: 81,
+        score: 128,
         foundAt: NOW - 30 * HOUR,
         publishedAt: NOW - 40 * HOUR,
       })
@@ -266,14 +268,14 @@ describe('lastCheck', () => {
       const account = await insertAccount(ctx)
       const cold = await insertSignal(ctx, account, {
         title: 'n8n credentials vanished after the upgrade',
-        score: 85,
+        score: 283,
         foundAt: NOW - 10 * DAY,
         publishedAt: NOW - 10 * DAY,
       })
       const post = await reactiveIdea(ctx, account, cold, '2026-10-14')
       const fresh = await insertSignal(ctx, account, {
         title: 'n8n queue mode for webhooks',
-        score: 88,
+        score: 367,
         foundAt: NOW - 2 * HOUR,
         publishedAt: NOW - 3 * HOUR,
       })
@@ -341,14 +343,14 @@ describe('lastCheck', () => {
       await ctx.db.delete(gone._id)
 
       // Freshness 49: below the bar a swap needs.
-      const weak = await insertSignal(ctx, account, { title: 'Not fresh enough', score: 70, foundAt: NOW - DAY, publishedAt: NOW - DAY })
+      const weak = await insertSignal(ctx, account, { title: 'Not fresh enough', score: 117, foundAt: NOW - DAY, publishedAt: NOW - DAY })
       expect(await lastCheck(ctx, kept._id, NOW)).toEqual({ swapped: false })
       expect(await ctx.db.get(kept._id)).toMatchObject({ concept: kept.concept, signalIds: [gone._id] })
       await ctx.db.delete(weak._id)
 
       const fresh = await insertSignal(ctx, account, {
         title: 'n8n queue mode for webhooks',
-        score: 88,
+        score: 367,
         foundAt: NOW - 2 * HOUR,
         publishedAt: NOW - 3 * HOUR,
       })
@@ -389,7 +391,7 @@ describe('lastCheck', () => {
       })
       const coldIdea = await reactiveIdea(ctx, account, cold, '2026-10-15')
       // Freshness 49: below the bar a swap needs.
-      await insertSignal(ctx, account, { title: 'Not fresh enough', score: 70, foundAt: NOW - DAY, publishedAt: NOW - DAY })
+      await insertSignal(ctx, account, { title: 'Not fresh enough', score: 117, foundAt: NOW - DAY, publishedAt: NOW - DAY })
       const evergreen = await insertPost(ctx, account, { status: 'idea', plannedFor: '2026-10-14' })
       const written = await insertPost(ctx, account, { status: 'draft', plannedFor: '2026-10-14' })
       await ctx.db.patch(written._id, { signalIds: [cold._id] })
