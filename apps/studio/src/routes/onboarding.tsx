@@ -32,6 +32,7 @@ import React from 'react'
 import { z } from 'zod'
 import { FormatFields } from '@/components/format-fields'
 import { AccountMark, AccountName } from '@/components/account-mark'
+import { NICHE_HINT } from '@/components/account-profile'
 import { SetupSteps } from '@/components/setup-steps'
 import { Button, ErrorLine, Field, Input, LinkButton, PageHeader, Skeleton, Textarea } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
@@ -342,7 +343,7 @@ function AccountStep(props: {
               <Input value={draft.name} onChange={(event) => patch({ name: event.target.value })} required />
             </Field>
           </div>
-          <Field label="Niche" hint="What the account posts about.">
+          <Field label="Niche" hint={NICHE_HINT}>
             <Input
               value={draft.niche}
               onChange={(event) => patch({ niche: event.target.value })}

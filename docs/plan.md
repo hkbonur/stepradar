@@ -543,6 +543,14 @@ Every account posted at least once a day, so four forum accounts asked for four 
 - [x] Lowering the days or the posts a day drops the ideas from today on that no longer fit, and frees their signals; a written post stays.
 - [x] The settings pick the days, the profile says them in words (`cadenceText`), the accounts list in a few.
 
+### Slice 31: bios that claim nothing, and a niche that names the readers (operator, 2026-11-16)
+
+Every live account's niche was "Workflows for Formstep", the sponsor's name rather than what its readers talk about, and the classifier judges every thread against it. The proposed bios claimed fixes and tests the operator never made ("I fix the n8n intake workflows that break at 2am"), and the checklist kept quoting a bio after it changed.
+
+- [x] The account proposal is held to the writing rules (shared `WRITING_RULES`), and its bio says what the account helps with and for whom, claiming no clients, years, fixes, tests or results.
+- [x] The niche field says what a niche is, on the setup and on the profile (`NICHE_HINT`).
+- [x] A new bio rewords the open checklist item that quotes the old one (core/checklist.ts `rewordBioItem`).
+
 ### Later
 
 - [ ] The X real reader, once the tier is chosen (decision 3 stands, operator, 2026-10-23).
@@ -590,6 +598,7 @@ Roughly a quarter of today's code is deleted. Most of the rest is renamed or gen
 - Slice 24: done. The operator's provider keys live in `providerKeys`, set from the setup's new key step and the Providers page's Your keys card; every action reads them once and hands them to the providers it builds (ADR 0005). The review of slices 23 and 24 found that a growth span dropped the change from the read before it, that the digest added karma, followers and likes into one number, that "what works" added reach across platforms and counted clicks against reach never read, and that the leak kept a one-step funnel; all fixed, the leak now one click flow (shared `clickLeak`). A key shorter than 12 characters is refused, and the setup's Add it later shows in mock mode only.
 - Slice 25: done. A Discourse search reads the forum's newest topics without a term. Read live on 2026-11-15, a Sunday: in 12 hours the n8n Community started 3 topics, the Make Community 1, the Bubble Forum 1 and the Softr Community none; the classifier turned down all but the one already drafted (two were product spam, one a services ad, one a beginner's self-hosting question).
 - Slice 26: done. Read live: the n8n account's poll stored 21 signals (20 from the four forums, 1 search suggestion, none from Hacker News) and named Reddit unread with its three keys.
+- Slice 31: done. The five live accounts took a niche and a bio each, written by hand, and their bio items quote the new bios. Read live first: the Bubble Forum lists about three new topics a day and the Softr Community about one a week, so the listener, which looks 12 hours back, kept none there; n8n lists about thirty a day and Make nine.
 - Slice 30: done. The live accounts took their platform's days through a one-off migration (every one two days a week); the n8n Community account's six ideas next week became two, on Tuesday and Thursday. The "plans post slots by the cadence" test had failed on Sundays since slice 23: it planned next week, whose Monday is due the next day, so it now plans two weeks out.
 - Slice 29: done. Read live: a poll of the n8n account kept 18 threads on its niche and dismissed 48, a Make account's 26 and 40; the outage standout left Today. The 60 forum signals stored before were dismissed by hand, to be read again under their new names.
 - Slice 28: done. Read live on the n8n account: three pasted threads drafted without a story or a staged opener; after the rules asked for what to do rather than what "I" do, the third came back in two imperative sentences.

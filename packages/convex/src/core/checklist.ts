@@ -44,13 +44,30 @@ export async function openFirstItems(
   const profile = profileEditLink(placeOf(account), account.handle)
   await ctx.db.insert('checklistItems', {
     accountId: account._id,
-    title: `Put the bio and its link on the profile of ${accountInWords(account)}`,
+    title: bioItemTitle(account),
     why: `People who read a reply or a post open the profile next. Its bio: "${account.bio}" Its link, so the visits the profile brings count for the account: ${bioLink}`,
     status: 'open',
     ...(profile === null ? {} : { action: { kind: 'visit' as const, url: profile } }),
     createdAt: now,
   })
   if (historyCanComeIn(account.platform, reader.activity !== undefined)) await openVoiceItem(ctx, account, now)
+}
+
+function bioItemTitle(account: Doc<'accounts'>): string {
+  return `Put the bio and its link on the profile of ${accountInWords(account)}`
+}
+
+/** A new bio: an open item that quotes the old one, to put it on the profile, quotes the new one. */
+export async function rewordBioItem(ctx: MutationCtx, account: Doc<'accounts'>, bio: string): Promise<void> {
+  const quoted = `"${account.bio}"`
+  const open = await ctx.db
+    .query('checklistItems')
+    .withIndex('by_account_status', (q) => q.eq('accountId', account._id).eq('status', 'open'))
+    .collect()
+  for (const item of open) {
+    if (!item.why.includes(quoted)) continue
+    await ctx.db.patch(item._id, { title: bioItemTitle(account), why: item.why.replace(quoted, () => `"${bio}"`) })
+  }
 }
 
 /**

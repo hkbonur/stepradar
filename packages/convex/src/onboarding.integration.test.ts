@@ -175,6 +175,32 @@ describe('onboarding', () => {
     await expect(t.action(api.private.onboarding.propose, { ...NORA, forum })).rejects.toThrow('a x account has a forum')
   })
 
+  it('quotes a new bio in the open item that asks to put it on the profile', async () => {
+    const t = await withProduct()
+    const { accountId } = await proposeAndCreate(t, NORA)
+    const account = await t.run((ctx) => ctx.db.get(accountId))
+    if (!account) throw new Error('the account was not made')
+    const { name, niche, audience, tone, bible, affiliationLine, pillars, publishHour, cadence, sponsorDial, sponsorRampPosts, timezone } =
+      account
+    const settings = {
+      name,
+      niche,
+      audience,
+      tone,
+      bible,
+      affiliationLine,
+      pillars,
+      publishHour,
+      cadence,
+      sponsorDial,
+      sponsorRampPosts,
+      timezone,
+    }
+    await t.mutation(api.private.accounts.update, { accountId, ...settings, bio: 'Help for Notion builders with client portals.' })
+    const [item] = (await t.query(api.private.checklist.list, {})).filter((row) => row.title.startsWith('Put the bio'))
+    expect(item?.why).toContain('Its bio: "Help for Notion builders with client portals." Its link')
+  })
+
   it("opens a new account's first checklist items: its bio for its profile, and its voice where its posts can come in, done once learned", async () => {
     const t = await withProduct()
     const { proposal, accountId } = await proposeAndCreate(t, NORA)

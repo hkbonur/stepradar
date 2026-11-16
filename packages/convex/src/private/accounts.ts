@@ -21,6 +21,7 @@ import { capabilitiesOf } from '../providers/platforms'
 import { communitiesOf } from '../core/communities'
 import { planWaits } from '../core/planner'
 import { weekPosting } from '../core/growth'
+import { rewordBioItem } from '../core/checklist'
 import { bioLinkOf, makeBioLink as makeBioLinkRule } from '../core/links'
 import { workspaceOf } from '../core/workspace'
 
@@ -168,6 +169,8 @@ export const update = mutation({
     assertFormat({ platform: account.platform, publishHour: fields.publishHour, cadence: fields.cadence })
     await assertHoursKept(ctx, account, fields)
     assertAffiliation(fields.affiliationLine, (await workspaceOf(ctx, account)).sponsorName)
+    // The bio item quotes the bio for the operator to copy, so it quotes the new one.
+    if (fields.bio !== account.bio) await rewordBioItem(ctx, account, fields.bio)
     await ctx.db.patch(accountId, fields)
     // Fewer days or posts a day leave ideas planned where the cadence no longer posts.
     await dropIdeasOffCadence(ctx, { ...account, ...fields }, Date.now())

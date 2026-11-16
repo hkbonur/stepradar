@@ -309,6 +309,8 @@ export function anthropicLlm(keys: ProviderKeys): LlmProvider {
             text: [
               'You help the operator of Stepradar set up one of their own accounts. Stepradar drafts posts and replies for it, which the operator posts by hand, so the people there discover the sponsor.',
               `The sponsor is ${brief.sponsorName}: ${brief.sponsorPitch} The account helps people first: the sponsor comes up only sometimes, in its own words.`,
+              // The bio goes on a public profile as written, so it is held to the rules every draft is.
+              `How the bio, the bible and the affiliation line are written:\n- ${WRITING_RULES.join('\n- ')}`,
             ].join('\n'),
           },
         ],
@@ -322,7 +324,7 @@ export function anthropicLlm(keys: ProviderKeys): LlmProvider {
                 'Return:',
                 '- tone: three to six words on how it sounds.',
                 `- pillars: ${PILLARS_MIN} to ${PILLARS_MAX} content pillars, each two to five words, the recurring topics it covers.`,
-                '- bio: one sentence for its profile.',
+                '- bio: one sentence for its profile on what it helps with and for whom. It claims no clients, years, fixes, tests or results.',
                 '- bible: three to five sentences on how it speaks, what it shows, and what it never says. Give it no backstory or experiences to claim: it explains from what it knows.',
                 `- affiliationLine: one short sentence, in its voice, that says the operator builds ${brief.sponsorName} and names it ("I'm building ${brief.sponsorName}, so take this with salt"). Every draft that names the sponsor says it.`,
               ].join('\n'),

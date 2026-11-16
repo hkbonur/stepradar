@@ -17,6 +17,9 @@ import { Button, Card, ErrorLine, Field, type FormState, Input, Mono, Textarea }
 import { errorMessage } from '@/lib/errors'
 import { plural } from '@/lib/format'
 
+/** The niche field's hint, on the setup and on the profile: the classifier judges every thread against the niche, so it names readers' topics, not the sponsor. */
+export const NICHE_HINT = 'What the account posts about, in its readers\' words ("n8n workflows for agencies"), not the sponsor\'s name.'
+
 type BioLinkData = NonNullable<NonNullable<FunctionReturnType<typeof api.private.accounts.get>>['bioLink']>
 
 /**
@@ -162,7 +165,7 @@ export function AccountSettings(props: { account: Doc<'accounts'>; onDone: () =>
         <Field label="Name">
           <Input name="name" defaultValue={p.name} required />
         </Field>
-        <Field label="Niche" className="lg:col-span-2">
+        <Field label="Niche" className="lg:col-span-2" hint={NICHE_HINT}>
           <Input name="niche" defaultValue={p.niche} required />
         </Field>
         <Field label="Audience" className="sm:col-span-2 lg:col-span-3" hint="Who it talks to. The writer reads it with the niche.">
